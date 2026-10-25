@@ -18,6 +18,11 @@
   TH06 adds missing declarations, uses the DirectX-8 image-info layout and redirects
   includes; no SDL/OpenGL implementation is imported.
 - Imported DXUtil/DSUtil declarations retain their Microsoft copyright notices.
+- `tools/wine-replay/launch.cpp` and `identity.hpp` adapt the owned suspended-process
+  launcher and SHA-256 identity check from `th08-solver` (MIT, copyright 2026
+  N0zoM1z0), revision `a6a045630044e570f6a5f0b0b2aa47f3ec4ff633`.
+  They use the TH06 1.02h identity and observer export. The retained
+  TH08 MIT notice covers this reuse as well.
 
 Touhou and its original game code/assets are by ZUN / Team Shanghai Alice. The
 repository contains reconstruction and solver code only. Original EXE/DAT/image/

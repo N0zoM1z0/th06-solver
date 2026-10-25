@@ -2,8 +2,9 @@
 
 Current scope: make the native runtime dependable for later shadow MPC.
 The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
-including fresh native replay of every entire route. No retail execution or
-retail replay work is in scope yet.
+including fresh native replay of every entire route. The owner has now authorized
+Wine retail replay interoperability, starting with Lunatic Reimu A. That separate
+test is recorded in [Retail replay](RETAIL_REPLAY.md).
 
 ## Acceptance matrix
 

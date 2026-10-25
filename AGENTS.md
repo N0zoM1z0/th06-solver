@@ -3,7 +3,9 @@
 Read README.md and docs/STATUS.md before changing behavior. The owner's current
 scope is the native runtime required by later shadow MPC: finish all legitimate
 stage/difficulty/shot combinations first, then complete continuous stories.
-Retail execution, Wine integration and retail replay export are deferred.
+The owner has now authorized retail replay interoperability under Wine, starting
+with a complete Lunatic story. Keep native and retail proof separate. Run one
+Wine instance at a time under a 2 GiB cgroup memory cap with swap disabled.
 
 - Use C++17. Preserve the imported source, licenses and pinned provenance in-tree.
   Keep parsing, native state, proposals, process isolation, tapes and CLI separate.
