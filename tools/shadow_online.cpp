@@ -68,15 +68,27 @@ int main(int argc, char **argv) {
         std::string data, directory;
         unsigned horizon = 128, lead = 16, budget = 110, interval = 16;
         bool pulse = false;
+        bool recorded = false;
+        bool fresh = false;
+        unsigned proposals = 1;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
+            if (key == "--fresh") {
+                fresh = true;
+                continue;
+            }
+            if (key == "--recorded") {
+                recorded = true;
+                continue;
+            }
             if (key == "--pulse") {
                 pulse = true;
                 continue;
             }
             if (key == "--help") {
-                std::cout << "th06_shadow_online --data DIR --directory DIR [--horizon 32..240] "
-                             "[--lead 8..64] [--budget-ms N] [--interval N] [--pulse]\n";
+                std::cout << "th06_shadow_online --data DIR --directory DIR [--horizon 32..592] "
+                             "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
+                             "[--fresh] [--pulse] [--recorded]\n";
                 return 0;
             }
             if (++i == argc)
@@ -99,14 +111,18 @@ int main(int argc, char **argv) {
                     budget = n;
                 else if (key == "--interval")
                     interval = n;
+                else if (key == "--proposals")
+                    proposals = n;
                 else
                     throw std::runtime_error("unknown option");
             }
         }
-        if (data.empty() || directory.empty() || horizon < 32 || horizon > 240 || lead < 8 ||
+        if (data.empty() || directory.empty() || horizon < 32 || horizon > 592 || lead < 8 ||
             lead > 64 || horizon + lead > b::capacity || !budget || budget > 2000 || !interval ||
-            interval > horizon)
+            interval > horizon || !proposals || proposals > 50)
             throw std::runtime_error("invalid shadow configuration");
+        if (recorded && horizon > 240)
+            throw std::runtime_error("recorded proposals require horizon <= 240");
         Mapping mapping(directory + "/bridge.bin");
         auto *map = mapping.words;
         Resources resources(data);
@@ -144,6 +160,8 @@ int main(int argc, char **argv) {
         std::vector<double> times, gaps;
         unsigned timeouts = 0, attempts = 0, submitted = 0, stale = 0, failed = 0, reused = 0;
         unsigned motion_attempts = 0, motion_selected = 0, motion_cursor = 0;
+        unsigned forecasts = 0, checks = 0, recorded_selected = 0;
+        std::array<unsigned, 8> timeouts_by_phase{};
         std::uint64_t branches = 0, updates = 0, offset = 0, prior_time = 0;
         b::Plan active, pending;
         std::uint16_t previous = 261;
@@ -232,9 +250,13 @@ int main(int argc, char **argv) {
                 // the accepted queue/fallback through the immutable lead.
                 const auto origin = unsigned(state.frame);
                 last_search = origin;
-                const bool reuse = attempts % 4 != 0;
+                const bool reuse = !fresh && attempts % 4 != 0;
                 const auto result = b::search(game, active, previous, lead, horizon, budget, reuse,
-                                              pulse, motion_cursor);
+                                              pulse, motion_cursor, recorded, proposals);
+                forecasts += result.recorded_forecasts;
+                checks += result.recorded_checks;
+                if (result.timeout && result.last_phase < timeouts_by_phase.size())
+                    ++timeouts_by_phase[result.last_phase];
                 motion_attempts += result.motion_attempts;
                 motion_cursor = result.motion_cursor;
                 ++attempts;
@@ -266,6 +288,7 @@ int main(int argc, char **argv) {
                     published = true;
                     reused += result.prediction.nominal;
                     motion_selected += result.prediction.motion;
+                    recorded_selected += result.prediction.recorded;
                 } else if (result.prediction.count)
                     ++stale;
                 else if (!result.timeout)
@@ -297,12 +320,23 @@ int main(int argc, char **argv) {
                << horizon << "\",\"frames\":" << state.frame << ",\"complete\":" << tape.complete
                << ",\"error\":\"" << error << "\",\"horizon\":" << horizon << ",\"lead\":" << lead
                << ",\"budget_ms\":" << budget << ",\"interval\":" << interval
+               << ",\"fresh_only\":" << fresh << ",\"proposals\":" << proposals
                << ",\"searches\":" << attempts << ",\"timeouts\":" << timeouts
                << ",\"failed\":" << failed << ",\"published\":" << submitted
                << ",\"accepted_generation\":" << b::load(map + b::Accepted)
                << ",\"rejected_generation\":" << b::load(map + b::Rejected)
                << ",\"stale\":" << stale << ",\"nominal_publications\":" << reused
-               << ",\"pulse\":" << pulse << ",\"motion_attempts\":" << motion_attempts
+               << ",\"recorded\":" << recorded << ",\"recorded_forecasts\":" << forecasts
+               << ",\"recorded_checks\":" << checks
+               << ",\"recorded_publications\":" << recorded_selected
+               << ",\"timeouts_lead\":" << timeouts_by_phase[1]
+               << ",\"timeouts_literal\":" << timeouts_by_phase[2]
+               << ",\"timeouts_recording\":" << timeouts_by_phase[3]
+               << ",\"timeouts_geometry\":" << timeouts_by_phase[4]
+               << ",\"timeouts_recorded_verification\":" << timeouts_by_phase[5]
+               << ",\"timeouts_heuristic\":" << timeouts_by_phase[6]
+               << ",\"timeouts_motion\":" << timeouts_by_phase[7] << ",\"pulse\":" << pulse
+               << ",\"motion_attempts\":" << motion_attempts
                << ",\"motion_publications\":" << motion_selected
                << ",\"motion_cursor\":" << motion_cursor
                << ",\"completed_search_branches\":" << branches

@@ -12,6 +12,9 @@
   Measured headless fast paths skip identity ANM color components and cache empty
   bomb-projectile regions only within a source bullet-update scope; source
   collision priority, state layout, clocks and RNG are preserved.
+  Read-only headless hooks in `Player.cpp` optionally record raw bullet/body
+  boxes, rotated laser arguments and movement context. Ungrazed bullets are
+  captured before graze expansion. Original collision predicates remain intact.
 - The scoped region-cache design and candidate-diversity experiments reference
   `th08-solver` revision `1d49a8e` (`native_policy.hpp`, headless `runtime.cpp` and
   `docs/PLANNER.md`). TH06 uses its own source predicates and update boundaries;
@@ -40,6 +43,11 @@
   The common-start follower, immutable lead, bounded child verification and
   separate X11/PulseAudio capture follow its `docs/PLANNER.md` design. TH06 uses
   its own input bits, source callbacks, projection, lifecycle and native planner.
+- `src/shadow_recorded.cpp` references the same TH08 revision's conditional
+  geometry recording, spatial beam diversity and independent native verification
+  (`src/shadow_recorded.cpp`). It uses TH06's own collision phases, clockwise
+  laser transform, movement timing and bounds. The retained TH08 MIT notice
+  covers this adaptation; geometry is proposal guidance, never collision authority.
 
 Touhou and its original game code/assets are by ZUN / Team Shanghai Alice. The
 repository contains reconstruction and solver code only. Original EXE/DAT/image/

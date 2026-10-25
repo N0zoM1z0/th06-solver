@@ -1,5 +1,6 @@
 #include "th06/shadow_search.hpp"
 #include "th06/planner.hpp"
+#include "th06/shadow_recorded.hpp"
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
@@ -9,6 +10,7 @@
 #include <stdexcept>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <utility>
@@ -83,8 +85,10 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 }
 } // namespace
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
-              unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor) {
-    if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000)
+              unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
+              bool recorded, unsigned proposals) {
+    if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
+        !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
     if (prctl(PR_SET_CHILD_SUBREAPER, 1))
         throw std::runtime_error("set child subreaper");
@@ -101,8 +105,10 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
         throw std::runtime_error("search progress map");
     b::save(progress.words, cursor % 66);
     int pipefd[2];
-    if (pipe(pipefd))
-        throw std::runtime_error("search pipe");
+    // A sequenced packet keeps the complete larger certificate atomic. A
+    // readable pipe prefix must not bypass the parent's whole-search deadline.
+    if (socketpair(AF_UNIX, SOCK_SEQPACKET, 0, pipefd))
+        throw std::runtime_error("search socket");
     const auto pid = fork();
     if (pid < 0)
         throw std::runtime_error("search fork");
@@ -113,6 +119,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
             const auto origin = unsigned(game.state().frame);
             Prediction result;
             bool safe = true;
+            b::save(progress.words + 2, 1);
             for (unsigned i = 0; i < lead; ++i) {
                 previous = b::next_input(active, origin + i + 1, previous);
                 const auto state = game.step(previous);
@@ -127,11 +134,27 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
             if (safe) {
                 Prediction tail;
                 if (reuse && active.count && origin + lead < active.origin + active.count) {
+                    b::save(progress.words + 2, 2);
                     tail = nominal(game, active, origin, lead, horizon, previous);
                     ++result.branches;
                     result.updates += tail.updates;
                 }
+                if (!tail.count && recorded && milliseconds(begin) < budget) {
+                    std::vector<std::uint16_t> baseline;
+                    auto held = previous;
+                    for (unsigned i = 0; i < horizon; ++i) {
+                        held = b::next_input(active, origin + lead + i + 1, held);
+                        baseline.push_back(held);
+                    }
+                    const auto proposal = recorded_search(
+                        game, baseline, std::max(1, int(budget - milliseconds(begin))),
+                        recorded_beam_width, progress.words + 2);
+                    tail = proposal.prediction;
+                    result.branches += tail.branches;
+                    result.updates += tail.updates;
+                }
                 if (!tail.count && pulse && active.count) {
+                    b::save(progress.words + 2, 7);
                     // TH08's native portfolio: 18 held motions and 16/32/64
                     // pulses. Advance shared progress before each attempt so
                     // deadlines cannot repeatedly starve later directions.
@@ -171,11 +194,12 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     }
                 }
                 if (!tail.count) {
+                    b::save(progress.words + 2, 6);
                     PlannerOptions options;
                     options.horizon = horizon;
                     options.commit = 8;
                     options.reuse = horizon;
-                    options.proposals = 1;
+                    options.proposals = proposals;
                     options.reactive = true;
                     options.defer_later_digests = true;
                     const auto decision = choose(game, options);
@@ -194,6 +218,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     result.count = lead + tail.count;
                     result.nominal = tail.nominal;
                     result.motion = tail.motion;
+                    result.recorded = tail.recorded;
                     std::copy_n(tail.inputs.begin(), tail.count, result.inputs.begin() + lead);
                     std::copy_n(tail.digests.begin(), tail.count, result.digests.begin() + lead);
                 }
@@ -235,6 +260,9 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
     result.wall_ms = milliseconds(begin);
     result.motion_attempts = b::load(progress.words + 1);
     result.motion_cursor = b::load(progress.words);
+    result.last_phase = b::load(progress.words + 2);
+    result.recorded_forecasts = b::load(progress.words + 3);
+    result.recorded_checks = b::load(progress.words + 4);
     if ((!received && !result.timeout) || (received && (!WIFEXITED(status) || WEXITSTATUS(status))))
         throw std::runtime_error("shadow search child failed");
     return result;

@@ -8,6 +8,9 @@
 #include "EffectManager.hpp"
 #include "EnemyManager.hpp"
 #include "ScreenEffect.hpp"
+#if defined(TH06_HEADLESS)
+#include "th06/native_geometry.hpp"
+#endif
 #if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
 #include "th06/bomb_projectile_scope.hpp"
 #endif
@@ -490,6 +493,10 @@ i32 Player::CalcDamageToEnemy(D3DXVECTOR3 *enemyPos, D3DXVECTOR3 *enemyHitboxSiz
                   bombProjectileBottomRight)
 i32 Player::CheckCollision(D3DXVECTOR3 *bulletCenter, D3DXVECTOR3 *bulletSize)
 {
+#if defined(TH06_HEADLESS)
+    if (solver::geometry_frame)
+        solver::record_geometry_box(bulletCenter->x, bulletCenter->y, bulletSize->x, bulletSize->y);
+#endif
     PlayerRect *curBombProjectile;
     D3DXVECTOR3 bulletTopLeft, bulletBottomRight;
     D3DXVECTOR3 bombProjectileTopLeft, bombProjectileBottomRight;
@@ -538,6 +545,12 @@ i32 Player::CheckCollision(D3DXVECTOR3 *bulletCenter, D3DXVECTOR3 *bulletSize)
 #pragma var_order(bombTopLeft, i, bulletBottomRight, bulletTopLeft, bombProjectile, bombBottomRight)
 i32 Player::CheckGraze(D3DXVECTOR3 *center, D3DXVECTOR3 *size)
 {
+#if defined(TH06_HEADLESS)
+    // Ungrazed distant bullets do not call CheckCollision this update. Capture
+    // their lethal size here, before the separate expanded graze predicate.
+    if (solver::geometry_frame)
+        solver::record_geometry_box(center->x, center->y, size->x, size->y);
+#endif
     D3DXVECTOR3 bombBottomRight;
     PlayerRect *bombProjectile;
     D3DXVECTOR3 bombTopLeft;
@@ -618,6 +631,11 @@ ZunBool Player::CalcItemBoxCollision(D3DXVECTOR3 *itemCenter, D3DXVECTOR3 *itemS
 i32 Player::CalcLaserHitbox(D3DXVECTOR3 *laserCenter, D3DXVECTOR3 *laserSize, D3DXVECTOR3 *rotation, f32 angle,
                             ZunBool canGraze)
 {
+#if defined(TH06_HEADLESS)
+    if (solver::geometry_frame)
+        solver::record_geometry_laser(laserCenter->x, laserCenter->y, laserSize->x, laserSize->y,
+                                      rotation->x, rotation->y, angle);
+#endif
     D3DXVECTOR3 laserTopLeft;
     D3DXVECTOR3 laserBottomRight;
     D3DXVECTOR3 playerRelativeTopLeft;
@@ -721,6 +739,16 @@ static void StartFireBulletTimer(Player *p)
 #pragma var_order(playerDirection, speedY, speedX, orbOffsetY, orbOffsetX)
 ZunResult Player::HandlePlayerInputs()
 {
+#if defined(TH06_HEADLESS)
+    if (solver::geometry_frame)
+    {
+        solver::geometry_frame->movement = true;
+        solver::geometry_frame->vulnerable = this->playerState == PLAYER_STATE_ALIVE;
+        solver::geometry_frame->multiplier_x = this->speedMultiplierDuringBomb.x;
+        solver::geometry_frame->multiplier_y = this->speedMultiplierDuringBomb.y;
+        solver::geometry_frame->frame_multiplier = g_Supervisor.effectiveFramerateMultiplier;
+    }
+#endif
     f32 orbOffsetX;
     f32 orbOffsetY;
 

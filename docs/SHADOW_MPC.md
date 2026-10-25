@@ -1,10 +1,10 @@
 # Live Wine shadow MPC
 
 The controller now drives the owned Japanese 1.02h retail process under Wine.
-Two complete Lunatic Stage 5 / Reimu B runs pass NMNB, including a live recording.
-Their actual input tapes pass independent complete native replay. Stage 6 has a
-retained failure under the initial short-horizon profile; this is not all-stage
-or full-story retail certification.
+Two complete Lunatic Stage 5 / Reimu B runs and one Stage 6 / Marisa B run pass
+NMNB, including a Stage 5 live recording. All three actual input tapes pass
+independent complete native replay. Five failed Stage 6 controls remain in the
+evidence; this is not all-seed, all-stage or full-story retail certification.
 
 ## Run
 
@@ -18,6 +18,13 @@ python3 scripts/run_wine_shadow.py \
   --data /path/to/same-six-dat-archives --stage 5 --shot 1 \
   --horizon 128 --lead 16 --budget-ms 110 --interval 16 \
   --updates 40000 --seconds 900 --output reports/local/live-stage5
+
+# Faster feedback profile used for the Stage 6 component clear.
+python3 scripts/run_wine_shadow.py \
+  --game /path/to/private-game-copy --prefix /path/to/dedicated-wine-prefix \
+  --data /path/to/same-six-dat-archives --stage 6 --shot 3 \
+  --horizon 64 --lead 8 --budget-ms 80 --interval 4 --proposals 3 --fresh \
+  --updates 40000 --seconds 900 --output reports/local/live-stage6
 ```
 
 Difficulty is currently fixed to Lunatic. A standalone start uses the original
@@ -26,7 +33,8 @@ requests a natural story start; a frame-limited handoff check is not a complete
 story. The EXE and dedicated 32-bit Wine prefix requirements are the same as
 [retail replay](RETAIL_REPLAY.md). The runner checks the pinned EXE and equality
 of all six DAT files, snapshots executable/controller/DLL identities, locks the
-owned prefix, and places Wine, Xvfb, controller, descendants and optional capture
+owned prefix, freezes the Python runner/capture modules as well, and places
+Wine, Xvfb, controller, descendants and optional capture
 processes in one 2-GiB/no-swap user-systemd cgroup. It never attaches to an
 existing game or changes the disk EXE.
 
@@ -61,14 +69,21 @@ fresh native replay still compare exact per-update observable digests.
 
 The initial profile preserves 16 lead inputs, then verifies 128 newly generated
 updates: a successful nonterminal plan contains 144 literal inputs. The `horizon`
-option counts the new tail, separately from the lead. The transport holds at most
-256 inputs, so a 240 tail with lead 16 verifies/publishes 256 updates.
+option counts the new tail, separately from the lead. Version-2 transport holds
+at most 600 inputs, so a 512 tail with lead 40 verifies/publishes all 552 updates.
+The horizon is 32–592, lead 8–64, with their sum bounded by 600. Native and Wine
+must use matching bridge versions. Archived version-1 runs retain frozen binaries.
+Native tape format is unchanged. The larger child certificate travels in one
+`SOCK_SEQPACKET` message, so a readable partial pipe cannot bypass the deadline.
 
 Every 16 actual updates, a search first tries to extend the existing literal
 queue on three out of four attempts; the fourth requests a fresh proposal.
 Fresh candidates use the existing native planner with one required successful
-proposal and reactive tails. The minimum interval does not imply a 16.67-ms
-search deadline. A 110-ms total search cap fits inside the 16-update lead;
+future and reactive tails. `--proposals N` raises the minimum evaluated candidate
+count before the planner can stop with a safe winner; `--fresh` skips nominal
+extension and requests fresh candidates at every interval. Defaults remain
+128/16/110/16 with one candidate and nominal reuse. The minimum interval does not
+imply a 16.67-ms search deadline. A 110-ms total search cap fits inside the 16-update lead;
 fork/termination/reaping can finish slightly later and actual elapsed time is
 reported. After search, the controller catches up to actual receipts and checks
 every consumed predicted input/digest before publishing. Retail checks freshness
@@ -127,8 +142,9 @@ run has owner rejections or stale publications. Cgroup peaks are 353,722,368
 bytes without recording and 821,743,616 bytes with recording/muxing; OOM and
 OOM-kill counters are zero. These are finite live samples, not all-seed guarantees.
 
-Stage 6 remains a counterexample. Its final accepted plan originates at 14,080;
-subsequent searches time out through 14,208, then the lead itself fails at 14,224.
+The initial Stage 6 seed remains a counterexample. Its final accepted plan
+originates at 14,080; subsequent searches time out through 14,208, then the lead
+itself fails at 14,224.
 At origin 14,112, an unbounded diagnostic evaluates all 50 proposal futures and
 reaches only 101 safe tail updates. Additional CPU alone does not make that
 proposal family certify 128. Earlier, at origin 13,952 plus the actual 16-input
@@ -136,6 +152,72 @@ lead, a 240-update native future is found in about 72 ms. At origin 14,016 the
 short profile finds 128 safe updates, while all longer diagnostic candidates
 reach at most 172. These checked-prefix diagnostics motivate testing longer
 verification before this trap; they do not prove a counterfactual retail clear.
+
+Further Stage 6 component runs retain both failures and the new success:
+
+| Seed | Tail / lead / cap / interval | Proposal policy | Retail outcome | Searches / timeouts | Fallback |
+|---|---|---|---|---:|---:|
+| 57766 | 128 / 16 / 110 ms / 16 | Recorded, one endpoint per refinement | Hit at 5,174 | 323 / 62 | 24 |
+| 18751 | 512 / 40 / 480 ms / 32 | Nominal plus native planner | Hit at 5,002 | 156 / 8 | 35 |
+| 10347 | 64 / 8 / 80 ms / 4 | Fresh, minimum three candidates | Complete NMNB at 28,254 | 7,050 / 63 | 4 startup |
+
+The recorded run publishes 75 independently native-verified geometry proposals.
+Its timeouts include 31 during geometry search, 18 during native verification and
+13 in the ordinary planner. Geometry proposals are usable, but this run still
+exhausts the queue. The long-buffer run has 17 completed unsuccessful searches;
+its final searches finish without a certificate in 246/232 ms, below the 480-ms
+cap. Increasing the deadline alone cannot fix that candidate-family limitation.
+
+The successful fresh profile has median/p99/max search time 29.07/77.70/82.87 ms,
+6,985 publications, zero stale results and zero retail rejections. Every input
+after the first four uses a verified plan. Whole-cgroup peak is 354,058,240 bytes;
+OOM/OOM-kill counters are zero. Controller/child CPU is 24.31/201.69 seconds over
+483.43 seconds of controller wall time. Completed searches execute 26,255 native
+branches and 1,614,007 updates; interrupted work is excluded from those counters.
+This is a real component clear with faster feedback, not a paired demonstration
+of improved robustness or lower CPU.
+
+A separate native timing model uses seed 47489 and advances the actual source
+world by `max(1, ceil(search_ms * 60 / 1000))` updates during each search. It checks
+every consumed predicted input/digest and preserves the lead. Initial,
+fresh-three-candidate and fresh-six-candidate profiles all fail at
+14,505/6,788/12,181 updates respectively. This models execution lag without Wine
+or rendering, so it is diagnostic evidence only. Different-seed retail trials
+and this model cannot establish universal policy improvement. Complete live
+story control and broader seed robustness remain open.
+
+## Conditional geometry experiment
+
+`--recorded` is separate from video capture and remains optional, with tail at
+most 240. Read-only headless hooks capture source collision arguments in a native
+fork: lethal bullet/body AABBs, raw rotated-laser rectangles and movement context.
+Both `CheckGraze` and `CheckCollision` are needed: distant ungrazed bullets can
+skip the latter; the former must be recorded before its graze-size expansion.
+Laser proposals use TH06's clockwise rotation and original startup/despawn
+arguments. Movement records source time-stop, vulnerability and speed multipliers.
+All source predicates, callbacks, RNG and x87 gameplay arithmetic are unchanged.
+
+A 64-node spatial beam tries multi-turn paths with two-update near controls and
+four-update distant controls, preserving coarse spatial diversity before filling
+by score. Only this proposal translation unit uses SSE2 arithmetic. Up to four
+endpoint-diverse paths receive full native checks before another geometry search;
+the deepest failure supplies conditional geometry for the next refinement.
+At most three refinements use the union of recorded constraints. A safe candidate
+then receives a second independent native replay producing every literal digest.
+Unrecorded futures and approximate geometry never certify a path.
+
+Five shared tape slots contain at most 240 frames, each with 2,048 boxes and 512
+lasers (about 54 MiB of virtual raw storage). The combined spatial-index entries
+across all frames/refinements are capped at 32 MiB before allocation. Capacity or
+nonfinite data fails explicitly. The parent deadline covers capture, index
+construction, beam search, all verification descendants and the fallback planner;
+phase/forecast/check counters survive a killed child. The full old Stage 5 video
+tape still replays with identical native digests after adding these passive hooks.
+
+At the checked late origins 14,080/14,112 of seed 47489, the current four-path
+portfolio still times out under 110 ms after four native checks. It does not
+rescue that known failure window. The feature remains an instrumented proposal
+experiment, off by default.
 
 ## Live recording
 
@@ -162,5 +244,8 @@ remain under ignored `reports/local/`.
 
 Tests cover torn map writes, stale/changed leads, stage identity, input bounds,
 float tolerance, literal native prediction/COW isolation, failed futures,
-independent deferred-hash winner verification, and repeated forced deadlines in
-nested source rollout descendants with no surviving children or zombies.
+maximum-size 600-input plans, independent deferred-hash and recorded winner
+verification, raw collision geometry, explicit index-capacity rejection, and
+repeated forced deadlines in nested source rollout descendants with no surviving
+children or zombies. Twenty-three focused contracts pass; full matrices and
+other-difficulty story tests were not rerun for this optimization.

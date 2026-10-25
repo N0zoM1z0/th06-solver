@@ -1,6 +1,8 @@
 #include "stdafx.h"
+#include "th06/native_geometry.hpp"
 #include "th06/planner.hpp"
 #include "th06/resources.hpp"
+#include "th06/shadow_recorded.hpp"
 #include "th06/shadow_search.hpp"
 #include <cerrno>
 #include <chrono>
@@ -14,10 +16,17 @@ using namespace th06::solver;
 namespace {
 unsigned calls = 0;
 bool delay = false;
+bool saturate = false;
 std::uint16_t forbidden = 0;
 std::uint32_t *blocked = nullptr;
 th06::ChainCallbackResult inject(void *) {
     ++calls;
+    if (saturate) {
+        if (geometry_frame)
+            while (geometry_frame->box_count < geometry_boxes)
+                record_geometry_box(192.f, 224.f, 1000.f, 1000.f);
+        return th06::CHAIN_CALLBACK_RESULT_CONTINUE;
+    }
     if (delay && calls >= 9) {
         b::save(blocked, getpid() != getpgrp() ? 2u : 1u);
         usleep(2000000);
@@ -45,19 +54,23 @@ int main(int argc, char **argv) {
         Session game(config);
         const auto before = game.observation_digest();
         const std::string mode = argv[2];
-        if (mode == "literal" || mode == "pulse") {
+        if (mode == "literal" || mode == "pulse" || mode == "recorded") {
             b::Plan active;
             if (mode == "pulse") {
                 active.count = 48;
                 active.inputs.fill(261);
             }
-            const auto result =
-                b::search(game, active, 261, 16, 32, 1000, false, mode == "pulse", 65);
+            const auto result = b::search(game, active, 261, 16, 32, 1000, false, mode == "pulse",
+                                          65, mode == "recorded");
             require(!result.timeout && result.prediction.count == 48, "full lead and future");
             if (mode == "pulse")
                 require(result.prediction.motion && result.motion_attempts == 1 &&
                             result.motion_cursor == 0,
                         "literal pulse and persistent rotation");
+            if (mode == "recorded")
+                require(result.prediction.recorded && result.recorded_forecasts &&
+                            result.recorded_checks >= 2,
+                        "geometry proposal receives independent native verification");
             require(game.observation_digest() == before, "fork preserves actual world/RNG");
             for (unsigned i = 0; i < result.prediction.count; ++i) {
                 game.step(result.prediction.inputs[i]);
@@ -69,8 +82,26 @@ int main(int argc, char **argv) {
             callback.SetCallback(reinterpret_cast<th06::ChainCallback>(inject));
             require(th06::g_FuncChain.AddToCalcChain(&callback, 15) == ZUN_SUCCESS,
                     "inject calc observer");
-            delay = mode == "deadline" || mode == "pulse-deadline";
-            require(delay || mode == "failure" || mode == "deferred", "test mode");
+            if (mode == "recorded-capacity") {
+                saturate = true;
+                bool rejected = false;
+                try {
+                    b::recorded_search(game, std::vector<std::uint16_t>(32, 261), 1000);
+                } catch (const std::runtime_error &e) {
+                    rejected = std::string(e.what()) == "recorded geometry index capacity exceeded";
+                }
+                require(rejected, "large overlapping shapes cannot allocate an unbounded index");
+                require(calls == 0 && game.observation_digest() == before,
+                        "capacity failure preserves actual world");
+                int status;
+                errno = 0;
+                require(waitpid(-1, &status, WNOHANG) == -1 && errno == ECHILD,
+                        "capacity failure reaps its capture child");
+                return 0;
+            }
+            delay = mode == "deadline" || mode == "pulse-deadline" || mode == "recorded-deadline";
+            require(delay || mode == "failure" || mode == "deferred" || mode == "recorded-failure",
+                    "test mode");
             if (delay) {
                 blocked = static_cast<std::uint32_t *>(
                     mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
@@ -114,15 +145,20 @@ int main(int argc, char **argv) {
                     active.count = 64;
                     active.inputs.fill(261);
                 }
-                const auto result =
-                    b::search(game, active, 261, 8, 32, delay ? 30 : 1000, false, pulse, 65);
+                const bool recorded = mode == "recorded-deadline" || mode == "recorded-failure";
+                const auto result = b::search(game, active, 261, 8, 32, delay ? 30 : 1000, false,
+                                              pulse, 65, recorded);
                 require(result.prediction.count == 0, "failed future publishes no prefix");
                 if (delay) {
                     require(result.timeout, "deadline interrupts native calculation");
                     require(b::load(blocked) == 2, "deadline reaches a nested rollout descendant");
                     if (pulse)
-                        require(result.motion_attempts == 1 && result.motion_cursor == 0,
+                        require(result.motion_attempts == 1 && result.motion_cursor == 0 &&
+                                    result.last_phase == 7,
                                 "timeout retains attempted pulse cursor");
+                    if (recorded)
+                        require(result.recorded_forecasts == 1 && result.last_phase == 3,
+                                "deadline accounts for interrupted recording");
                     require(std::chrono::steady_clock::now() - begin <
                                 std::chrono::milliseconds(500),
                             "deadline wall bound including cleanup");

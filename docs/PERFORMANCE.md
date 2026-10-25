@@ -2,12 +2,23 @@
 
 ## Live shadow decision costs
 
-The new [Wine shadow MPC](SHADOW_MPC.md) has a 110-ms total search cap and a
-16-update immutable input lead. Two complete Stage 5 / Reimu B live runs pass
-NMNB; Stage 6 controls remain incomplete. Search timeouts are terminated and
-charged separately from successful certificates, while an already verified
-queue can keep retail running. Default offline policy and cost behavior remain
-unchanged.
+The [Wine shadow MPC](SHADOW_MPC.md) clears two Stage 5 / Reimu B live runs under
+the initial 128-tail/16-lead/110-ms profile. A fresh-proposal Stage 6 / Marisa B
+run now also clears NMNB: 64 tail, eight lead, 80-ms cap, interval four and a
+three-candidate minimum. Its 7,050 searches have median/p99/max
+29.07/77.70/82.87 ms including cleanup, 63 timeouts and only four startup fallback
+inputs. Search wall time totals 206.55 seconds; controller/child CPU totals
+24.31/201.69 seconds over 483.43 seconds of controller wall time. The completed
+work counters report 26,255 branches and 1,614,007 updates, explicitly excluding
+interrupted work. Faster feedback has a measurable CPU cost; these different-seed
+clears do not establish lower total cost or better all-seed success.
+
+Five actual Stage 6 controls fail, including long verification and recorded
+geometry. A native timing model of seed 47489 fails under the initial profile,
+the fresh profile and a six-candidate profile. Full source rollouts still decide
+whether a candidate can supply a queue. Timeout kills and descendant reaping
+are charged separately; the previously verified queue keeps retail running.
+Default offline policy and cost behavior remain unchanged.
 
 Full retained digests on every failed candidate were an avoidable search cost.
 The online planner now hashes the first candidate normally, skips hashes on later

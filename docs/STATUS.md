@@ -2,11 +2,21 @@
 
 Current scope: [live Lunatic shadow MPC in Wine](SHADOW_MPC.md), with bounded
 decision time and actual input/queue accounting. Two complete Stage 5 / Reimu B
-runs pass NMNB, including a live recording and independent native replay of both
-actual routes. The initial Stage 6 case fails at update 14,230 after its safe
-queue expires; its source-level counterexample remains part of the evidence.
-Natural handoff and longer-verification experiments are separate from the older
-complete offline and retail-replay results below.
+runs and one Stage 6 / Marisa B run pass NMNB, including a Stage 5 live recording
+and independent complete native replay of all three actual routes. Stage 6 seed
+10347 clears in 28,254 updates with a 64-tail/8-lead/80-ms profile, fresh proposals
+at a minimum four-update interval and a three-candidate minimum. Search median/p99/max is
+29.07/77.70/82.87 ms including cleanup; only four startup inputs use fallback.
+The whole Wine/controller cgroup peaks at 354,058,240 bytes with zero OOM events.
+
+Five other actual Stage 6 runs fail, including recorded-geometry and long-buffer
+controls. A separate same-seed native timing model also fails under three
+policies; the new clear does not establish a general policy improvement.
+Optional collision-phase geometry proposals require independent native
+verification; their storage and spatial index have explicit bounds. Version-2
+transport carries up to 600 literal inputs with an atomic child certificate.
+Twenty-three focused contracts pass. Natural handoff and all live experiments
+remain separate from the older complete offline and retail-replay results below.
 Current experiments focus on [Lunatic hard-stage performance](PERFORMANCE.md),
 not another full matrix or story campaign. The latest 20 new paired stage-5/6
 cases compare `f942133` with opt-in native-future retention (`--reuse 32`). Both

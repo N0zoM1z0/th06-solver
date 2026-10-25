@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 namespace th06::shadow {
-constexpr std::uint32_t magic = 0x53483036, version = 1, capacity = 256;
+constexpr std::uint32_t magic = 0x53483036, version = 2, capacity = 600;
 enum Header : unsigned {
     Magic,
     Version,

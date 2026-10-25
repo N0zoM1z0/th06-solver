@@ -48,6 +48,13 @@ int main() {
         p.inputs[0] = 261;
         p.origin = UINT32_MAX - 1;
         require(!b::valid(p), "sequence overflow");
+        p.origin = 100;
+        p.count = b::capacity;
+        p.generation = 6;
+        p.inputs.back() = 325;
+        b::publish(map.data(), p);
+        require(b::read(map.data(), read) && read.count == b::capacity && read.inputs.back() == 325,
+                "maximum-length literal plan crosses both complete map slots");
         require(b::next_input(accepted, 149, 389) == 389, "explicit exhausted-queue hold");
         b::Receipt native{}, retail{};
         native[b::X] = b::bits(192.f);

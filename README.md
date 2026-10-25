@@ -10,10 +10,12 @@ See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. Current experiments focus
 only on Lunatic random-seed robustness.
-The [live Wine shadow controller](docs/SHADOW_MPC.md) now clears two Lunatic
-Stage 5 / Reimu B runs NMNB, including an actual live recording. It enforces a
-110-ms search budget behind a 16-update input lead. Stage 6 retains an incomplete
-counterexample; these component runs are separate from full-story retail replay.
+The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
+Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5
+recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-update
+tail, eight-update lead and 80-ms search cap; search median/p99 is 29.07/77.70 ms.
+Failed Stage 6 seeds remain counterexamples. These component runs are separate
+from full-story retail replay and do not establish all-seed robustness.
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
 recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass

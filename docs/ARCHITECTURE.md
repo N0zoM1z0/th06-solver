@@ -176,6 +176,9 @@ projection detects divergence rather than serializing that world. Atomic mapped
 plan slots preserve the immutable lead and the retail input owner keeps a private
 accepted copy. A successful branch predicts every literal update and digest;
 late adoption checks the actual consumed prefix before replacing the future.
+Version 2 carries up to 600 inputs. A sequenced-packet Unix socket transfers the
+whole child certificate atomically, preserving the deadline when it exceeds a
+pipe's atomic-write size. Both native and Wine binaries are snapshotted together.
 
 The search process group has a wall deadline, including its native descendants.
 Only full safe futures or real terminals publish. Native collision/RNG authority,
@@ -184,3 +187,12 @@ layers. Failed futures, timeout work and exhausted-queue fallback remain visible
 A source stage handoff clears the old queue in both owner and follower, carrying
 RNG/resources through the original lifecycle without reseeding. Scalar state is
 cached only while the parent has received no new actual update.
+
+Optional recorded proposals capture raw collision-phase boxes, rotated lasers
+and movement context inside a native fork. A bounded spatial beam searches those
+conditional futures; each proposed winner needs a full independent native run
+and a second digest-producing replay. Approximate SSE2 proposal arithmetic does
+not change original x87 gameplay compilation. Per-frame shape limits and a
+32-MiB combined spatial-index entry cap fail explicitly on overflow. Fresh
+proposal frequency and candidate count are configurable independently of the
+verified horizon and immutable lead; none of these settings changes game clocks.

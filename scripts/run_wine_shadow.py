@@ -77,11 +77,14 @@ parser.add_argument('--stage', type=int, default=5)
 parser.add_argument('--shot', type=int, default=1)
 parser.add_argument('--story', action='store_true')
 parser.add_argument('--pulse', action='store_true', help='try rotating native motion recovery before heuristic proposals')
+parser.add_argument('--recorded', action='store_true', help='propose multi-turn paths from conditional native collision geometry')
 parser.add_argument('--record', action='store_true', help='capture owned Xvfb video and private audio separately')
 parser.add_argument('--horizon', type=int, default=128)
 parser.add_argument('--lead', type=int, default=16)
 parser.add_argument('--budget-ms', type=int, default=110)
 parser.add_argument('--interval', type=int, default=16)
+parser.add_argument('--proposals', type=int, default=1)
+parser.add_argument('--fresh', action='store_true', help='search fresh native alternatives at every interval')
 parser.add_argument('--updates', type=int, default=180000)
 parser.add_argument('--seconds', type=int, default=3000)
 args = parser.parse_args()
@@ -93,9 +96,11 @@ if not 1 <= args.updates <= 1000000 or not 1 <= args.seconds <= 7200:
     parser.error('invalid frame/time budget')
 if not 1 <= args.stage <= 6 or not 0 <= args.shot <= 3 or (args.story and args.stage != 1):
     parser.error('invalid Lunatic stage/shot/story start')
-if not (32 <= args.horizon <= 240 and 8 <= args.lead <= 64 and args.horizon + args.lead <= 256
-        and 1 <= args.budget_ms <= 2000 and 1 <= args.interval <= args.horizon):
+if not (32 <= args.horizon <= 592 and 8 <= args.lead <= 64 and args.horizon + args.lead <= 600
+        and 1 <= args.budget_ms <= 2000 and 1 <= args.interval <= args.horizon and 1 <= args.proposals <= 50):
     parser.error('invalid shadow search bounds')
+if args.recorded and args.horizon > 240:
+    parser.error('recorded proposals require horizon <= 240')
 args.data = args.data.resolve()
 args.game = args.game.resolve()
 args.build = args.build.resolve()
@@ -155,11 +160,15 @@ worker_config = {
     'controller': [str(frozen / 'th06_shadow_online'), '--data', str(args.data),
                    '--directory', str(args.output), '--horizon', str(args.horizon),
                    '--lead', str(args.lead), '--budget-ms', str(args.budget_ms),
-                   '--interval', str(args.interval)],
+                   '--interval', str(args.interval), '--proposals', str(args.proposals)],
     'wine': ['wine', str(frozen / 'launch.exe'), 'th06.exe', windows(frozen / 'shadow.dll'),
              windows(args.output)], 'record': args.record}
 if args.pulse:
     worker_config['controller'].append('--pulse')
+if args.recorded:
+    worker_config['controller'].append('--recorded')
+if args.fresh:
+    worker_config['controller'].append('--fresh')
 (args.output / 'worker.json').write_text(json.dumps(worker_config, indent=2) + '\n')
 receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'peak_cgroup_bytes': 0, 'oom': 0, 'oom_kill': 0,
