@@ -1,7 +1,17 @@
 # Native runtime status
 
 Current scope: make the native runtime dependable for later shadow MPC.
-New trials focus only on [Lunatic random-seed robustness](LUNATIC_RANDOM_SEEDS.md).
+Current experiments focus on [Lunatic hard-stage performance](PERFORMANCE.md),
+not another full matrix or story campaign. Twenty fixed stage-5/6 seed/case pairs
+clear 20/20 in both versions after the same bounded recovery policy. Native fast
+paths plus opt-in diverse-first ordering improve initial clears from 14/20 to
+16/20 and reduce total planner CPU from 3,622.66 to 2,744.31 seconds, including
+all failures/retries. The ordering remains optional because one stage-6 initial
+clear regresses. Unchanged-input native timing improves about 1.5–2×; nine
+focused contracts pass and all 40 final tapes pass current-build fresh replay.
+
+The earlier [Lunatic random-seed campaign](LUNATIC_RANDOM_SEEDS.md) remains a
+separate historical control.
 The four fixed random seeds pass 96/96 standalone cases and 16/16 continuous
 stories after checked-prefix recovery (92/96 and 11/16 initially). Every route
 passes full fresh native replay with zero misses/bombs. These 112 sampled cases

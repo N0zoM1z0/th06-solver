@@ -6,6 +6,14 @@
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
+#include <sys/resource.h>
+#if __has_include(<valgrind/callgrind.h>)
+#include <valgrind/callgrind.h>
+#else
+#define CALLGRIND_START_INSTRUMENTATION ((void)0)
+#define CALLGRIND_STOP_INSTRUMENTATION ((void)0)
+#define CALLGRIND_ZERO_STATS ((void)0)
+#endif
 
 using namespace th06::solver;
 int main(int argc, char **argv) {
@@ -17,6 +25,14 @@ int main(int argc, char **argv) {
         unsigned prefix_frames = 0;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
+            if (key == "--diverse-first") {
+                options.diverse_first = true;
+                continue;
+            }
+            if (key == "--profile") {
+                options.profile = true;
+                continue;
+            }
             if (key == "--reactive") {
                 options.reactive = true;
                 continue;
@@ -30,7 +46,7 @@ int main(int argc, char **argv) {
                     << "th06_plan --data DIR --output TAPE [--stage 1..7] [--difficulty 0..4]\n"
                        "  [--shot 0..3] [--seed 0..65535] [--power 0..128] [--frames N]\n"
                        "  [--horizon 1..600] [--commit 1..horizon] [--proposals N] [--story] "
-                       "[--reactive]\n";
+                       "[--reactive] [--profile] [--diverse-first]\n";
                 return 0;
             }
             if (i + 1 == argc)
@@ -104,8 +120,23 @@ int main(int argc, char **argv) {
             tape.rows.push_back(prefix.rows[i]);
         }
         next_progress = unsigned(state.frame / 600 + 1) * 600;
+        PlannerTimings timings;
+        unsigned decisions = 0, short_horizon_decisions = 0;
+        std::uint64_t unique_inputs = 0;
+        const auto search_begin = std::chrono::steady_clock::now();
+        rusage self_begin{}, children_begin{};
+        getrusage(RUSAGE_SELF, &self_begin);
+        getrusage(RUSAGE_CHILDREN, &children_begin);
+        if (options.profile) {
+            CALLGRIND_START_INSTRUMENTATION;
+            CALLGRIND_ZERO_STATS;
+        }
         while (state.frame < frames && !state.complete && !state.hit) {
             const auto decision = choose(game, options);
+            timings += decision.timings;
+            ++decisions;
+            short_horizon_decisions += decision.lookahead_frames < options.horizon;
+            unique_inputs += decision.unique_inputs;
             options.excluded_input = -1;
             branches += decision.branches;
             reactive_branches += decision.reactive_branches;
@@ -135,6 +166,8 @@ int main(int argc, char **argv) {
                 next_progress += 600;
             }
         }
+        if (options.profile)
+            CALLGRIND_STOP_INSTRUMENTATION;
         tape.complete = state.complete;
         if (!tape.rows.empty())
             write_tape(output, tape);
@@ -153,8 +186,36 @@ int main(int argc, char **argv) {
                   << ",\"simulated_frames\":" << simulated << ",\"horizon\":" << options.horizon
                   << ",\"reactive\":" << options.reactive
                   << ",\"reactive_branches\":" << reactive_branches
-                  << ",\"commit\":" << options.commit << ",\"proposals\":" << options.proposals
-                  << ",\"planning_seconds\":" << seconds << "}\n";
+                  << ",\"diverse_first\":" << options.diverse_first
+                  << ",\"decisions\":" << decisions
+                  << ",\"short_horizon_decisions\":" << short_horizon_decisions
+                  << ",\"unique_inputs\":" << unique_inputs << ",\"commit\":" << options.commit
+                  << ",\"proposals\":" << options.proposals << ",\"planning_seconds\":" << seconds;
+        if (options.profile) {
+            rusage self_end{}, children_end{};
+            getrusage(RUSAGE_SELF, &self_end);
+            getrusage(RUSAGE_CHILDREN, &children_end);
+            auto cpu = [](timeval t) { return t.tv_sec + t.tv_usec * 1e-6; };
+            std::cout << ",\"timings\":{\"search_wall_seconds\":"
+                      << std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                                       search_begin)
+                             .count()
+                      << ",\"parent_user_seconds\":"
+                      << cpu(self_end.ru_utime) - cpu(self_begin.ru_utime)
+                      << ",\"parent_system_seconds\":"
+                      << cpu(self_end.ru_stime) - cpu(self_begin.ru_stime)
+                      << ",\"children_user_seconds\":"
+                      << cpu(children_end.ru_utime) - cpu(children_begin.ru_utime)
+                      << ",\"children_system_seconds\":"
+                      << cpu(children_end.ru_stime) - cpu(children_begin.ru_stime)
+                      << ",\"ranking_seconds\":" << timings.ranking
+                      << ",\"rollout_wall_seconds\":" << timings.rollout_wall
+                      << ",\"native_step_seconds\":" << timings.native_step
+                      << ",\"guidance_seconds\":" << timings.guidance
+                      << ",\"scoring_seconds\":" << timings.scoring
+                      << ",\"digest_seconds\":" << timings.digest << '}';
+        }
+        std::cout << "}\n";
         return state.complete ? 0 : 2;
     } catch (const std::exception &error) {
         std::cerr << "th06_plan: " << error.what() << '\n';

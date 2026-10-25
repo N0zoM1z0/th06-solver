@@ -23,12 +23,18 @@ add_library(th06_tape STATIC src/tape.cpp)
 target_include_directories(th06_tape PUBLIC include)
 target_compile_features(th06_tape PUBLIC cxx_std_17)
 add_library(th06_native STATIC ${game_sources} src/native_support.cpp src/platform.cpp src/session.cpp
+  src/bomb_projectile_scope.cpp
   third_party/th08-compat/d3d_null.cpp third_party/th08-compat/d3dx_math.cpp)
 target_link_libraries(th06_native PUBLIC th06_resources)
 target_compile_features(th06_native PUBLIC cxx_std_17)
 target_include_directories(th06_native PUBLIC include ${native} third_party/th08-compat/include
   third_party/th08-compat ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_compile_definitions(th06_native PUBLIC TH06_HEADLESS)
+option(TH06_FAST_ANM_COLORS "Skip identity ANM color interpolation components" ON)
+option(TH06_FAST_BOMB_REGIONS "Cache empty bomb regions within a source bullet update" ON)
+target_compile_definitions(th06_native PRIVATE
+  $<$<BOOL:${TH06_FAST_ANM_COLORS}>:TH06_FAST_ANM_COLORS>
+  $<$<BOOL:${TH06_FAST_BOMB_REGIONS}>:TH06_FAST_BOMB_REGIONS>)
 target_compile_options(th06_native PRIVATE -include ${CMAKE_CURRENT_SOURCE_DIR}/include/th06/platform.hpp)
 add_executable(th06_headless tools/headless.cpp)
 target_link_libraries(th06_headless PRIVATE th06_native)
@@ -38,6 +44,8 @@ add_executable(th06_plan tools/plan.cpp)
 target_link_libraries(th06_plan PRIVATE th06_planner th06_tape)
 add_executable(th06_replay_check tools/replay_check.cpp)
 target_link_libraries(th06_replay_check PRIVATE th06_native th06_tape)
+add_executable(th06_runtime_bench tools/runtime_bench.cpp)
+target_link_libraries(th06_runtime_bench PRIVATE th06_native th06_tape)
 add_executable(th06_campaign tools/campaign.cpp)
 target_link_libraries(th06_campaign PRIVATE th06_tape)
 add_library(th06_retail_replay STATIC src/retail_replay.cpp)
@@ -69,12 +77,20 @@ if(BUILD_TESTING)
   add_executable(native_tests tests/native_tests.cpp)
   target_link_libraries(native_tests PRIVATE th06_native)
   add_test(NAME native_contracts COMMAND native_tests)
+  add_executable(native_fastpaths_tests tests/native_fastpaths_tests.cpp)
+  target_link_libraries(native_fastpaths_tests PRIVATE th06_native)
+  add_test(NAME native_fastpaths_contracts COMMAND native_fastpaths_tests)
   add_test(NAME campaign_manifest COMMAND ${CMAKE_COMMAND}
     -DCAMPAIGN=$<TARGET_FILE:th06_campaign> -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/campaign_manifest.cmake)
   add_test(NAME campaign_snapshot COMMAND ${CMAKE_COMMAND}
     -DCAMPAIGN=$<TARGET_FILE:th06_campaign> -DWORK=${CMAKE_CURRENT_BINARY_DIR}/snapshot-fixture
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/campaign_snapshot.cmake)
   if(TH06_DATA_DIR)
+    add_test(NAME planner_profile_contracts COMMAND ${CMAKE_COMMAND}
+      -DPLAN=$<TARGET_FILE:th06_plan> -DCHECK=$<TARGET_FILE:th06_replay_check>
+      -DDATA=${TH06_DATA_DIR} -DWORK=${CMAKE_CURRENT_BINARY_DIR}/profile-tests
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/planner_profile.cmake)
+    set_tests_properties(planner_profile_contracts PROPERTIES TIMEOUT 30)
     add_executable(story_transition_tests tests/story_transition.cpp)
     target_link_libraries(story_transition_tests PRIVATE th06_native)
     add_test(NAME story_transition_contracts COMMAND story_transition_tests ${TH06_DATA_DIR})

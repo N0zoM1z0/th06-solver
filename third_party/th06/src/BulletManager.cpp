@@ -3,6 +3,9 @@
 #include "BulletManager.hpp"
 #include "AsciiManager.hpp"
 #include "ChainPriorities.hpp"
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
+#include "th06/bomb_projectile_scope.hpp"
+#endif
 
 namespace th06
 {
@@ -643,6 +646,12 @@ static ChainCallbackResult BulletManager_OnUpdate(BulletManager *mgr)
     }
 
     g_ItemManager.OnUpdate();
+
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
+    // The remaining bullet/laser loop only reads bomb-projectile regions.
+    // Player/BombData writes occur in Player_OnUpdate, outside this scope.
+    solver::BombProjectileScope bombProjectiles(g_Player);
+#endif
 
 #if BUILT_SINCE(100)
     mgr->bulletCount = 0;

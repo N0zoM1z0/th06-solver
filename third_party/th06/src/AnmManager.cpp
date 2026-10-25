@@ -1237,6 +1237,13 @@ break_parser:
         i32 colorInterp;
         for (i32 i = 0; i < 4; i++)
         {
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_ANM_COLORS)
+            // Alpha interpolation normally leaves RGB unchanged. Equal byte
+            // endpoints are exact identities for this finite timer fraction;
+            // avoid their redundant x87 float-to-integer conversions.
+            if (COLOR_GET_COMPONENT(colors[1], i) == COLOR_GET_COMPONENT(colors[0], i))
+                continue;
+#endif
             colorInterp =
                 ((f32)COLOR_GET_COMPONENT(colors[1], i) - (f32)COLOR_GET_COMPONENT(colors[0], i)) * alphaInterpVal +
                 COLOR_GET_COMPONENT(colors[0], i);

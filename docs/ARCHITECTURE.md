@@ -44,6 +44,30 @@ dimensions, formats and lifetimes; PNG/BMP dimensions are read, while pixel colo
 are not decoded. ANM/GUI update scripts and RNG consumption still execute. This
 profile is an operational native simulator; retail-equivalent floating point,
 menu entry and draw-chain behavior are not established.
+Cross-runtime acceptance concerns gameplay progress and correctness. Harmless
+numeric drift from Wine is diagnostic; bit-identical floating point is not a
+requirement. Native parent/child and fresh-replay consistency remain internal
+checks on deterministic execution.
+
+## Measured native fast paths
+
+Two headless-only fast paths retain source layout, arithmetic, clocks and RNG.
+The ANM alpha loop skips a component when both byte endpoints are identical:
+the finite integer-timer fraction makes that component an exact identity.
+Changed components still use the original interpolation and truncation.
+
+`BombProjectileScope` scans the source's `size.x == 0` region predicate once
+after item update in the bullet callback. The remaining bullet/laser loop reads
+those regions; player/BombData writes happen in the earlier player callback.
+An owner-bound, stack-scoped empty result skips only the redundant region scan
+in collision/graze queries. Active regions and unscoped/other-player calls use
+the original loop, including bomb priority over player collision. Player update
+invalidates matching enclosing scopes before any region writes; no scope survives
+a native update or planner fork boundary. Debug builds recheck empty regions.
+
+`TH06_FAST_ANM_COLORS` and `TH06_FAST_BOMB_REGIONS` default on and can be disabled
+independently for measured ablations. See [Performance](PERFORMANCE.md) for the
+source analysis, unchanged-input timing workloads and focused seed comparison.
 
 ## Planning and proof boundaries
 
@@ -61,6 +85,15 @@ movement, RNG, spawns and collisions still run in the source game. The parent
 commits only the initial digest-checked action, then replans. Reactive branch
 counts and their complete native update costs are recorded separately.
 
+Opt-in `--diverse-first` evaluates the best-ranked future for each distinct
+initial input before duplicate futures for that input. Short, constant and
+reactive tails certify the same initial action, so a small proposal budget can
+otherwise cover only a few initial inputs. This changes pruning/order, retains
+the same native acceptance oracle, and has measured tradeoffs across stages;
+it is not enabled by default. `unique_inputs`, `decisions` and
+`short_horizon_decisions` expose search coverage. A short selected future can
+also be a natural terminal truncation, so that counter alone is not a failure.
+
 Each evaluated child runs the original game, including action-dependent targeting,
 RNG, transforms, enemy bodies and lasers. It returns a consecutive safe prefix
 and observable digests. The parent accepts only matching native execution, commits
@@ -76,6 +109,14 @@ native validation. This is deterministic replay-based backtracking, without
 teleporting actors or restoring incomplete manager snapshots. Prefix replay work
 is reported separately. Campaign binaries are copied into immutable, identified
 snapshots before tasks start; resuming uses fresh replay under the selected build.
+
+`--profile` adds a separate `timings` object with parent/child CPU and phase
+wall times. Child update/guidance/scoring/digest times are subsets of rollout
+wall time, not additional elapsed time. The native profile identifier retains
+its usual string type. `th06_runtime_bench DATA TAPE` measures native updates
+without initialization, hashing or file I/O, in one fresh game process. Its
+terminal digest check is a timing-workload guard; complete replay still uses
+the checker and every per-frame digest.
 
 Per-frame digests hash named player/RNG/rank/score/timeline and active actor,
 bullet/laser/player-shot observations, never padding or pointers. They detect

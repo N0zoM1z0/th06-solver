@@ -8,6 +8,9 @@
 #include "EffectManager.hpp"
 #include "EnemyManager.hpp"
 #include "ScreenEffect.hpp"
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
+#include "th06/bomb_projectile_scope.hpp"
+#endif
 
 namespace th06
 {
@@ -497,6 +500,9 @@ i32 Player::CheckCollision(D3DXVECTOR3 *bulletCenter, D3DXVECTOR3 *bulletSize)
     bulletTopLeft.y = bulletCenter->y - bulletSize->y / 2.0f;
     bulletBottomRight.x = bulletCenter->x + bulletSize->x / 2.0f;
     bulletBottomRight.y = bulletCenter->y + bulletSize->y / 2.0f;
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
+    if (!solver::BombProjectileScope::known_empty(this))
+#endif
     for (curBombIdx = 0; curBombIdx < ARRAY_SIZE_SIGNED(this->bombProjectiles); curBombIdx++, curBombProjectile++)
     {
         if (curBombProjectile->size.x == 0.0f)
@@ -545,6 +551,9 @@ i32 Player::CheckGraze(D3DXVECTOR3 *center, D3DXVECTOR3 *size)
     bulletBottomRight.y = center->y + size->y / 2.0f + 20.0f;
     bombProjectile = this->bombProjectiles;
 
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
+    if (!solver::BombProjectileScope::known_empty(this))
+#endif
     for (i = 0; i < ARRAY_SIZE_SIGNED(this->bombProjectiles); i++, bombProjectile++)
     {
         if (bombProjectile->size.x == 0.0f)
@@ -1020,6 +1029,9 @@ static ChainCallbackResult Player_OnUpdate(Player *p)
     {
         return CHAIN_CALLBACK_RESULT_CONTINUE;
     }
+#if defined(TH06_HEADLESS) && defined(TH06_FAST_BOMB_REGIONS)
+    solver::BombProjectileScope::invalidate(p);
+#endif
     for (idx = 0; idx < PLAYER_BOMB_REGION_COUNT; idx++)
     {
         p->bombRegionSizes[idx].x = 0.0f;

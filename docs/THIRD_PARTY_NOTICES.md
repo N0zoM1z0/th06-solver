@@ -9,6 +9,13 @@
 - Local TH06 changes adapt template/assert syntax, explicit x87 operand sizes,
   a rendering-only rounding block, VC7 loop scope, a diagnostic format string,
   and fail-closed native opcode dispatch. Source gameplay algorithms are retained.
+  Measured headless fast paths skip identity ANM color components and cache empty
+  bomb-projectile regions only within a source bullet-update scope; source
+  collision priority, state layout, clocks and RNG are preserved.
+- The scoped region-cache design and candidate-diversity experiments reference
+  `th08-solver` revision `1d49a8e` (`native_policy.hpp`, headless `runtime.cpp` and
+  `docs/PLANNER.md`). TH06 uses its own source predicates and update boundaries;
+  the retained TH08 MIT notice also covers this design adaptation.
 - `src/native_support.cpp` carries the imported chain, RNG, timer and angle
   helpers, separated from Windows controller/filesystem/audio initialization.
 - `third_party/th08-compat/` reuses Linux Win32/Direct3D declarations, CPU D3D

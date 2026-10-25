@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -12,6 +13,10 @@
 
 namespace th06::solver {
 namespace {
+using Clock = std::chrono::steady_clock;
+double seconds_since(Clock::time_point start) {
+    return std::chrono::duration<double>(Clock::now() - start).count();
+}
 struct Candidate {
     std::uint16_t input;
     unsigned moving;
@@ -72,6 +77,7 @@ struct Result {
     double cost = 0;
     bool complete = false;
     std::array<std::uint64_t, 600> digests{};
+    PlannerTimings timings;
 };
 void transfer(int fd, void *data, std::size_t size, bool output) {
     auto *bytes = static_cast<char *>(data);
@@ -86,7 +92,7 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
     }
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
-               unsigned commit, bool reactive) {
+               unsigned commit, bool reactive, bool profile) {
     int pipefd[2];
     if (::pipe(pipefd))
         throw std::runtime_error("pipe failed");
@@ -104,6 +110,7 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
             Result result;
             std::uint16_t action = input;
             for (unsigned frame = 0; frame < horizon; ++frame) {
+                auto start = profile ? Clock::now() : Clock::time_point{};
                 if (reactive) {
                     // Only the initial commit-sized action is certified to the
                     // caller. This branch-owned continuation can turn using
@@ -112,21 +119,38 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                         action = reactive_input(game.observe());
                 } else
                     action = frame < moving ? input : std::uint16_t(input & ~std::uint16_t(0xf0));
+                if (profile) {
+                    result.timings.guidance += seconds_since(start);
+                    start = Clock::now();
+                }
                 const auto state = game.step(action);
+                if (profile)
+                    result.timings.native_step += seconds_since(start);
                 ++result.attempted;
                 if (state.hit)
                     break;
-                if (frame < commit)
+                if (frame < commit) {
+                    start = profile ? Clock::now() : Clock::time_point{};
                     result.digests[frame] = game.observation_digest();
+                    if (profile)
+                        result.timings.digest += seconds_since(start);
+                }
                 ++result.safe;
+                start = profile ? Clock::now() : Clock::time_point{};
                 result.cost += game.proposal_cost();
+                if (profile)
+                    result.timings.scoring += seconds_since(start);
                 if (state.complete) {
                     result.complete = true;
                     break;
                 }
             }
-            if (result.safe)
+            if (result.safe) {
+                const auto start = profile ? Clock::now() : Clock::time_point{};
                 result.cost = result.cost / result.safe + game.proposal_cost();
+                if (profile)
+                    result.timings.scoring += seconds_since(start);
+            }
             transfer(pipefd[1], &result, sizeof(result), true);
             ::close(pipefd[1]);
             ::_exit(0);
@@ -163,6 +187,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
     constexpr std::array<std::uint16_t, 9> directions = {0,       16,       32,      64,      128,
                                                          16 | 64, 16 | 128, 32 | 64, 32 | 128};
     Decision decision;
+    auto start = options.profile ? Clock::now() : Clock::time_point{};
     unsigned best_safe = 0;
     double best_cost = std::numeric_limits<double>::infinity();
     bool best_complete = false;
@@ -199,12 +224,35 @@ Decision choose(Session &game, const PlannerOptions &options) {
     }
     std::stable_sort(candidates.begin(), candidates.end(),
                      [](const auto &a, const auto &b) { return a.rank < b.rank; });
+    if (options.diverse_first) {
+        // The short, constant and reactive tails can certify the same first
+        // action. Spend the first budget on distinct committed actions before
+        // considering additional futures for an already represented action.
+        std::array<bool, 512> represented{};
+        std::vector<Candidate> distinct, repeated;
+        for (const auto &candidate : candidates) {
+            (represented[candidate.input] ? repeated : distinct).push_back(candidate);
+            represented[candidate.input] = true;
+        }
+        distinct.insert(distinct.end(), repeated.begin(), repeated.end());
+        candidates = std::move(distinct);
+    }
+    if (options.profile)
+        decision.timings.ranking = seconds_since(start);
+    std::array<bool, 512> evaluated{};
     for (const auto &candidate : candidates) {
         const auto input = candidate.input;
         const auto moving = candidate.moving;
-        const auto result =
-            rollout(game, input, moving, options.horizon, options.commit, candidate.reactive);
+        start = options.profile ? Clock::now() : Clock::time_point{};
+        const auto result = rollout(game, input, moving, options.horizon, options.commit,
+                                    candidate.reactive, options.profile);
+        if (options.profile) {
+            decision.timings.rollout_wall += seconds_since(start);
+            decision.timings += result.timings;
+        }
         ++decision.branches;
+        decision.unique_inputs += !evaluated[input];
+        evaluated[input] = true;
         decision.reactive_branches += candidate.reactive;
         decision.simulated_frames += result.attempted;
         const double cost = result.cost + ((input & 0xf0) ? 0.02 : 0);
@@ -213,6 +261,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
              (result.safe > best_safe || (result.safe == best_safe && cost < best_cost)))) {
             best_complete = result.complete;
             best_safe = result.safe;
+            decision.lookahead_frames = best_safe;
             best_cost = cost;
             decision.input = input;
             // A short motion followed by a neutral tail proves only

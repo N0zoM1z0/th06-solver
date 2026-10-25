@@ -1,12 +1,16 @@
 # TH06 solver engineering rules
 
 Read README.md and docs/STATUS.md before changing behavior. The owner's current
-scope is Lunatic-only random-seed robustness of the native runtime required by
-later shadow MPC: all six stages and four shots, then continuous stories.
+scope is Lunatic standalone hard-stage search and runtime performance, using
+focused random-seed samples and th08-solver as a reference for later shadow MPC.
+Do not rerun the full matrix or story campaign for routine optimization.
 Retain the historical seed-0 matrix; do not schedule other difficulties now.
 The owner has now authorized retail replay interoperability under Wine, starting
 with a complete Lunatic story. Keep native and retail proof separate. Run one
 Wine instance at a time under a 2 GiB cgroup memory cap with swap disabled.
+Cross-runtime comparison should judge gameplay progress/correctness; exact
+floating-point identity with Wine is not required. Native fork/replay consistency
+remains a useful internal guard.
 
 - Use C++17. Preserve the imported source, licenses and pinned provenance in-tree.
   Keep parsing, native state, proposals, process isolation, tapes and CLI separate.
