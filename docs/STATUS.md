@@ -1,9 +1,9 @@
 # Native runtime status
 
 Current scope: make the native runtime dependable for later shadow MPC.
-The complete standalone matrix passes 96/96, including fresh native replay of
-every entire route. The 16 continuous stories are in progress. No retail execution
-or retail replay work is in scope yet.
+The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
+including fresh native replay of every entire route. No retail execution or
+retail replay work is in scope yet.
 
 ## Acceptance matrix
 
@@ -14,7 +14,7 @@ or retail replay work is in scope yet.
 | Hard | Stages 1–6, four shots | 24/24 |
 | Lunatic | Stages 1–6, four shots | 24/24 |
 | Extra | Stage 7, four shots | 4/4 |
-| Continuous story | Four standard difficulties × four shots | In progress |
+| Continuous story | Four standard difficulties × four shots | 16/16 |
 
 Easy story ends after stage 5 as in the source; the other stories end after stage 6.
 An earlier terminal event is rejected, even if the current route has no misses.
@@ -85,7 +85,33 @@ remaining Extra shots. Their current complete-route evidence is:
 
 Every entry has a complete new-process replay with zero misses/bombs. The last
 continuation budgets above do not replace earlier checked prefixes or erase retry
-costs. No full continuous story has yet been certified.
+costs.
+
+Continuous stories start at stage 1, power 0, and carry native state through every
+natural stage transition. Complete update counts below have matching new-process
+replays, zero misses/bombs and all required stage clears:
+
+| Difficulty | Reimu A | Reimu B | Marisa A | Marisa B |
+|---|---:|---:|---:|---:|
+| Easy | 86,336 | 89,323 | 87,424 | 91,853 |
+| Normal | 117,897 | 119,018 | 117,072 | 124,054 |
+| Hard | 119,829 | 124,260 | 123,471 | 129,796 |
+| Lunatic | 127,737 | 133,648 | 130,563 | 141,393 |
+
+These story searches use reactive futures, horizon 120, commit 8 and six ranked
+proposals, with a 180,000-update frame budget per complete story. The budget is
+not a completion criterion. All 16 complete stories were planned from their
+natural starts without prefix recovery in this campaign. Together they contain
+1,863,674 accepted and independently replayed updates.
+
+The final local evidence receipt cross-checks all 112 case identities, start
+profiles, completion flags, zero-miss/bomb counts, required stage counts and
+planner/checker/tape frame counts. It records tape/report SHA-256 identities and
+confirms the frozen story binaries match the current build. The complete
+standalone and story routes contain 3,854,742 accepted updates in total; this is
+route length, not total search effort. The receipt is stored at
+`reports/local/native-acceptance-final.json`; tapes and failed-attempt evidence
+remain private and ignored.
 
 Each campaign snapshots its planner/checker binaries and records their identities.
 Recompiling the workspace cannot change a running campaign. Resume rechecks each

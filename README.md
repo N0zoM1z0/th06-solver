@@ -2,9 +2,9 @@
 
 C++17 native, headless Touhou 06 runtime and offline planning, following
 [th08-solver](https://github.com/N0zoM1z0/th08-solver)'s native rollout approach.
-**Native standalone coverage: 96/96 legitimate stage/difficulty/shot combinations**
-at seed 0, each NMNB with a complete fresh-process replay. The 16 continuous-story
-cases are now in progress. Retail integration is deferred.
+**Native coverage: 96/96 legitimate stage/difficulty/shot combinations and 16/16
+continuous stories** at seed 0. Every case is NMNB with a complete fresh-process
+replay. Retail integration is deferred.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.
@@ -67,6 +67,8 @@ ctest --test-dir build --output-on-failure -j 1
 The complete standalone matrix includes all four Extra shots, with complete
 fresh-checked routes of 47,240–61,696 updates. Story acceptance additionally
 requires the natural five-stage Easy or six-stage Normal/Hard/Lunatic terminal.
+All 16 difficulty/shot stories pass, starting at power 0 and carrying actual
+resources, rank and gameplay RNG through every stage.
 Coverage, exact checkpoint profiles and reproduction
 belong in [Status](docs/STATUS.md). [Architecture](docs/ARCHITECTURE.md) describes
 the native profile, checkpoints, proposals and lifecycle boundaries;
