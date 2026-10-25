@@ -27,6 +27,8 @@ replaced by a named checkpoint, with rank 16, source difficulty rank bounds,
 two spare lives and three bombs. Text/ASCII resources load before stage, player,
 bullet, enemy, ECL, effect and GUI initialization. The gameplay RNG is seeded
 once at bootstrap; future draws, including ANM/effects, use the original stream.
+Extra selects the source's final score-extend table entry, disabling score-based
+extra lives while retaining actual item effects and its rank bounds of 14–18.
 
 Each supplied input runs the original calc chain once: ASCII priority 1, game
 manager 4, stage 6, player 7, enemy 9, effects 10, bullets/items 11, GUI 12 and
@@ -34,6 +36,8 @@ screen effects 14. Bomb/menu input is rejected. Shoot, focus, movement and dialo
 skip use the source's normal input tests. Source death state is a failure even
 before a delayed life counter could conceal it. Unknown ECL/ANM/timeline opcodes
 throw and cannot certify a prefix.
+Invalid input is rejected before a pending story transition can mutate resources,
+RNG or the current stage.
 
 Rendering and text rasterization are omitted. CPU Direct3D resources retain
 dimensions, formats and lifetimes; PNG/BMP dimensions are read, while pixel colors

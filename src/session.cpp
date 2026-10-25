@@ -51,6 +51,9 @@ Session::Session(const StartConfig &c) {
     g_GameManager.currentPower = c.power;
     g_GameManager.livesRemaining = 2;
     g_GameManager.bombsRemaining = 3;
+    // GameManager_AddedCallback disables score extends in Extra by selecting
+    // the final (unreachable) 1,900,000,000-point entry in its five-score table.
+    g_GameManager.livesEarned = c.difficulty == EXTRA ? 4 : 0;
     g_GameManager.rank = 16;
     g_GameManager.minRank = c.difficulty == 0 ? 12 : c.difficulty == 4 ? 14 : 10;
     g_GameManager.maxRank = c.difficulty == 0 ? 20 : c.difficulty == 4 ? 18 : 32;
@@ -164,12 +167,12 @@ bool Session::terminal() const {
 State Session::step(std::uint16_t input) {
     if (terminal())
         throw std::logic_error("stage already complete");
-    if (story_ && g_Supervisor.curState == SUPERVISOR_STATE_NEXT_STAGE)
-        advance_stage();
     constexpr std::uint16_t supported =
         TH_BUTTON_DIRECTION | TH_BUTTON_SHOOT | TH_BUTTON_FOCUS | TH_BUTTON_SKIP;
     if (input & ~supported)
         throw std::invalid_argument("unsupported input (bomb/menu disallowed)");
+    if (story_ && g_Supervisor.curState == SUPERVISOR_STATE_NEXT_STAGE)
+        advance_stage();
     g_PreviousFrameKeys = g_CurFrameInput;
     g_CurFrameInput = input;
     if (g_FuncChain.RunCalcChain() < 0)

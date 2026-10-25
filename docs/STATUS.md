@@ -50,11 +50,23 @@ uses power 64 and is tracked separately. A ranked four-proposal run reproduces
 the stage-1 completion in 26.80 seconds with 6,967 native branches and 603,011
 simulated updates. All retry effort remains in the local attempt ledger.
 
-Seven focused tests pass, including a source-binary replacement regression for
-campaign snapshots and RNG/resource carry across a stage handoff. A clean Release
+Eight focused tests pass, including a source-binary replacement regression for
+campaign snapshots, RNG/resource carry across a stage handoff, atomic rejection
+of invalid handoff input, and Extra's source bootstrap/score-extend rule. A clean Release
 build passes the asset-free contracts and replays the initial complete tape.
-Extra currently has safe but incomplete prefixes around update 13,000; these are
-not clears. Verified-prefix rewind and alternate-action search are being evaluated.
+The first 96-case sweep completed 89 routes; remaining incomplete routes are being
+repaired and all completions are rechecked with the current binary.
+
+Extra Reimu B now completes at update 59,837 with zero misses/bombs and passes
+fresh replay under the corrected runtime. Verified-prefix rewind first crossed
+the update-13,078 dead end with horizon 180/proposals 8, then the update-47,943
+dead end with horizon 240. Source review found the omitted Extra score-extend
+disable; the corrected bootstrap selects source score-table index 4. Its first
+observable difference occurred at update 58,556, so the route was resumed from
+the checked prefix ending at 58,555 and fully replayed again. All earlier attempts
+and their simulation/replay costs remain recorded; the last continuation's timing
+is not the cost of the entire solve. Other Extra shots still require current-build
+verification or repair. No full continuous story has yet been certified.
 
 Each campaign snapshots its planner/checker binaries and records their identities.
 Recompiling the workspace cannot change a running campaign. Resume rechecks each

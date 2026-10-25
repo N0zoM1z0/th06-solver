@@ -11,6 +11,9 @@ stories. Existing tapes are rechecked by the current native binary when resuming
 ```sh
 build/th06_campaign --data /path/to/th06-data --suite stages --jobs 2 \
   --output reports/local/stages --resume
+# Retry incomplete routes from a checked earlier prefix with a larger lookahead.
+build/th06_campaign --data /path/to/th06-data --suite stages --jobs 2 \
+  --output reports/local/stages --resume --rewind 768 --horizon 180 --proposals 8 --frames 120000
 build/th06_campaign --data /path/to/th06-data --suite story --jobs 2 --frames 180000 \
   --output reports/local/story --resume
 ```
@@ -61,7 +64,8 @@ ctest --test-dir build --output-on-failure -j 1
 
 The first Lunatic stage-1 seed-0 Reimu-A route finishes 13,701 native updates with
 zero misses and bombs, and passes a fresh-process per-frame replay. This is one
-case, not a completed coverage matrix. Full current coverage and reproduction
+case, not a completed coverage matrix. Extra Reimu B also has a complete 59,837-update
+NMNB route replayed under the corrected source bootstrap. Full coverage and reproduction
 belong in [Status](docs/STATUS.md). [Architecture](docs/ARCHITECTURE.md) describes
 the native profile, checkpoints, proposals and lifecycle boundaries;
 [third-party notices](docs/THIRD_PARTY_NOTICES.md) record source provenance.

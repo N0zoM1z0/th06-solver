@@ -10,13 +10,28 @@
 using namespace th06;
 int main(int argc, char **argv) {
     try {
-        check(argc == 2, "test needs DAT directory");
+        check(argc == 2 || argc == 3, "test needs DAT directory and optional profile");
         solver::Resources resources(argv[1]);
         solver::set_resources(&resources);
         solver::StartConfig start;
         start.seed = 29768;
         start.story = true;
+        const bool extra = argc == 3 && std::string(argv[2]) == "extra";
+        if (extra) {
+            start.story = false;
+            start.stage = 7;
+            start.difficulty = 4;
+            start.power = 128;
+        }
         solver::Session game(start);
+        if (extra) {
+            check(g_GameManager.livesEarned == 4 && g_GameManager.livesRemaining == 2 &&
+                      g_GameManager.bombsRemaining == 3 && g_GameManager.rank == 16 &&
+                      g_GameManager.minRank == 14 && g_GameManager.maxRank == 18,
+                  "Extra bootstrap must preserve source rank/extend rules");
+            std::cout << "Extra source bootstrap contracts passed\n";
+            return 0;
+        }
         for (unsigned i = 0; i < 30; ++i)
             game.step(261);
         g_GameManager.currentPower = 17;
@@ -34,6 +49,11 @@ int main(int argc, char **argv) {
         // This is a lifecycle regression, not evidence that the skipped stage
         // was cleared. Full story acceptance still requires natural MSG endings.
         g_Supervisor.curState = SUPERVISOR_STATE_NEXT_STAGE;
+        const auto pending_seed = g_Rng.seed;
+        rejects([&] { game.step(2); }, "unsupported input accepted at handoff");
+        check(g_GameManager.currentStage == 1 && g_Rng.seed == pending_seed &&
+                  g_Supervisor.curState == SUPERVISOR_STATE_NEXT_STAGE,
+              "rejected input partially advanced the story");
         const auto state = game.step(261);
         check(state.stage == 2 && state.frame == 31 && !state.complete, "story handoff boundary");
         check(g_GameManager.currentPower == 17 && g_GameManager.livesRemaining == 1 &&

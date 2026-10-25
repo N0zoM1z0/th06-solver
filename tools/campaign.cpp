@@ -136,7 +136,7 @@ void report(const fs::path &directory, const std::vector<Case> &cases) {
         throw std::runtime_error("campaign status write failed");
     fs::rename(directory / "status.json.tmp", directory / "status.json");
 }
-void preserve_attempt(const fs::path &directory, const std::string &name) {
+fs::path preserve_attempt(const fs::path &directory, const std::string &name) {
     const auto attempts = directory / "attempts";
     fs::create_directories(attempts);
     unsigned attempt = 1;
@@ -148,6 +148,7 @@ void preserve_attempt(const fs::path &directory, const std::string &name) {
         if (fs::exists(path))
             fs::rename(path, attempts / (name + "." + std::to_string(attempt) + suffix));
     }
+    return attempts / (name + "." + std::to_string(attempt));
 }
 } // namespace
 
@@ -156,7 +157,8 @@ int main(int argc, char **argv) {
         fs::path data, directory = "reports/local/stages";
         const auto source_binaries = fs::read_symlink("/proc/self/exe").parent_path();
         std::string suite = "stages", only;
-        unsigned jobs = 2, seed = 0, frames = 60000, horizon = 90, commit = 8, proposals = 4;
+        unsigned jobs = 2, seed = 0, frames = 60000, horizon = 90, commit = 8, proposals = 4,
+                 rewind = 0;
         bool list = false, resume = false;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
@@ -171,7 +173,7 @@ int main(int argc, char **argv) {
             if (key == "--help") {
                 std::cout << "th06_campaign --data DIR --output DIR [--suite stages|story|all]\n"
                              "  [--jobs 1..4] [--seed N] [--frames N] [--horizon N] [--commit N]\n"
-                             "  [--proposals N] [--case NAME] [--resume] [--list]\n";
+                             "  [--proposals N] [--case NAME] [--resume] [--rewind N] [--list]\n";
                 return 0;
             }
             if (i + 1 == argc)
@@ -202,6 +204,8 @@ int main(int argc, char **argv) {
                     commit = n;
                 else if (key == "--proposals")
                     proposals = n;
+                else if (key == "--rewind")
+                    rewind = n;
                 else
                     throw std::invalid_argument("unknown/invalid option " + key);
             }
@@ -280,7 +284,16 @@ int main(int argc, char **argv) {
                     report(directory, cases);
                     continue;
                 }
-                preserve_attempt(directory, c.name);
+                Tape prefix;
+                if (resume && rewind) {
+                    try {
+                        prefix = read_tape(directory / (c.name + ".actions"));
+                    } catch (const std::exception &) {
+                    }
+                    if (!same(prefix.start, c.start))
+                        prefix.rows.clear();
+                }
+                const auto archived = preserve_attempt(directory, c.name);
                 const auto &s = c.start;
                 std::vector<std::string> args = {(binaries / "th06_plan").string(),
                                                  "--data",
@@ -307,6 +320,13 @@ int main(int argc, char **argv) {
                                                  (directory / (c.name + ".actions")).string()};
                 if (s.story)
                     args.push_back("--story");
+                if (!prefix.rows.empty()) {
+                    const auto cut = prefix.rows.size() > rewind ? prefix.rows.size() - rewind : 0;
+                    args.insert(args.end(),
+                                {"--prefix", archived.string() + ".actions", "--prefix-frames",
+                                 std::to_string(cut), "--exclude-first",
+                                 std::to_string(prefix.rows[cut].input)});
+                }
                 const auto pid = spawn(args, directory / (c.name + ".plan.json"),
                                        directory / (c.name + ".plan.log"));
                 c.status = "running";
@@ -330,6 +350,14 @@ int main(int argc, char **argv) {
                 throw std::runtime_error("unowned campaign child");
             auto &c = cases[found->index];
             const bool ok = WIFEXITED(status) && WEXITSTATUS(status) == 0 && verify(c);
+            if (!ok) {
+                try {
+                    const auto partial = read_tape(directory / (c.name + ".actions"));
+                    if (same(partial.start, c.start))
+                        c.frames = partial.rows.size();
+                } catch (const std::exception &) {
+                }
+            }
             c.status = ok ? "cleared" : "failed";
             std::cerr << c.status << ' ' << c.name << " frames=" << c.frames << '\n';
             running.erase(found);

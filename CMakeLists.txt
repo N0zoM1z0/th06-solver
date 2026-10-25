@@ -61,6 +61,7 @@ if(BUILD_TESTING)
     add_executable(story_transition_tests tests/story_transition.cpp)
     target_link_libraries(story_transition_tests PRIVATE th06_native)
     add_test(NAME story_transition_contracts COMMAND story_transition_tests ${TH06_DATA_DIR})
+    add_test(NAME extra_bootstrap_contracts COMMAND story_transition_tests ${TH06_DATA_DIR} extra)
     add_test(NAME real_data_contracts COMMAND ${CMAKE_COMMAND}
       -DHEADLESS=$<TARGET_FILE:th06_headless> -DPLAN=$<TARGET_FILE:th06_plan>
       -DCHECK=$<TARGET_FILE:th06_replay_check> -DDATA=${TH06_DATA_DIR}

@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
         auto state = game.state();
         std::uint64_t branches = 0, simulated = 0;
         unsigned next_progress = 600;
+        const int excluded_first_input = options.excluded_input;
         const auto begin = std::chrono::steady_clock::now();
         for (unsigned i = 0; i < prefix_frames; ++i) {
             state = game.step(prefix.rows[i].input);
@@ -135,6 +136,7 @@ int main(int argc, char **argv) {
                   << ",\"seed\":" << tape.start.seed << ",\"power\":" << tape.start.power
                   << ",\"frames\":" << state.frame << ",\"story\":" << tape.start.story
                   << ",\"replayed_prefix_frames\":" << prefix_frames
+                  << ",\"excluded_first_input\":" << excluded_first_input
                   << ",\"cleared_stages\":" << game.cleared_stages()
                   << ",\"complete\":" << state.complete << ",\"deaths\":" << state.deaths
                   << ",\"bombs\":" << state.bombs << ",\"branches\":" << branches
