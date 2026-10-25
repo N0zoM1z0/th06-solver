@@ -1,0 +1,28 @@
+# TH06 solver engineering rules
+
+Read README.md and docs/STATUS.md before changing behavior. The owner's current
+scope is the native runtime required by later shadow MPC: finish all legitimate
+stage/difficulty/shot combinations first, then complete continuous stories.
+Retail execution, Wine integration and retail replay export are deferred.
+
+- Use C++17. Preserve the imported source, licenses and pinned provenance in-tree.
+  Keep parsing, native state, proposals, process isolation, tapes and CLI separate.
+- Native game rollouts decide collisions and terminal outcomes. Cheap proposal
+  approximations cannot certify a route. Unknown gameplay opcodes must fail.
+- Never memcpy pointer-rich managers as independent worlds. Forks own mutable
+  memory, actor pointers and gameplay RNG. Preserve original callback order.
+- Stage transitions must use the source's lifecycle rules: carry RNG, rank and
+  resources; reset actors and pools only where the source does. No reseeding at
+  a story handoff. Document checkpoints separately from natural story starts.
+- Clear means the native terminal event, zero misses/bombs, and a fresh-process
+  replay with matching per-frame observable digests. Prefixes and budget exhaustion
+  must remain incomplete. Native agreement does not establish retail equivalence.
+- Keep all EXE/DAT/assets/archives and preparation notes out of Git. Keep generated
+  tapes, logs and campaign reports under ignored reports/local/ or build/.
+- Run focused regressions and CTest after behavioral changes; run affected real
+  DAT cases when available. Preserve failed evidence and include all retries in
+  campaign accounting. Use at most four concurrent solver jobs on this shared host.
+- Keep documentation compact and current. Use English code comments and docs.
+  Format first-party C++ with .clang-format; minimize changes to imported source.
+- Publish tested progress on main without rewriting unrelated history. Commit
+  subjects use `gpt-6.1-sol: <English summary>`.

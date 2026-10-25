@@ -1,0 +1,17 @@
+/game_exe_data/
+/build*/
+/reports/local/
+/th06-sth.txt
+*.exe
+*.dll
+*.dat
+*.DAT
+*.rar
+*.zip
+*.wav
+*.rpy
+*.o
+*.a
+*.so
+__pycache__/
+.cache/
