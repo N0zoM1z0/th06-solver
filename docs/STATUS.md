@@ -2,8 +2,12 @@
 
 Current scope: make the native runtime dependable for later shadow MPC.
 New trials focus only on [Lunatic random-seed robustness](LUNATIC_RANDOM_SEEDS.md).
-The four fixed random seeds pass 96/96 standalone cases after checked-prefix
-recovery (92/96 initially); their 16 continuous stories are in progress.
+The four fixed random seeds pass 96/96 standalone cases and 16/16 continuous
+stories after checked-prefix recovery (92/96 and 11/16 initially). Every route
+passes full fresh native replay with zero misses/bombs. These 112 sampled cases
+contain 4,057,594 accepted updates; peak campaign memory is 140,361,728 bytes
+(133.86 MiB), with zero OOM events under the 2-GiB/no-swap cap. Random-seed results
+are native evidence for this fixed sample; see the separate experiment ledger.
 The all-difficulty seed-0 results below remain historical controls.
 The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
 including fresh native replay of every entire route. The owner has now authorized

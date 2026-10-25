@@ -12,7 +12,8 @@ owner's request; original game assets remain private. Current experiments focus
 only on Lunatic random-seed robustness.
 The preselected [random-seed experiment](docs/LUNATIC_RANDOM_SEEDS.md) covers
 four seeds across all Lunatic stages/shots and continuous stories. Its standalone
-matrix now passes **96/96** (92 first-pass, four recovered); stories are in progress.
+matrix passes **96/96** (92 first-pass, four recovered), and its continuous stories
+pass **16/16** (11 first-pass, five recovered), all with full fresh native replay.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.

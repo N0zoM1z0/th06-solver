@@ -55,6 +55,7 @@ build/th06_campaign --data game_exe_data/extracted/th06 --suite stages \
 
 The measured run uses this command inside a user-systemd unit with `MemoryMax=2G`,
 `MemoryHigh=1536M`, `MemorySwapMax=0`, `TasksMax=256` and a finite runtime.
+
 ## Standalone result
 
 All **96/96 sampled stage cases** complete NMNB and pass full fresh-process
@@ -92,6 +93,52 @@ time and excludes separately recorded diagnostic/control work. Cgroup peak is
 127,803,392 bytes (121.88 MiB), with zero OOM events under the 2-GiB/no-swap cap.
 
 [Per-case stage evidence](../reports/lunatic-random-20261025-stages.csv) includes
-all retry effort and tape SHA-256 identities. The 16 continuous-story cases are
-still in progress. These are fixed-sample native results; the seed-0 baseline
-does not count toward the sample and other 16-bit seeds remain untested.
+all retry effort and tape SHA-256 identities. These are fixed-sample native
+results; the seed-0 baseline does not count toward the sample and other 16-bit
+seeds remain untested.
+
+## Continuous stories
+
+All **16/16 sampled stories** complete six natural stage clears, zero misses/bombs
+and full fresh-process replay. The initial search completes **11/16**; the first
+predeclared recovery raises this to **15/16**, and the second clears the last case.
+The five initial incomplete safe frontiers remain in the evidence ledger:
+
+| Seed | Shot | Stage at stop | Initial safe frontier |
+|---|---|---:|---:|
+| 7589 | Reimu A | 3 | 34,007 |
+| 30826 | Reimu B | 5 | 89,789 |
+| 30826 | Marisa B | 4 | 78,782 |
+| 9674 | Reimu B | 6 | 116,566 |
+| 9674 | Marisa B | 5 | 96,606 |
+
+These failures occur in continuous runs with actual pickups and carried RNG;
+standalone checkpoint clears do not replace them. The final full-route update
+counts below all have matching new-process checker reports:
+
+| Seed | Initial clears | Reimu A | Reimu B | Marisa A | Marisa B |
+|---|---:|---:|---:|---:|---:|
+| 5341 | 4/4 | 124,905 | 131,127 | 131,950 | 135,163 |
+| 7589 | 3/4 | 124,174 | 130,798 | 133,101 | 131,016 |
+| 30826 | 2/4 | 123,479 | 125,933 | 129,703 | 133,977 |
+| 9674 | 2/4 | 123,969 | 130,576 | 131,684 | 132,317 |
+
+Four recovered stories finish with horizon 180 / eight proposals. Seed 9674,
+Marisa B crosses its original stage-5 stop but reaches a new incomplete frontier
+at update 118,784 in stage 6. The second recovery replays and rewinds that route
+to update 116,736, then uses horizon 240 / twelve proposals to finish at 132,317.
+The final horizon describes the last continuation; earlier accepted prefixes and
+both failed attempts are retained. No random sample is replaced.
+
+The story search ledger includes **22 attempts**, 1,909,457 native branches,
+194,167,669 speculative updates and 528,646 prefix-replay updates. Complete
+stories contain 2,073,872 accepted updates. Summed per-attempt planning wall time
+is 16,638.21 seconds across parallel jobs; this excludes checker timing and is
+not campaign elapsed time. Story cgroup peak is 140,361,728 bytes (133.86 MiB),
+with zero OOM events under the same 2-GiB/no-swap limit.
+
+[Per-case story evidence](../reports/lunatic-random-20261025-story.csv) records
+initial outcomes, every search attempt's aggregate cost and final tape SHA-256.
+Together the sampled stage and story suites pass **112/112** and contain
+4,057,594 accepted updates. The four fixed seeds are now covered; all other
+nonzero seeds and random-seed retail playback remain untested by this experiment.

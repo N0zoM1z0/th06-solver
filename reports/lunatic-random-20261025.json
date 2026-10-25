@@ -71,7 +71,7 @@
     "th06_plan": "6230049f78dfae950c2e8e3a269b46f901a8e4e8de2ef48fdd845485db7755ed",
     "th06_replay_check": "c57c0de3a165003f7bb0d5f45b9e56b65084ddbfcf853794b8c098e8f650b33a"
   },
-  "status": "standalone complete; continuous stories in progress",
+  "status": "complete: 96/96 sampled Lunatic stages and 16/16 sampled Lunatic stories",
   "stage_results": {
     "expected": 96,
     "initial_cleared": 92,
@@ -179,5 +179,113 @@
       "planning_seconds": 109.420266
     }
   },
-  "diagnostic_note": "Diagnostic replay/control work is separate from the 96 sampled cases and their search totals."
+  "diagnostic_note": "Diagnostic replay/control work is separate from the 96 sampled cases and their search totals.",
+  "story_results": {
+    "expected": 16,
+    "initial_cleared": 11,
+    "initial_incomplete": 5,
+    "final_cleared": 16,
+    "failed": 0,
+    "per_seed": [
+      {
+        "seed": 5341,
+        "cases": 4,
+        "initial_cleared": 4,
+        "final_cleared": 4,
+        "complete_updates": [
+          124905,
+          131127,
+          131950,
+          135163
+        ]
+      },
+      {
+        "seed": 7589,
+        "cases": 4,
+        "initial_cleared": 3,
+        "final_cleared": 4,
+        "complete_updates": [
+          124174,
+          130798,
+          133101,
+          131016
+        ]
+      },
+      {
+        "seed": 30826,
+        "cases": 4,
+        "initial_cleared": 2,
+        "final_cleared": 4,
+        "complete_updates": [
+          123479,
+          125933,
+          129703,
+          133977
+        ]
+      },
+      {
+        "seed": 9674,
+        "cases": 4,
+        "initial_cleared": 2,
+        "final_cleared": 4,
+        "complete_updates": [
+          123969,
+          130576,
+          131684,
+          132317
+        ]
+      }
+    ],
+    "recovered_cases": [
+      {
+        "case": "story-d3-shot0-seed7589",
+        "first_stopped_frame": 34007,
+        "attempts": 2,
+        "final_updates": 124174,
+        "final_horizon": 180
+      },
+      {
+        "case": "story-d3-shot1-seed30826",
+        "first_stopped_frame": 89789,
+        "attempts": 2,
+        "final_updates": 125933,
+        "final_horizon": 180
+      },
+      {
+        "case": "story-d3-shot3-seed30826",
+        "first_stopped_frame": 78782,
+        "attempts": 2,
+        "final_updates": 133977,
+        "final_horizon": 180
+      },
+      {
+        "case": "story-d3-shot1-seed9674",
+        "first_stopped_frame": 116566,
+        "attempts": 2,
+        "final_updates": 130576,
+        "final_horizon": 180
+      },
+      {
+        "case": "story-d3-shot3-seed9674",
+        "first_stopped_frame": 96606,
+        "attempts": 3,
+        "final_updates": 132317,
+        "final_horizon": 240
+      }
+    ],
+    "native_updates": 2073872,
+    "search_attempts": 22,
+    "branches_including_retries": 1909457,
+    "simulated_updates_including_retries": 194167669,
+    "replayed_prefix_updates": 528646,
+    "planning_seconds_sum_including_retries": 16638.207444,
+    "peak_cgroup_bytes": 140361728,
+    "oom": 0,
+    "oom_kill": 0,
+    "csv": "reports/lunatic-random-20261025-story.csv",
+    "recovery1_total_cleared": 15,
+    "recovery2_total_cleared": 16
+  },
+  "combined_final_route_updates": 4057594,
+  "native_only_note": "Random-seed trials establish native clears for this fixed sample, not retail equivalence or all 65536 seeds."
 }
