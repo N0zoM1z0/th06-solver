@@ -1,16 +1,23 @@
 # Native runtime status
 
-Current scope: make the native runtime dependable for later shadow MPC. First
-complete legitimate standalone stage/difficulty/shot combinations, then continuous
-stories. No retail execution or retail replay work is in scope yet.
+Current scope: make the native runtime dependable for later shadow MPC.
+The complete standalone matrix passes 96/96, including fresh native replay of
+every entire route. The 16 continuous stories are in progress. No retail execution
+or retail replay work is in scope yet.
 
 ## Acceptance matrix
 
-- Easy: stages 1–5, four shots (20 cases).
-- Normal, Hard and Lunatic: stages 1–6, four shots each (72 cases).
-- Extra: stage 7, four shots (4 cases).
-- Story: four standard difficulties × four shots (16 cases). Easy ends after
-  stage 5 as in the source; the other stories end after stage 6.
+| Suite | Domain | Complete fresh-replayed NMNB cases |
+|---|---|---:|
+| Easy | Stages 1–5, four shots | 20/20 |
+| Normal | Stages 1–6, four shots | 24/24 |
+| Hard | Stages 1–6, four shots | 24/24 |
+| Lunatic | Stages 1–6, four shots | 24/24 |
+| Extra | Stage 7, four shots | 4/4 |
+| Continuous story | Four standard difficulties × four shots | In progress |
+
+Easy story ends after stage 5 as in the source; the other stories end after stage 6.
+An earlier terminal event is rejected, even if the current route has no misses.
 
 The initial seed is 0. Standalone checkpoints use power 0 at stage 1, 64 at
 stage 2, and 128 at stages 3–7. Story starts at power 0 and carries actual pickups.
@@ -43,19 +50,20 @@ fast-math. The original EXE SHA-256 is
   sequencing and corruption, source RNG ordering, collision edges, unsupported
   opcodes and a planned prefix with fresh-process replay and rejection controls.
 
-The full 96-case standalone matrix and 16-story matrix are in progress. Lunatic
-stage 1 has cleared with all four shots. Additional complete, fresh-replayed
-Lunatic stage-2 and stage-3 Reimu-A runs use power 128; the canonical stage-2 matrix
-uses power 64 and is tracked separately. A ranked four-proposal run reproduces
+The complete 96-case standalone matrix uses the canonical checkpoints above.
+Earlier standalone stage-2 power-128 experiments are separate evidence; the
+matrix stage-2 checkpoint uses power 64. A ranked four-proposal run reproduces
 the stage-1 completion in 26.80 seconds with 6,967 native branches and 603,011
 simulated updates. All retry effort remains in the local attempt ledger.
 
-Eight focused tests pass, including a source-binary replacement regression for
+Nine focused tests pass, including a source-binary replacement regression for
 campaign snapshots, RNG/resource carry across a stage handoff, atomic rejection
-of invalid handoff input, and Extra's source bootstrap/score-extend rule. A clean Release
+of invalid handoff input, Extra's source bootstrap/score-extend rule, reactive
+future continuation replay, and rejection of a premature story terminal. A clean Release
 build passes the asset-free contracts and replays the initial complete tape.
-The first 96-case sweep completed 89 routes; remaining incomplete routes are being
-repaired and all completions are rechecked with the current binary.
+The final standalone gate independently replays all 96 complete tapes under the
+current runtime and reports 96 cleared, 0 failed. Earlier incomplete searches and
+their costs remain in the attempt ledger.
 
 Extra Reimu B now completes at update 59,837 with zero misses/bombs and passes
 fresh replay under the corrected runtime. Verified-prefix rewind first crossed
@@ -65,8 +73,19 @@ disable; the corrected bootstrap selects source score-table index 4. Its first
 observable difference occurred at update 58,556, so the route was resumed from
 the checked prefix ending at 58,555 and fully replayed again. All earlier attempts
 and their simulation/replay costs remain recorded; the last continuation's timing
-is not the cost of the entire solve. Other Extra shots still require current-build
-verification or repair. No full continuous story has yet been certified.
+is not the cost of the entire solve. Reactive native futures then complete the
+remaining Extra shots. Their current complete-route evidence is:
+
+| Shot | Complete native updates | Last continuation horizon / proposals | Reactive futures |
+|---|---:|---|---|
+| Reimu A | 47,240 | 240 / 8 | Enabled |
+| Reimu B | 59,837 | 240 / 8 | Disabled |
+| Marisa A | 55,702 | 240 / 8 | Enabled |
+| Marisa B | 61,696 | 320 / 12 | Enabled |
+
+Every entry has a complete new-process replay with zero misses/bombs. The last
+continuation budgets above do not replace earlier checked prefixes or erase retry
+costs. No full continuous story has yet been certified.
 
 Each campaign snapshots its planner/checker binaries and records their identities.
 Recompiling the workspace cannot change a running campaign. Resume rechecks each

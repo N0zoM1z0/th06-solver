@@ -54,11 +54,20 @@ future spawns, non-linear transforms and laser geometry. It proposes actions onl
 The default search evaluates four ranked proposals, expanding through the rest
 when needed. The report records budgets and every actual branch/update cost.
 
+Opt-in `--reactive` adds a continuation for each initial input. After the initial
+commit-sized action, this branch steers every 16 native updates using owned future
+observations and a cheap local forecast. That forecast chooses inputs only: all
+movement, RNG, spawns and collisions still run in the source game. The parent
+commits only the initial digest-checked action, then replans. Reactive branch
+counts and their complete native update costs are recorded separately.
+
 Each evaluated child runs the original game, including action-dependent targeting,
 RNG, transforms, enemy bodies and lasers. It returns a consecutive safe prefix
 and observable digests. The parent accepts only matching native execution, commits
 a bounded prefix, and replans. Failed child processes are errors, not safe routes.
 An exhausted frame budget writes an incomplete tape and exits 2.
+The accepted frontier is also saved atomically every 600 updates, so a later
+rollout error retains a replayable prefix; no speculative future is checkpointed.
 
 For recovery, `th06_plan --prefix TAPE --prefix-frames N --exclude-first MASK`
 initializes a fresh game and checks every prefix digest before branching from N.
@@ -89,6 +98,8 @@ spawn state and stage counters. Player/GUI shared ANMs survive where their
 callbacks test NEXT_STAGE. Easy takes the source's stage-5 ending; the other
 standard difficulties end after stage 6. A later standalone clear cannot substitute
 for a continuous-story replay.
+Story mode fixes the required stage count from its initial difficulty and rejects
+any terminal event before the required final stage and natural clear count.
 
 ## Discriminating probes
 

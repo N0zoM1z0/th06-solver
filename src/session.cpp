@@ -34,6 +34,7 @@ Session::Session(const StartConfig &c) {
         throw std::invalid_argument("complete story must start at stage 1");
     active = true;
     story_ = c.story;
+    required_stages_ = c.story ? (c.difficulty == EASY ? 5 : 6) : 1;
     g_Supervisor.curState = SUPERVISOR_STATE_GAMEMANAGER;
     g_Supervisor.framerateMultiplier = g_Supervisor.effectiveFramerateMultiplier = 1.f;
     g_Supervisor.cfg.lifeCount = g_Supervisor.defaultConfig.lifeCount = 2;
@@ -180,6 +181,10 @@ State Session::step(std::uint16_t input) {
     ++frame_;
     if (g_Supervisor.curState == SUPERVISOR_STATE_NEXT_STAGE || terminal())
         ++cleared_stages_;
+    if (story_ && terminal() &&
+        (unsigned(g_GameManager.currentStage) != required_stages_ ||
+         cleared_stages_ != required_stages_))
+        throw std::runtime_error("story terminated before all required stages were cleared");
     return state();
 }
 

@@ -2,8 +2,9 @@
 
 C++17 native, headless Touhou 06 runtime and offline planning, following
 [th08-solver](https://github.com/N0zoM1z0/th08-solver)'s native rollout approach.
-The immediate goal is every legitimate stage/difficulty/shot combination, then
-complete continuous stories. Retail integration is deferred.
+**Native standalone coverage: 96/96 legitimate stage/difficulty/shot combinations**
+at seed 0, each NMNB with a complete fresh-process replay. The 16 continuous-story
+cases are now in progress. Retail integration is deferred.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.
@@ -15,6 +16,7 @@ build/th06_campaign --data /path/to/th06-data --suite stages --jobs 2 \
 build/th06_campaign --data /path/to/th06-data --suite stages --jobs 2 \
   --output reports/local/stages --resume --rewind 768 --horizon 180 --proposals 8 --frames 120000
 build/th06_campaign --data /path/to/th06-data --suite story --jobs 2 --frames 180000 \
+  --reactive --horizon 120 --proposals 6 \
   --output reports/local/story --resume
 ```
 
@@ -62,10 +64,10 @@ cmake --build build -j 2
 ctest --test-dir build --output-on-failure -j 1
 ```
 
-The first Lunatic stage-1 seed-0 Reimu-A route finishes 13,701 native updates with
-zero misses and bombs, and passes a fresh-process per-frame replay. This is one
-case, not a completed coverage matrix. Extra Reimu B also has a complete 59,837-update
-NMNB route replayed under the corrected source bootstrap. Full coverage and reproduction
+The complete standalone matrix includes all four Extra shots, with complete
+fresh-checked routes of 47,240–61,696 updates. Story acceptance additionally
+requires the natural five-stage Easy or six-stage Normal/Hard/Lunatic terminal.
+Coverage, exact checkpoint profiles and reproduction
 belong in [Status](docs/STATUS.md). [Architecture](docs/ARCHITECTURE.md) describes
 the native profile, checkpoints, proposals and lifecycle boundaries;
 [third-party notices](docs/THIRD_PARTY_NOTICES.md) record source provenance.

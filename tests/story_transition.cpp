@@ -24,6 +24,20 @@ int main(int argc, char **argv) {
             start.power = 128;
         }
         solver::Session game(start);
+        if (argc == 3 && std::string(argv[2]) == "premature") {
+            ChainElem premature;
+            premature.SetCallback(+[](void *) {
+                g_Supervisor.curState = SUPERVISOR_STATE_ENDING;
+                return CHAIN_CALLBACK_RESULT_CONTINUE;
+            });
+            premature.arg = nullptr;
+            check(g_FuncChain.AddToCalcChain(&premature, 15) == ZUN_SUCCESS,
+                  "premature-terminal fixture");
+            rejects([&] { game.step(261); }, "one-stage ending certified as a full story");
+            g_FuncChain.Cut(&premature);
+            std::cout << "premature story terminal rejection passed\n";
+            return 0;
+        }
         if (extra) {
             check(g_GameManager.livesEarned == 4 && g_GameManager.livesRemaining == 2 &&
                       g_GameManager.bombsRemaining == 3 && g_GameManager.rank == 16 &&

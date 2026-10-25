@@ -53,6 +53,21 @@ execute_process(COMMAND "${CHECK}" --data "${DATA}" --tape "${WORK}/continued.ac
 if(NOT result EQUAL 0)
   message(FATAL_ERROR "continued route did not replay: ${diagnostic}")
 endif()
+execute_process(COMMAND "${PLAN}" --data "${DATA}" --prefix "${WORK}/prefix.actions"
+  --prefix-frames 200 --frames 600 --horizon 48 --commit 8 --reactive
+  --output "${WORK}/reactive.actions" RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE diagnostic)
+if(NOT result EQUAL 2 OR NOT output MATCHES "\"reactive\":true")
+  message(FATAL_ERROR "reactive native prefix failed: ${output} ${diagnostic}")
+endif()
+string(JSON reactive_branches GET "${output}" reactive_branches)
+if(reactive_branches LESS 1)
+  message(FATAL_ERROR "reactive continuation was not exercised")
+endif()
+execute_process(COMMAND "${CHECK}" --data "${DATA}" --tape "${WORK}/reactive.actions"
+  RESULT_VARIABLE result OUTPUT_QUIET ERROR_VARIABLE diagnostic)
+if(NOT result EQUAL 0)
+  message(FATAL_ERROR "reactive route did not replay: ${diagnostic}")
+endif()
 execute_process(COMMAND "${PLAN}" --data "${DATA}" --prefix "${WORK}/damaged.actions"
   --prefix-frames 1 --frames 10 --output "${WORK}/invalid-prefix.actions"
   RESULT_VARIABLE result OUTPUT_QUIET ERROR_VARIABLE diagnostic)

@@ -17,6 +17,10 @@ int main(int argc, char **argv) {
         unsigned prefix_frames = 0;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
+            if (key == "--reactive") {
+                options.reactive = true;
+                continue;
+            }
             if (key == "--story") {
                 tape.start.story = true;
                 continue;
@@ -25,7 +29,8 @@ int main(int argc, char **argv) {
                 std::cout
                     << "th06_plan --data DIR --output TAPE [--stage 1..7] [--difficulty 0..4]\n"
                        "  [--shot 0..3] [--seed 0..65535] [--power 0..128] [--frames N]\n"
-                       "  [--horizon 1..600] [--commit 1..horizon] [--proposals N] [--story]\n";
+                       "  [--horizon 1..600] [--commit 1..horizon] [--proposals N] [--story] "
+                       "[--reactive]\n";
                 return 0;
             }
             if (i + 1 == argc)
@@ -87,7 +92,7 @@ int main(int argc, char **argv) {
         set_resources(&resources);
         Session game(tape.start);
         auto state = game.state();
-        std::uint64_t branches = 0, simulated = 0;
+        std::uint64_t branches = 0, simulated = 0, reactive_branches = 0;
         unsigned next_progress = 600;
         const int excluded_first_input = options.excluded_input;
         const auto begin = std::chrono::steady_clock::now();
@@ -103,6 +108,7 @@ int main(int argc, char **argv) {
             const auto decision = choose(game, options);
             options.excluded_input = -1;
             branches += decision.branches;
+            reactive_branches += decision.reactive_branches;
             simulated += decision.simulated_frames;
             if (!decision.certified_frames)
                 break;
@@ -119,6 +125,10 @@ int main(int argc, char **argv) {
                     break;
             }
             if (state.frame >= next_progress) {
+                // Persist only the accepted native frontier. A later rollout
+                // error can be resumed without inventing or copying game state.
+                tape.complete = state.complete;
+                write_tape(output, tape);
                 std::cerr << "frame=" << state.frame << " timeline=" << state.timeline
                           << " bullets=" << state.bullets << " stage=" << state.stage
                           << " power=" << state.power << " branches=" << branches << '\n';
@@ -141,6 +151,8 @@ int main(int argc, char **argv) {
                   << ",\"complete\":" << state.complete << ",\"deaths\":" << state.deaths
                   << ",\"bombs\":" << state.bombs << ",\"branches\":" << branches
                   << ",\"simulated_frames\":" << simulated << ",\"horizon\":" << options.horizon
+                  << ",\"reactive\":" << options.reactive
+                  << ",\"reactive_branches\":" << reactive_branches
                   << ",\"commit\":" << options.commit << ",\"proposals\":" << options.proposals
                   << ",\"planning_seconds\":" << seconds << "}\n";
         return state.complete ? 0 : 2;

@@ -16,17 +16,19 @@ struct Candidate {
     std::uint16_t input;
     unsigned moving;
     double rank;
+    bool reactive = false;
 };
 // Inexpensive, deliberately approximate proposal ranking. Native rollouts still
 // resolve future spawns, acceleration, lasers, collisions and action-dependent RNG.
-double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving, unsigned horizon) {
+double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving, unsigned horizon,
+                     unsigned stride = 4) {
     const int dx = bool(input & 128) - bool(input & 64), dy = bool(input & 32) - bool(input & 16);
     const bool focus = input & 4;
     const float speed =
         dx && dy ? (focus ? o.focused_diagonal : o.diagonal) : (focus ? o.focused_axis : o.axis);
     double result = 0;
     unsigned samples = 0;
-    for (unsigned t = 1; t <= horizon; t += 4) {
+    for (unsigned t = 1; t <= horizon; t += stride) {
         const auto duration = float(std::min(t, moving));
         const float x = std::clamp(o.x + dx * speed * duration, 8.f, 376.f);
         const float y = std::clamp(o.y + dy * speed * duration, 16.f, 432.f);
@@ -45,6 +47,25 @@ double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving,
         ++samples;
     }
     return result / samples + (dx || dy ? 0.02 : 0);
+}
+std::uint16_t reactive_input(const Observation &observation) {
+    constexpr std::array<std::uint16_t, 9> directions = {0,       16,       32,      64,      128,
+                                                         16 | 64, 16 | 128, 32 | 64, 32 | 128};
+    double best = std::numeric_limits<double>::infinity();
+    std::uint16_t selected = 261;
+    for (const auto direction : directions)
+        for (unsigned focus : {4u, 0u}) {
+            if (!direction && !focus)
+                continue;
+            const auto input = std::uint16_t(direction | focus | 1u | 256u);
+            const double cost = std::min(proposal_rank(observation, input, 16, 40, 8),
+                                         proposal_rank(observation, input, 40, 40, 8));
+            if (cost < best) {
+                best = cost;
+                selected = input;
+            }
+        }
+    return selected;
 }
 struct Result {
     unsigned safe = 0, attempted = 0;
@@ -65,7 +86,7 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
     }
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
-               unsigned commit) {
+               unsigned commit, bool reactive) {
     int pipefd[2];
     if (::pipe(pipefd))
         throw std::runtime_error("pipe failed");
@@ -81,9 +102,16 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
         ::close(pipefd[0]);
         try {
             Result result;
+            std::uint16_t action = input;
             for (unsigned frame = 0; frame < horizon; ++frame) {
-                const auto action =
-                    frame < moving ? input : std::uint16_t(input & ~std::uint16_t(0xf0));
+                if (reactive) {
+                    // Only the initial commit-sized action is certified to the
+                    // caller. This branch-owned continuation can turn using
+                    // future observations; every update still executes natively.
+                    if (frame >= commit && (frame - commit) % 16 == 0)
+                        action = reactive_input(game.observe());
+                } else
+                    action = frame < moving ? input : std::uint16_t(input & ~std::uint16_t(0xf0));
                 const auto state = game.step(action);
                 ++result.attempted;
                 if (state.hit)
@@ -155,13 +183,29 @@ Decision choose(Session &game, const PlannerOptions &options) {
             }
         }
     }
+    if (options.reactive) {
+        const auto constant = candidates;
+        std::array<bool, 512> seen{};
+        for (const auto &candidate : constant) {
+            if (seen[candidate.input])
+                continue;
+            seen[candidate.input] = true;
+            double rank = candidate.rank;
+            for (const auto &other : constant)
+                if (other.input == candidate.input)
+                    rank = std::min(rank, other.rank);
+            candidates.push_back({candidate.input, options.commit, rank + 0.01, true});
+        }
+    }
     std::stable_sort(candidates.begin(), candidates.end(),
                      [](const auto &a, const auto &b) { return a.rank < b.rank; });
     for (const auto &candidate : candidates) {
         const auto input = candidate.input;
         const auto moving = candidate.moving;
-        const auto result = rollout(game, input, moving, options.horizon, options.commit);
+        const auto result =
+            rollout(game, input, moving, options.horizon, options.commit, candidate.reactive);
         ++decision.branches;
+        decision.reactive_branches += candidate.reactive;
         decision.simulated_frames += result.attempted;
         const double cost = result.cost + ((input & 0xf0) ? 0.02 : 0);
         if ((result.complete && !best_complete) ||

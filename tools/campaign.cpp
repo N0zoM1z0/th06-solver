@@ -159,9 +159,13 @@ int main(int argc, char **argv) {
         std::string suite = "stages", only;
         unsigned jobs = 2, seed = 0, frames = 60000, horizon = 90, commit = 8, proposals = 4,
                  rewind = 0;
-        bool list = false, resume = false;
+        bool list = false, resume = false, reactive = false;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
+            if (key == "--reactive") {
+                reactive = true;
+                continue;
+            }
             if (key == "--list") {
                 list = true;
                 continue;
@@ -173,7 +177,8 @@ int main(int argc, char **argv) {
             if (key == "--help") {
                 std::cout << "th06_campaign --data DIR --output DIR [--suite stages|story|all]\n"
                              "  [--jobs 1..4] [--seed N] [--frames N] [--horizon N] [--commit N]\n"
-                             "  [--proposals N] [--case NAME] [--resume] [--rewind N] [--list]\n";
+                             "  [--proposals N] [--case NAME] [--resume] [--rewind N] [--reactive] "
+                             "[--list]\n";
                 return 0;
             }
             if (i + 1 == argc)
@@ -320,6 +325,8 @@ int main(int argc, char **argv) {
                                                  (directory / (c.name + ".actions")).string()};
                 if (s.story)
                     args.push_back("--story");
+                if (reactive)
+                    args.push_back("--reactive");
                 if (!prefix.rows.empty()) {
                     const auto cut = prefix.rows.size() > rewind ? prefix.rows.size() - rewind : 0;
                     args.insert(args.end(),

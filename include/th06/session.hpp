@@ -51,5 +51,6 @@ class Session {
     bool started_ = false;
     bool story_ = false;
     unsigned cleared_stages_ = 0;
+    unsigned required_stages_ = 1;
 };
 } // namespace th06::solver
