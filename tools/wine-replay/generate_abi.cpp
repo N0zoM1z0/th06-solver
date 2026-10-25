@@ -24,6 +24,7 @@ int main(int argc, char **argv) {
     FIELD(GameManager, demoMode);
     FIELD(GameManager, replayFile);
     FIELD(GameManager, currentPower);
+    FIELD(GameManager, randomSeed);
     FIELD(GameManager, livesRemaining);
     FIELD(GameManager, bombsRemaining);
     FIELD(GameManager, isInMenu);

@@ -93,7 +93,8 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
     }
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
-               unsigned commit, unsigned retained, bool reactive, bool profile) {
+               unsigned commit, unsigned retained, bool reactive, bool profile, bool digests,
+               const std::vector<std::uint16_t> *literal = nullptr) {
     int pipefd[2];
     if (::pipe(pipefd))
         throw std::runtime_error("pipe failed");
@@ -112,7 +113,9 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
             std::uint16_t action = input;
             for (unsigned frame = 0; frame < horizon; ++frame) {
                 auto start = profile ? Clock::now() : Clock::time_point{};
-                if (reactive) {
+                if (literal)
+                    action = (*literal)[frame];
+                else if (reactive) {
                     // Future observations and their action-dependent RNG belong
                     // to this branch. Retention records the literal actions,
                     // including turns; it never repeats just the initial input.
@@ -133,7 +136,8 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                 if (frame < retained) {
                     start = profile ? Clock::now() : Clock::time_point{};
                     result.inputs[frame] = action;
-                    result.digests[frame] = game.observation_digest();
+                    if (digests)
+                        result.digests[frame] = game.observation_digest();
                     if (profile)
                         result.timings.digest += seconds_since(start);
                 }
@@ -247,10 +251,11 @@ Decision choose(Session &game, const PlannerOptions &options) {
     for (const auto &candidate : candidates) {
         const auto input = candidate.input;
         const auto moving = candidate.moving;
+        const bool digests = !options.defer_later_digests || decision.branches == 0;
         start = options.profile ? Clock::now() : Clock::time_point{};
-        const auto result =
-            rollout(game, input, moving, options.horizon, options.commit,
-                    std::max(options.commit, options.reuse), candidate.reactive, options.profile);
+        const auto result = rollout(game, input, moving, options.horizon, options.commit,
+                                    std::max(options.commit, options.reuse), candidate.reactive,
+                                    options.profile, digests);
         if (options.profile) {
             decision.timings.rollout_wall += seconds_since(start);
             decision.timings += result.timings;
@@ -265,6 +270,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
             (result.complete == best_complete &&
              (result.safe > best_safe || (result.safe == best_safe && cost < best_cost)))) {
             best_complete = result.complete;
+            decision.future_complete = result.complete;
             best_safe = result.safe;
             decision.lookahead_frames = best_safe;
             best_cost = cost;
@@ -274,14 +280,35 @@ Decision choose(Session &game, const PlannerOptions &options) {
             // A full native future may publish a longer literal action sequence.
             if (options.reuse && (result.complete || result.safe == options.horizon))
                 decision.certified_frames = std::min(options.reuse, result.safe);
-            decision.expected_digests.assign(result.digests.begin(),
-                                             result.digests.begin() + decision.certified_frames);
+            decision.expected_digests.clear();
+            if (digests)
+                decision.expected_digests.assign(
+                    result.digests.begin(), result.digests.begin() + decision.certified_frames);
             decision.expected_inputs.assign(result.inputs.begin(),
                                             result.inputs.begin() + decision.certified_frames);
         }
         if (decision.branches >= options.proposals &&
             (best_complete || best_safe == options.horizon))
             break;
+    }
+    if (decision.certified_frames && decision.expected_digests.empty()) {
+        const auto start = options.profile ? Clock::now() : Clock::time_point{};
+        const auto verified =
+            rollout(game, decision.input, decision.certified_frames, decision.certified_frames,
+                    options.commit, decision.certified_frames, false, options.profile, true,
+                    &decision.expected_inputs);
+        if (verified.safe != decision.certified_frames ||
+            verified.complete != (decision.future_complete &&
+                                  decision.certified_frames == decision.lookahead_frames))
+            throw std::runtime_error("winner certificate replay diverged");
+        decision.expected_digests.assign(verified.digests.begin(),
+                                         verified.digests.begin() + decision.certified_frames);
+        ++decision.branches;
+        decision.simulated_frames += verified.attempted;
+        if (options.profile) {
+            decision.timings.rollout_wall += seconds_since(start);
+            decision.timings += verified.timings;
+        }
     }
     return decision;
 }

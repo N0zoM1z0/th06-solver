@@ -18,7 +18,8 @@
   the retained TH08 MIT notice also covers this design adaptation.
 - Verified-future retention references TH08's complete-certificate/publication
   window in `docs/PLANNER.md`, revision `969ae4664e75`. TH06 records and executes
-  its own literal native input/digest prefix; no live transport layer is imported.
+  its own literal native input/digest prefix; that offline change imports no live
+  transport layer.
 - `src/native_support.cpp` carries the imported chain, RNG, timer and angle
   helpers, separated from Windows controller/filesystem/audio initialization.
 - `third_party/th08-compat/` reuses Linux Win32/Direct3D declarations, CPU D3D
@@ -33,6 +34,12 @@
   N0zoM1z0), revision `a6a045630044e570f6a5f0b0b2aa47f3ec4ff633`.
   They use the TH06 1.02h identity and observer export. The retained
   TH08 MIT notice covers this reuse as well.
+- `include/th06/shadow_bridge.hpp` adapts the aligned atomic mapped-file plan
+  transport from th08-solver revision `969ae4664e7551b392450c0eaaece92586f7ef6c`
+  (`include/th08/shadow_bridge.hpp`, MIT, copyright 2026 N0zoM1z0).
+  The common-start follower, immutable lead, bounded child verification and
+  separate X11/PulseAudio capture follow its `docs/PLANNER.md` design. TH06 uses
+  its own input bits, source callbacks, projection, lifecycle and native planner.
 
 Touhou and its original game code/assets are by ZUN / Team Shanghai Alice. The
 repository contains reconstruction and solver code only. Original EXE/DAT/image/

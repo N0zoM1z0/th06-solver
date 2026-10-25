@@ -27,3 +27,12 @@ add_custom_command(OUTPUT ${_wine_out}/observer.dll
   DEPENDS tools/wine-replay/observer.cpp tools/wine-replay/identity.hpp
     ${_wine_out}/retail_abi.hpp VERBATIM)
 add_custom_target(th06_wine_replay ALL DEPENDS ${_wine_out}/launch.exe ${_wine_out}/observer.dll)
+add_custom_command(OUTPUT ${_wine_out}/shadow.dll
+  COMMAND ${TH06_MINGW_CXX} -std=c++17 -O2 -static -shared -I${_wine_out}
+    -I${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/wine-shadow/observer.cpp
+    -ladvapi32 -Wl,--kill-at -o ${_wine_out}/shadow.new.dll
+  COMMAND ${CMAKE_COMMAND} -E rename ${_wine_out}/shadow.new.dll ${_wine_out}/shadow.dll
+  DEPENDS tools/wine-shadow/observer.cpp tools/wine-replay/identity.hpp
+    include/th06/shadow_bridge.hpp ${_wine_out}/retail_abi.hpp VERBATIM)
+add_custom_target(th06_wine_shadow ALL DEPENDS ${_wine_out}/shadow.dll)

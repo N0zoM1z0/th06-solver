@@ -166,3 +166,21 @@ shared frozen futures would therefore be an invalid oracle. Independent seeded
 stage starts and fresh-process replay are the additional predictions tested beyond
 the first fitted stationary trace. Full stage coverage and story lifecycle fidelity
 remain governed by the explicit acceptance matrix in Status.
+
+
+## Live shadow execution
+
+The [Wine shadow bridge](SHADOW_MPC.md) follows a real retail common start and
+actual input receipts. Native owns a separate complete world; the finite retail
+projection detects divergence rather than serializing that world. Atomic mapped
+plan slots preserve the immutable lead and the retail input owner keeps a private
+accepted copy. A successful branch predicts every literal update and digest;
+late adoption checks the actual consumed prefix before replacing the future.
+
+The search process group has a wall deadline, including its native descendants.
+Only full safe futures or real terminals publish. Native collision/RNG authority,
+retail progress and independent whole-tape native replay remain separate proof
+layers. Failed futures, timeout work and exhausted-queue fallback remain visible.
+A source stage handoff clears the old queue in both owner and follower, carrying
+RNG/resources through the original lifecycle without reseeding. Scalar state is
+cached only while the parent has received no new actual update.

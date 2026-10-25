@@ -1,0 +1,22 @@
+#pragma once
+#include "th06/session.hpp"
+#include "th06/shadow_bridge.hpp"
+namespace th06::shadow {
+struct Prediction {
+    unsigned count = 0, branches = 0, updates = 0, nominal = 0, motion = 0;
+    std::array<std::uint16_t, capacity> inputs{};
+    std::array<std::uint64_t, capacity> digests{};
+};
+static_assert(sizeof(Prediction) <= 4096);
+struct Search {
+    Prediction prediction;
+    double wall_ms = 0;
+    bool timeout = false;
+    unsigned motion_attempts = 0, motion_cursor = 0;
+};
+// The caller owns a single native world. Search forks it and enforces a wall
+// budget on the whole owned process group, including proposal descendants.
+Search search(solver::Session &game, const Plan &active, std::uint16_t previous, unsigned lead,
+              unsigned horizon, unsigned budget_ms, bool reuse, bool pulse = false,
+              unsigned motion_cursor = 0);
+} // namespace th06::shadow

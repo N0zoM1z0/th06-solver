@@ -13,6 +13,10 @@ struct PlannerOptions {
     // Retain a literal native future prefix only after a full horizon or terminal.
     // Zero preserves the commit-sized action; nonzero requires commit..horizon.
     unsigned reuse = 0;
+    // Skip hashes after the first candidate; independently replay a later
+    // winner to produce its full digest certificate. Defaults preserve offline
+    // cost/selection behavior. Verification work is included in the counters.
+    bool defer_later_digests = false;
 };
 struct PlannerTimings {
     double ranking = 0, rollout_wall = 0, native_step = 0, guidance = 0, scoring = 0, digest = 0;
@@ -34,6 +38,7 @@ struct Decision {
     std::uint64_t branches = 0, simulated_frames = 0;
     std::uint64_t reactive_branches = 0;
     unsigned lookahead_frames = 0, unique_inputs = 0;
+    bool future_complete = false;
     std::vector<std::uint64_t> expected_digests;
     std::vector<std::uint16_t> expected_inputs;
     PlannerTimings timings;

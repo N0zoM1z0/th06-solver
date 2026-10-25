@@ -1,6 +1,12 @@
 # Native runtime status
 
-Current scope: make the native runtime dependable for later shadow MPC.
+Current scope: [live Lunatic shadow MPC in Wine](SHADOW_MPC.md), with bounded
+decision time and actual input/queue accounting. Two complete Stage 5 / Reimu B
+runs pass NMNB, including a live recording and independent native replay of both
+actual routes. The initial Stage 6 case fails at update 14,230 after its safe
+queue expires; its source-level counterexample remains part of the evidence.
+Natural handoff and longer-verification experiments are separate from the older
+complete offline and retail-replay results below.
 Current experiments focus on [Lunatic hard-stage performance](PERFORMANCE.md),
 not another full matrix or story campaign. The latest 20 new paired stage-5/6
 cases compare `f942133` with opt-in native-future retention (`--reuse 32`). Both

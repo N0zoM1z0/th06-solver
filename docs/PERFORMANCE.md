@@ -1,5 +1,40 @@
 # Lunatic hard-stage performance
 
+## Live shadow decision costs
+
+The new [Wine shadow MPC](SHADOW_MPC.md) has a 110-ms total search cap and a
+16-update immutable input lead. Two complete Stage 5 / Reimu B live runs pass
+NMNB; Stage 6 controls remain incomplete. Search timeouts are terminated and
+charged separately from successful certificates, while an already verified
+queue can keep retail running. Default offline policy and cost behavior remain
+unchanged.
+
+Full retained digests on every failed candidate were an avoidable search cost.
+The online planner now hashes the first candidate normally, skips hashes on later
+candidates, and independently replays a later winner to build its complete digest
+certificate. It charges that verification branch and every replayed update.
+Three alternating paired trials at each of four checked Stage 5 seed-51280
+origins give these median whole-search times, including winner verification:
+
+| Actual origin, then fixed 16-input lead | Eager hashes | Deferred hashes | Native tail reached |
+|---|---:|---:|---:|
+| 3,056 | 360.52 ms | 254.47 ms | Complete 128 |
+| 8,352 | 466.38 ms | 349.46 ms | Incomplete 63 |
+| 13,632 | 392.59 ms | 287.20 ms | Incomplete 104 |
+| 17,408 | 106.61 ms | 99.16 ms | Complete 128 |
+
+Literal winner inputs and lookaheads match in every pair. These are diagnostic
+windows with the budget disabled to attribute costs, not additional retail
+clears or a whole-run speedup claim. Incomplete futures still publish no queue.
+
+The follower also caches its scalar state until an actual receipt changes the
+parent world. A synthetic 1,200-receipt stream paced over 20 seconds, with the
+same recorded retail inputs and an intentionally unacknowledged proposal,
+reduces controller CPU from 0.919 to 0.752 seconds in one pair. It isolates idle
+pool rescans rather than establishing live-policy throughput. A truncated final
+journal injected into the same fixture is rejected instead of becoming a clear.
+
+
 This experiment targets standalone stages, not the full matrix or stories. The
 previous random campaign stopped in four stage-5 cases; stage 6 consumed the most
 search time. The fixed comparison therefore selects stage 5 Reimu B / Marisa B

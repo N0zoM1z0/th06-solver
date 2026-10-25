@@ -1,8 +1,9 @@
 # TH06 solver engineering rules
 
 Read README.md and docs/STATUS.md before changing behavior. The owner's current
-scope is Lunatic standalone hard-stage search volume and runtime performance, using
-focused random-seed samples and th08-solver as a reference for later shadow MPC.
+scope is live Lunatic shadow MPC in the owned Wine retail game, using
+th08-solver as a reference. Measure actual decision deadlines and queue behavior;
+keep offline search and live execution evidence separate.
 Do not rerun the full matrix or story campaign for routine optimization.
 Retain the historical seed-0 matrix; do not schedule other difficulties now.
 The owner has now authorized retail replay interoperability under Wine, starting
