@@ -1,7 +1,8 @@
 # Wine retail replay interoperability
 
-The current trial uses the complete seed-0 Lunatic Reimu A native story:
-127,737 accepted updates, stage 1 / power 0 through the natural six-stage ending.
+The complete seed-0 Lunatic Reimu A story now passes retail playback:
+127,737 updates, stage 1 / power 0 through six natural clears, zero misses/bombs,
+and every row matching the declared 15-field native projection.
 The native `TH06ACTIONS` tape is an input to export; it cannot be renamed into a
 retail replay. Native coverage remains 96 standalone cases and 16 stories.
 
@@ -78,13 +79,40 @@ hidden-state hash. Immediate source death state is a failure even before the
 miss counter changes. A retail clear requires the natural final replay-return
 event, all required stage clears and zero misses/bombs; a safe prefix does not pass.
 
-Initial probes: the first 3,000 updates match the native CSV in every recorded
-field and have no miss/bomb. A later controlled infrastructure restart preserves
-9,472 matching updates; that aborted attempt is not a full clear. The frozen full
-story test is in progress. The combined native/retail tool tests pass 11/11.
-The scalar comparator also has deterministic rejection tests for truncated rows,
-unequal traces and incomplete/premature completion records.
+The completed trial (`reports/local/retail/runs/full002/`) has:
 
-Unsupported evidence claims: one successful retail story would not certify the
+| Check | Result |
+|---|---|
+| Native / retail / compared rows | 127,737 / 127,737 / 127,737 |
+| First difference in the 15 recorded fields | None |
+| Natural stage clears / final replay return | 6 / supervisor state 8 |
+| Misses / bombs | 0 / 0 |
+| Cgroup memory peak | 348,819,456 bytes (332.66 MiB) |
+| Memory hard limit / swap limit | 2,147,483,648 bytes / 0 |
+| OOM / OOM kills | 0 / 0 |
+
+The replay is 76,528 bytes, SHA-256
+`c29f3975d9b2744d3460c7946c7130bdc026dc3c47566c1e0d45bf7c14fb192d`.
+The EXE's disk hash still matches the preserved original. Final comparison,
+natural terminal and resource receipts are `comparison-final.json`,
+`outcome.json` and `resource-receipt.json` in that attempt directory. A stage-6
+retail screenshot is retained privately as `stage6.png`.
+
+The older wrapper used for this full run exited with a service cleanup timeout
+after its owned launcher exited 0; the complete game outcome and trace agreement
+precede that teardown failure. The updated runner shuts down only its owned Wine
+prefix before closing X. A separate latest-binary 3,000-update check (`cleanup003`)
+matches every observed field, verifies the kernel memory/swap limits, stops at
+the requested incomplete frame budget (exit 4), and cleans up without a timeout.
+Its peak is 381,435,904 bytes, with zero OOM events. Both receipts remain intact.
+
+Earlier probes include a matching 3,000-update prefix and a controlled
+infrastructure restart after 9,472 matching updates. Those aborted/incomplete
+attempts are not full clears, and their logs and costs remain recorded.
+The combined native/retail tool tests pass 11/11. The scalar comparator includes
+deterministic rejection tests for truncated rows, unequal traces and
+incomplete/premature completion records.
+
+Unsupported evidence claims: this successful retail story does not certify the
 other 111 native cases, every seed, all Wine/renderer versions, or complete hidden
 state equality. Logs and exact binary/replay identities identify the tested run.

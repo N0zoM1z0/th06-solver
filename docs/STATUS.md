@@ -3,8 +3,12 @@
 Current scope: make the native runtime dependable for later shadow MPC.
 The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
 including fresh native replay of every entire route. The owner has now authorized
-Wine retail replay interoperability, starting with Lunatic Reimu A. That separate
-test is recorded in [Retail replay](RETAIL_REPLAY.md).
+Wine retail replay interoperability. The complete Lunatic Reimu A seed-0 story
+now also passes retail playback: six natural clears, zero misses/bombs and all
+127,737 rows matching the declared 15-field native projection. Its full-playback
+cgroup peak is 348,819,456 bytes with zero OOM events under a 2-GiB hard limit.
+That one retail case is separate from the 112-case native matrix; details are
+recorded in [Retail replay](RETAIL_REPLAY.md).
 
 ## Acceptance matrix
 

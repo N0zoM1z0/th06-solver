@@ -4,8 +4,9 @@ C++17 native, headless Touhou 06 runtime and offline planning, following
 [th08-solver](https://github.com/N0zoM1z0/th08-solver)'s native rollout approach.
 **Native coverage: 96/96 legitimate stage/difficulty/shot combinations and 16/16
 continuous stories** at seed 0. Every case is NMNB with a complete fresh-process
-replay. Wine retail replay interoperability is being tested on Lunatic Reimu A;
-see [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
+replay. **Wine retail playback also passes one complete Lunatic Reimu A story**:
+127,737 updates, six natural stage clears and zero misses/bombs.
+See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.
