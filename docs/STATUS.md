@@ -2,13 +2,16 @@
 
 Current scope: make the native runtime dependable for later shadow MPC.
 Current experiments focus on [Lunatic hard-stage performance](PERFORMANCE.md),
-not another full matrix or story campaign. Twenty fixed stage-5/6 seed/case pairs
-clear 20/20 in both versions after the same bounded recovery policy. Native fast
-paths plus opt-in diverse-first ordering improve initial clears from 14/20 to
-16/20 and reduce total planner CPU from 3,622.66 to 2,744.31 seconds, including
-all failures/retries. The ordering remains optional because one stage-6 initial
-clear regresses. Unchanged-input native timing improves about 1.5–2×; nine
-focused contracts pass and all 40 final tapes pass current-build fresh replay.
+not another full matrix or story campaign. The latest 20 new paired stage-5/6
+cases compare `f942133` with opt-in native-future retention (`--reuse 32`). Both
+versions clear 20/20 after the same recovery policy, including all failures and
+retries. Speculative native updates fall from 39,991,255 to 11,297,133 (−71.75%)
+and planner CPU from 2,659.12 to 935.33 seconds (−64.83%). Initial clears fall
+from 18/20 to 16/20, so the longer publication window remains optional.
+Eleven focused contracts pass, and all 40 final tapes pass fresh replay under
+both the frozen baseline checker and current build. Earlier kernel optimizations
+retain their separate 1.5–2× unchanged-input timing result; diverse-first ordering
+is off in this new comparison.
 
 The earlier [Lunatic random-seed campaign](LUNATIC_RANDOM_SEEDS.md) remains a
 separate historical control.

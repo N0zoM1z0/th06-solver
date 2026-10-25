@@ -10,11 +10,12 @@ See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. Current experiments focus
 only on Lunatic random-seed robustness.
-The latest [hard-stage performance study](docs/PERFORMANCE.md) compares 20 fixed
-seed/case pairs: both versions clear 20/20 after recovery, while native fast
-paths plus optional diverse-first search use 24% less total planner CPU.
-Unchanged-input native stage replays run about 1.5–2× faster. Diverse-first stays
-opt-in because its first-pass improvement in stage 5 trades off a stage-6 case.
+The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
+future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
+recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass
+clears fall from 18/20 to 16/20, so retention remains optional. The earlier native
+kernel optimizations make unchanged-input stage replays about 1.5–2× faster;
+diverse-first ordering remains a separate optional experiment.
 The preselected [random-seed experiment](docs/LUNATIC_RANDOM_SEEDS.md) covers
 four seeds across all Lunatic stages/shots and continuous stories. Its standalone
 matrix passes **96/96** (92 first-pass, four recovered), and its continuous stories

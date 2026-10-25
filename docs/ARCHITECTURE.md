@@ -94,12 +94,24 @@ it is not enabled by default. `unique_inputs`, `decisions` and
 `short_horizon_decisions` expose search coverage. A short selected future can
 also be a natural terminal truncation, so that counter alone is not a failure.
 
+Opt-in `--reuse N` retains a longer literal input/digest prefix of a selected
+native future, including stop/turn actions. A full horizon or natural terminal
+is required to extend beyond `commit`; incomplete futures keep the legacy cap.
+The parent executes `Decision::expected_inputs` and checks every matching digest.
+`Decision::input` names only its first action. Zero preserves default behavior;
+nonzero bounds are `commit <= reuse <= horizon <= 600`. The horizon, proposal
+budget, original initial-action duration and reactive guidance cadence are
+unchanged. No mutable native state is copied or restored. Longer publication
+changes replanning frequency and can increase retries; measured work and outcome
+tradeoffs belong in [Performance](PERFORMANCE.md).
+
 Each evaluated child runs the original game, including action-dependent targeting,
 RNG, transforms, enemy bodies and lasers. It returns a consecutive safe prefix
 and observable digests. The parent accepts only matching native execution, commits
 a bounded prefix, and replans. Failed child processes are errors, not safe routes.
 An exhausted frame budget writes an incomplete tape and exits 2.
-The accepted frontier is also saved atomically every 600 updates, so a later
+The accepted frontier is saved atomically after blocks crossing 600-update
+intervals, so a later
 rollout error retains a replayable prefix; no speculative future is checkpointed.
 
 For recovery, `th06_plan --prefix TAPE --prefix-frames N --exclude-first MASK`

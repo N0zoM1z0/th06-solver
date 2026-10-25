@@ -16,6 +16,9 @@
   `th08-solver` revision `1d49a8e` (`native_policy.hpp`, headless `runtime.cpp` and
   `docs/PLANNER.md`). TH06 uses its own source predicates and update boundaries;
   the retained TH08 MIT notice also covers this design adaptation.
+- Verified-future retention references TH08's complete-certificate/publication
+  window in `docs/PLANNER.md`, revision `969ae4664e75`. TH06 records and executes
+  its own literal native input/digest prefix; no live transport layer is imported.
 - `src/native_support.cpp` carries the imported chain, RNG, timer and angle
   helpers, separated from Windows controller/filesystem/audio initialization.
 - `third_party/th08-compat/` reuses Linux Win32/Direct3D declarations, CPU D3D

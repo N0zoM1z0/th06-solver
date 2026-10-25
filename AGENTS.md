@@ -1,7 +1,7 @@
 # TH06 solver engineering rules
 
 Read README.md and docs/STATUS.md before changing behavior. The owner's current
-scope is Lunatic standalone hard-stage search and runtime performance, using
+scope is Lunatic standalone hard-stage search volume and runtime performance, using
 focused random-seed samples and th08-solver as a reference for later shadow MPC.
 Do not rerun the full matrix or story campaign for routine optimization.
 Retain the historical seed-0 matrix; do not schedule other difficulties now.

@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
                     << "th06_plan --data DIR --output TAPE [--stage 1..7] [--difficulty 0..4]\n"
                        "  [--shot 0..3] [--seed 0..65535] [--power 0..128] [--frames N]\n"
                        "  [--horizon 1..600] [--commit 1..horizon] [--proposals N] [--story] "
-                       "[--reactive] [--profile] [--diverse-first]\n";
+                       "[--reactive] [--profile] [--diverse-first] [--reuse N]\n";
                 return 0;
             }
             if (i + 1 == argc)
@@ -79,6 +79,8 @@ int main(int argc, char **argv) {
                     options.horizon = n;
                 else if (key == "--commit")
                     options.commit = n;
+                else if (key == "--reuse")
+                    options.reuse = n;
                 else if (key == "--proposals" && n)
                     options.proposals = n;
                 else if (key == "--prefix-frames")
@@ -93,6 +95,8 @@ int main(int argc, char **argv) {
             throw std::invalid_argument("--data and --output are required");
         if (!options.commit || options.commit > options.horizon || options.horizon > 600)
             throw std::invalid_argument("require 1 <= commit <= horizon <= 600");
+        if (options.reuse && (options.reuse < options.commit || options.reuse > options.horizon))
+            throw std::invalid_argument("require reuse = 0 or commit <= reuse <= horizon");
         Tape prefix;
         if (!prefix_path.empty()) {
             prefix = read_tape(prefix_path);
@@ -123,6 +127,7 @@ int main(int argc, char **argv) {
         PlannerTimings timings;
         unsigned decisions = 0, short_horizon_decisions = 0;
         std::uint64_t unique_inputs = 0;
+        std::uint64_t reused_frames = 0, extended_prefixes = 0, mixed_prefixes = 0;
         const auto search_begin = std::chrono::steady_clock::now();
         rusage self_begin{}, children_begin{};
         getrusage(RUSAGE_SELF, &self_begin);
@@ -143,15 +148,26 @@ int main(int argc, char **argv) {
             simulated += decision.simulated_frames;
             if (!decision.certified_frames)
                 break;
+            if (decision.expected_inputs.size() != decision.certified_frames ||
+                decision.expected_digests.size() != decision.certified_frames)
+                throw std::logic_error("invalid certified native action sequence");
             const auto count =
                 std::min<std::uint64_t>(decision.certified_frames, frames - state.frame);
+            if (count > options.commit) {
+                ++extended_prefixes;
+                reused_frames += count - options.commit;
+            }
+            mixed_prefixes += std::any_of(decision.expected_inputs.begin(),
+                                          decision.expected_inputs.begin() + count,
+                                          [&](auto input) { return input != decision.input; });
             for (unsigned i = 0; i < count; ++i) {
-                state = game.step(decision.input);
+                const auto input = decision.expected_inputs[i];
+                state = game.step(input);
                 const auto digest = game.observation_digest();
                 if (state.hit || digest != decision.expected_digests[i])
                     throw std::runtime_error("accepted prefix diverged from child at frame " +
                                              std::to_string(state.frame));
-                tape.rows.push_back({decision.input, digest});
+                tape.rows.push_back({input, digest});
                 if (state.complete)
                     break;
             }
@@ -190,6 +206,9 @@ int main(int argc, char **argv) {
                   << ",\"decisions\":" << decisions
                   << ",\"short_horizon_decisions\":" << short_horizon_decisions
                   << ",\"unique_inputs\":" << unique_inputs << ",\"commit\":" << options.commit
+                  << ",\"reuse\":" << options.reuse << ",\"reused_frames\":" << reused_frames
+                  << ",\"extended_prefixes\":" << extended_prefixes
+                  << ",\"mixed_prefixes\":" << mixed_prefixes
                   << ",\"proposals\":" << options.proposals << ",\"planning_seconds\":" << seconds;
         if (options.profile) {
             rusage self_end{}, children_end{};

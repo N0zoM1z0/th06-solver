@@ -5,6 +5,95 @@ previous random campaign stopped in four stage-5 cases; stage 6 consumed the mos
 search time. The fixed comparison therefore selects stage 5 Reimu B / Marisa B
 and stage 6 Marisa B. All starts use Lunatic, power 128 and the source checkpoint.
 
+## Search volume: retain a verified native future
+
+The next source-level waste is overlapping rollout work. Every decision pays
+for full native futures but ordinarily keeps only the first eight updates.
+With six 120-update candidates, an uncomplicated segment costs roughly 90
+speculative updates per accepted update. Retaining 32 already simulated updates
+can reduce that ratio toward 22.5 without reducing the horizon or proposals.
+
+`--reuse N` records the selected future's literal inputs and per-update digests.
+This includes a short move followed by holding and reactive turns after the
+first commit. The parent executes that sequence, checking every digest; repeating
+only the first input would be incorrect. Only a full safe horizon or natural
+terminal permits extending beyond the original commit. An incomplete future
+still supplies at most the legacy eight-update prefix. Bounds are
+`commit <= N <= horizon <= 600`; zero remains the default and disables retention.
+Both `th06_plan` and the resumable campaign accept the option.
+
+This adapts TH08's complete-certificate/publication-window idea to the offline
+TH06 interface. It copies only primitive inputs/digests, never a native world.
+All accepted updates still execute normally; gameplay clocks, RNG, physics and
+the native kernel are unchanged from `f942133`.
+
+### Development gate and fresh sample
+
+Three known cases each complete NMNB with both 16 and 32 retained updates,
+passing the frozen checker's full replay:
+
+| Development case | Speculative updates, reuse 16 | Speculative updates, reuse 32 |
+|---|---:|---:|
+| Stage 5 Reimu B, seed 7589 | 861,500 | 467,921 |
+| Stage 5 Marisa B, seed 5341 | 920,271 | 447,062 |
+| Stage 6 Marisa B, seed 7589 | 1,180,865 | 610,957 |
+
+The 32-update variant is frozen before inspecting the baseline outcomes of
+eight newly selected seeds: **50102, 1166, 13738, 3693, 10474, 61250, 26526,
+22400**. Stage 5 Reimu B / Marisa B use all eight; stage 6 Marisa B uses the
+first four. This is another 20 paired cases, separate from the earlier study.
+Both versions use horizon 120, commit 8, six proposals, reactive futures,
+default candidate ordering and a 60,000-update absolute frame budget.
+`--diverse-first` is off in both. The sole experimental policy change is reuse 32.
+
+| Case family | Default initial clears | Reuse-32 initial clears |
+|---|---:|---:|
+| Stage 5 Reimu B | 7/8 | 7/8 |
+| Stage 5 Marisa B | 7/8 | 6/8 |
+| Stage 6 Marisa B | 4/4 | 3/4 |
+| Total | 18/20 | 16/20 |
+
+The same predeclared recovery budgets apply to both: rewind 768 / horizon 180 /
+eight proposals, then rewind 2,048 / horizon 240 / twelve proposals. All six
+incomplete attempts clear with the first recovery; the second schedules no work.
+Both versions finish **20/20 NMNB**, with every complete route verified in full
+by the frozen baseline checker and the final current build.
+
+| All attempts, including failures/retries | Default | Reuse 32 |
+|---|---:|---:|
+| Attempts | 22 | 24 |
+| Search decisions | 57,187 | 14,804 |
+| Native branches | 407,147 | 128,083 |
+| Speculative native updates | 39,991,255 | 11,297,133 |
+| Prefix reconstruction updates | 21,035 | 42,880 |
+| Final accepted route updates | 455,861 | 453,098 |
+| Planner CPU seconds | 2,659.12 | 935.33 |
+
+Speculative work falls **71.75%**, decisions fall 74.11%, and planner CPU falls
+**64.83%** (2.84×). CPU includes all planner attempts, initialization, hashing,
+reconstruction and output; checker and diagnostic work are separate. Parent
+execution and prefix reconstruction still execute every native update. Final
+route lengths differ by less than 1%, so shorter gameplay does not explain
+the work reduction. Across all candidate attempts, 337,828 accepted updates
+reuse an existing proof beyond the first commit; 10,283 prefixes contain
+multiple inputs, confirming that this is not a larger constant-action commit.
+
+The first-pass regression is retained, not hidden by the recoveries. Longer
+publication delays the next complete rolling-horizon search and changes later
+choices; a safe finite future does not prove long-term escape. Retention remains
+opt-in. The results establish a lower-cost bounded offline solve for this sample,
+not a universal robustness improvement or an online/Wine controller result.
+
+Eleven focused tests pass. A controlled native callback fails every future at
+update 20: the selected safe length is 19 but only eight updates are certified.
+Another native fixture checks a mixed-input 32-update prefix and parent/RNG
+isolation. Invalid bounds, commit-sized legacy equivalence and campaign option
+forwarding are guarded. The whole original 10,567-update default failure tape
+also remains byte-identical. Raw evidence is under
+`reports/local/lunatic-search-20261025/`.
+The solver/probe group peaks at 110,108,672 bytes (105.01 MiB), with zero OOM
+events under the same 2-GiB/no-swap cap and at most four solver/probe jobs.
+
 ## Why a safe search can stop
 
 `src/planner.cpp` ranks linear forecasts of current bullets and enemy bodies.
@@ -75,7 +164,7 @@ which work was removed, without treating profiler overhead as application speed.
 The optimized default search also reproduces the entire original 10,567-update
 Reimu B failure tape byte-for-byte, preserving the baseline policy and replay.
 
-## Fixed random-seed comparison
+## Earlier kernel/diversity comparison
 
 Eight new seeds are chosen before gameplay trials:
 **54269, 14916, 31166, 20637, 33164, 54773, 14984, 1145**. Both stage-5 shots use
@@ -137,8 +226,8 @@ retains the native profile identifier and exact input/digest tape.
 
 ```sh
 build/th06_plan --data /path/to/th06-data --stage 5 --difficulty 3 --shot 1 \
-  --seed 54269 --power 128 --reactive --horizon 120 --commit 8 --proposals 6 \
-  --frames 60000 --diverse-first --output reports/local/perf-stage5.actions
+  --seed 50102 --power 128 --reactive --horizon 120 --commit 8 --proposals 6 \
+  --frames 60000 --reuse 32 --output reports/local/perf-stage5.actions
 build/th06_replay_check --data /path/to/th06-data \
   --tape reports/local/perf-stage5.actions --require-complete
 build/th06_runtime_bench /path/to/th06-data reports/local/perf-stage5.actions
@@ -163,10 +252,10 @@ Raw protocols, frozen binaries, attempts, tapes and receipts remain ignored unde
 a proof for every seed or new Wine playback evidence. Cross-runtime comparison
 accepts harmless floating-point drift while requiring correct gameplay progress.
 
-The next search bottleneck is the proposal/future family: linear observations
+The remaining search bottleneck is the proposal/future family: linear observations
 omit TH06's transform and laser state, and short commitments do not certify
 long-term escape. Native hazard recording with spatially diverse multi-leg
 proposals is a justified next experiment. Persistent checkpoint holders are a
-lower priority here: prefix reconstruction is roughly 0.1–0.2% of speculative
-updates. Those counts justify measuring reconstruction time before adding holder
+lower priority in the earlier kernel study: prefix reconstruction is roughly
+0.1–0.2% of speculative updates. Those counts justify measuring time before adding holder
 processes, rather than assuming they are the main search cost.

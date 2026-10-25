@@ -77,6 +77,7 @@ struct Result {
     double cost = 0;
     bool complete = false;
     std::array<std::uint64_t, 600> digests{};
+    std::array<std::uint16_t, 600> inputs{};
     PlannerTimings timings;
 };
 void transfer(int fd, void *data, std::size_t size, bool output) {
@@ -92,7 +93,7 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
     }
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
-               unsigned commit, bool reactive, bool profile) {
+               unsigned commit, unsigned retained, bool reactive, bool profile) {
     int pipefd[2];
     if (::pipe(pipefd))
         throw std::runtime_error("pipe failed");
@@ -112,9 +113,9 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
             for (unsigned frame = 0; frame < horizon; ++frame) {
                 auto start = profile ? Clock::now() : Clock::time_point{};
                 if (reactive) {
-                    // Only the initial commit-sized action is certified to the
-                    // caller. This branch-owned continuation can turn using
-                    // future observations; every update still executes natively.
+                    // Future observations and their action-dependent RNG belong
+                    // to this branch. Retention records the literal actions,
+                    // including turns; it never repeats just the initial input.
                     if (frame >= commit && (frame - commit) % 16 == 0)
                         action = reactive_input(game.observe());
                 } else
@@ -129,8 +130,9 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                 ++result.attempted;
                 if (state.hit)
                     break;
-                if (frame < commit) {
+                if (frame < retained) {
                     start = profile ? Clock::now() : Clock::time_point{};
+                    result.inputs[frame] = action;
                     result.digests[frame] = game.observation_digest();
                     if (profile)
                         result.timings.digest += seconds_since(start);
@@ -184,6 +186,8 @@ Decision choose(Session &game, const PlannerOptions &options) {
     if (!options.commit || options.commit > options.horizon || options.horizon > 600 ||
         !options.proposals)
         throw std::invalid_argument("require 1 <= commit <= horizon <= 600 and proposals > 0");
+    if (options.reuse && (options.reuse < options.commit || options.reuse > options.horizon))
+        throw std::invalid_argument("require reuse = 0 or commit <= reuse <= horizon");
     constexpr std::array<std::uint16_t, 9> directions = {0,       16,       32,      64,      128,
                                                          16 | 64, 16 | 128, 32 | 64, 32 | 128};
     Decision decision;
@@ -244,8 +248,9 @@ Decision choose(Session &game, const PlannerOptions &options) {
         const auto input = candidate.input;
         const auto moving = candidate.moving;
         start = options.profile ? Clock::now() : Clock::time_point{};
-        const auto result = rollout(game, input, moving, options.horizon, options.commit,
-                                    candidate.reactive, options.profile);
+        const auto result =
+            rollout(game, input, moving, options.horizon, options.commit,
+                    std::max(options.commit, options.reuse), candidate.reactive, options.profile);
         if (options.profile) {
             decision.timings.rollout_wall += seconds_since(start);
             decision.timings += result.timings;
@@ -264,11 +269,15 @@ Decision choose(Session &game, const PlannerOptions &options) {
             decision.lookahead_frames = best_safe;
             best_cost = cost;
             decision.input = input;
-            // A short motion followed by a neutral tail proves only
-            // the initial motion for this returned action.
             decision.certified_frames = std::min({options.commit, moving, result.safe});
+            // An incomplete future retains only its original short prefix.
+            // A full native future may publish a longer literal action sequence.
+            if (options.reuse && (result.complete || result.safe == options.horizon))
+                decision.certified_frames = std::min(options.reuse, result.safe);
             decision.expected_digests.assign(result.digests.begin(),
                                              result.digests.begin() + decision.certified_frames);
+            decision.expected_inputs.assign(result.inputs.begin(),
+                                            result.inputs.begin() + decision.certified_frames);
         }
         if (decision.branches >= options.proposals &&
             (best_complete || best_safe == options.horizon))

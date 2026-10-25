@@ -80,12 +80,17 @@ if(BUILD_TESTING)
   add_executable(native_fastpaths_tests tests/native_fastpaths_tests.cpp)
   target_link_libraries(native_fastpaths_tests PRIVATE th06_native)
   add_test(NAME native_fastpaths_contracts COMMAND native_fastpaths_tests)
+  add_executable(planner_reuse_tests tests/planner_reuse.cpp)
+  target_link_libraries(planner_reuse_tests PRIVATE th06_planner)
   add_test(NAME campaign_manifest COMMAND ${CMAKE_COMMAND}
     -DCAMPAIGN=$<TARGET_FILE:th06_campaign> -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/campaign_manifest.cmake)
   add_test(NAME campaign_snapshot COMMAND ${CMAKE_COMMAND}
     -DCAMPAIGN=$<TARGET_FILE:th06_campaign> -DWORK=${CMAKE_CURRENT_BINARY_DIR}/snapshot-fixture
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/campaign_snapshot.cmake)
   if(TH06_DATA_DIR)
+    add_test(NAME planner_reuse_actions COMMAND planner_reuse_tests ${TH06_DATA_DIR} mixed)
+    add_test(NAME planner_reuse_failure COMMAND planner_reuse_tests ${TH06_DATA_DIR} failed)
+    set_tests_properties(planner_reuse_actions planner_reuse_failure PROPERTIES TIMEOUT 30)
     add_test(NAME planner_profile_contracts COMMAND ${CMAKE_COMMAND}
       -DPLAN=$<TARGET_FILE:th06_plan> -DCHECK=$<TARGET_FILE:th06_replay_check>
       -DDATA=${TH06_DATA_DIR} -DWORK=${CMAKE_CURRENT_BINARY_DIR}/profile-tests

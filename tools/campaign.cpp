@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
         const auto source_binaries = fs::read_symlink("/proc/self/exe").parent_path();
         std::string suite = "stages", only;
         unsigned jobs = 2, seed = 0, frames = 60000, horizon = 90, commit = 8, proposals = 4,
-                 rewind = 0;
+                 rewind = 0, reuse = 0;
         int selected_difficulty = -1;
         std::vector<unsigned> seeds;
         bool seed_selected = false;
@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
                              "  [--jobs 1..4] [--seed N | --seeds N,N,...] [--difficulty 0..4]\n"
                              "  [--frames N] [--horizon N] [--commit N]\n"
                              "  [--proposals N] [--case NAME] [--resume] [--rewind N] [--reactive] "
-                             "[--list]\n";
+                             "[--reuse N] [--list]\n";
                 return 0;
             }
             if (i + 1 == argc)
@@ -238,6 +238,8 @@ int main(int argc, char **argv) {
                     horizon = n;
                 else if (key == "--commit")
                     commit = n;
+                else if (key == "--reuse")
+                    reuse = n;
                 else if (key == "--proposals")
                     proposals = n;
                 else if (key == "--rewind")
@@ -249,7 +251,7 @@ int main(int argc, char **argv) {
         if (suite != "stages" && suite != "story" && suite != "all")
             throw std::invalid_argument("invalid suite");
         if (!jobs || jobs > 4 || !commit || commit > horizon || horizon > 600 || !proposals ||
-            !frames)
+            !frames || (reuse && (reuse < commit || reuse > horizon)))
             throw std::invalid_argument("invalid campaign budget");
         if (seeds.empty())
             seeds.push_back(seed);
@@ -370,6 +372,8 @@ int main(int argc, char **argv) {
                     args.push_back("--story");
                 if (reactive)
                     args.push_back("--reactive");
+                if (reuse)
+                    args.insert(args.end(), {"--reuse", std::to_string(reuse)});
                 if (!prefix.rows.empty()) {
                     const auto cut = prefix.rows.size() > rewind ? prefix.rows.size() - rewind : 0;
                     args.insert(args.end(),

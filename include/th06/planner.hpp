@@ -10,6 +10,9 @@ struct PlannerOptions {
     bool reactive = false;
     bool profile = false;
     bool diverse_first = false;
+    // Retain a literal native future prefix only after a full horizon or terminal.
+    // Zero preserves the commit-sized action; nonzero requires commit..horizon.
+    unsigned reuse = 0;
 };
 struct PlannerTimings {
     double ranking = 0, rollout_wall = 0, native_step = 0, guidance = 0, scoring = 0, digest = 0;
@@ -24,12 +27,15 @@ struct PlannerTimings {
     }
 };
 struct Decision {
+    // Initial input for diagnostics. Execute expected_inputs, since an extended
+    // certificate can stop moving or turn after this first action.
     std::uint16_t input = 0;
     unsigned certified_frames = 0;
     std::uint64_t branches = 0, simulated_frames = 0;
     std::uint64_t reactive_branches = 0;
     unsigned lookahead_frames = 0, unique_inputs = 0;
     std::vector<std::uint64_t> expected_digests;
+    std::vector<std::uint16_t> expected_inputs;
     PlannerTimings timings;
 };
 // Candidate generation is heuristic. A successful child executes the original
