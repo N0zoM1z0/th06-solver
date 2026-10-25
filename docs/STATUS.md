@@ -1,6 +1,8 @@
 # Native runtime status
 
 Current scope: make the native runtime dependable for later shadow MPC.
+New trials focus only on [Lunatic random-seed robustness](LUNATIC_RANDOM_SEEDS.md).
+The all-difficulty seed-0 results below remain historical controls.
 The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
 including fresh native replay of every entire route. The owner has now authorized
 Wine retail replay interoperability. The complete Lunatic Reimu A seed-0 story

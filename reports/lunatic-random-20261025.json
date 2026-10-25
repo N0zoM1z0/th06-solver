@@ -1,0 +1,75 @@
+{
+  "experiment": "lunatic-random-20261025",
+  "selected_at_utc": "2026-10-25T09:54:26.985872+00:00",
+  "sampling": "four distinct uniform OS-random integers from 1..65535, selected before trials",
+  "seeds": [
+    5341,
+    7589,
+    30826,
+    9674
+  ],
+  "difficulty": 3,
+  "shots": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "stages": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "stage_checkpoint_power": {
+    "1": 0,
+    "2": 64,
+    "3": 128,
+    "4": 128,
+    "5": 128,
+    "6": 128
+  },
+  "story_start": {
+    "stage": 1,
+    "power": 0,
+    "natural_required_stages": 6
+  },
+  "expected_stage_cases": 96,
+  "expected_story_cases": 16,
+  "initial_search": {
+    "horizon": 120,
+    "commit": 8,
+    "proposals": 6,
+    "reactive": true,
+    "stage_frames": 60000,
+    "story_frames": 180000
+  },
+  "recovery_searches": [
+    {
+      "rewind": 768,
+      "horizon": 180,
+      "commit": 8,
+      "proposals": 8,
+      "reactive": true
+    },
+    {
+      "rewind": 2048,
+      "horizon": 240,
+      "commit": 8,
+      "proposals": 12,
+      "reactive": true
+    }
+  ],
+  "concurrency": 4,
+  "memory_max_bytes": 2147483648,
+  "swap_max_bytes": 0,
+  "acceptance": "natural native terminal, zero misses/bombs, full fresh-process tape replay with every digest matching",
+  "interpretation": "finite seed sample; budget failure is not a proof of unsolvability; record initial and retry outcomes separately",
+  "runtime_sha256": {
+    "th06_plan": "6230049f78dfae950c2e8e3a269b46f901a8e4e8de2ef48fdd845485db7755ed",
+    "th06_replay_check": "c57c0de3a165003f7bb0d5f45b9e56b65084ddbfcf853794b8c098e8f650b33a"
+  },
+  "status": "selected; not yet run"
+}

@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <sys/file.h>
@@ -26,6 +27,22 @@ struct Running {
     pid_t pid;
     std::size_t index;
 };
+std::vector<unsigned> parse_seeds(const std::string &value) {
+    if (value.empty() || value.back() == ',')
+        throw std::invalid_argument("empty seed list element");
+    std::istringstream input(value);
+    std::vector<unsigned> seeds;
+    std::string token;
+    while (std::getline(input, token, ',')) {
+        std::size_t used;
+        const auto n = std::stoul(token, &used);
+        if (used != token.size() || n > 65535 || seeds.size() >= 256 ||
+            std::find(seeds.begin(), seeds.end(), n) != seeds.end())
+            throw std::invalid_argument("seed list must contain 1..256 unique 16-bit values");
+        seeds.push_back(n);
+    }
+    return seeds;
+}
 class CampaignLock {
   public:
     explicit CampaignLock(const fs::path &directory) {
@@ -159,6 +176,9 @@ int main(int argc, char **argv) {
         std::string suite = "stages", only;
         unsigned jobs = 2, seed = 0, frames = 60000, horizon = 90, commit = 8, proposals = 4,
                  rewind = 0;
+        int selected_difficulty = -1;
+        std::vector<unsigned> seeds;
+        bool seed_selected = false;
         bool list = false, resume = false, reactive = false;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
@@ -176,7 +196,8 @@ int main(int argc, char **argv) {
             }
             if (key == "--help") {
                 std::cout << "th06_campaign --data DIR --output DIR [--suite stages|story|all]\n"
-                             "  [--jobs 1..4] [--seed N] [--frames N] [--horizon N] [--commit N]\n"
+                             "  [--jobs 1..4] [--seed N | --seeds N,N,...] [--difficulty 0..4]\n"
+                             "  [--frames N] [--horizon N] [--commit N]\n"
                              "  [--proposals N] [--case NAME] [--resume] [--rewind N] [--reactive] "
                              "[--list]\n";
                 return 0;
@@ -192,15 +213,25 @@ int main(int argc, char **argv) {
                 suite = value;
             else if (key == "--case")
                 only = value;
-            else {
+            else if (key == "--seeds") {
+                if (seed_selected)
+                    throw std::invalid_argument("choose --seed or --seeds once");
+                seeds = parse_seeds(value);
+                seed_selected = true;
+            } else {
                 std::size_t used;
                 const auto n = std::stoul(value, &used);
                 if (used != value.size() || n > 1000000)
                     throw std::invalid_argument("invalid campaign value");
                 if (key == "--jobs")
                     jobs = n;
-                else if (key == "--seed" && n <= 65535)
+                else if (key == "--seed" && n <= 65535) {
+                    if (seed_selected)
+                        throw std::invalid_argument("choose --seed or --seeds once");
                     seed = n;
+                    seed_selected = true;
+                } else if (key == "--difficulty" && n <= 4)
+                    selected_difficulty = n;
                 else if (key == "--frames")
                     frames = n;
                 else if (key == "--horizon")
@@ -220,29 +251,41 @@ int main(int argc, char **argv) {
         if (!jobs || jobs > 4 || !commit || commit > horizon || horizon > 600 || !proposals ||
             !frames)
             throw std::invalid_argument("invalid campaign budget");
+        if (seeds.empty())
+            seeds.push_back(seed);
         std::vector<Case> cases;
         if (suite != "story") {
             // Hardest standard cases first; unreachable Easy stage 6 is excluded.
-            for (int difficulty : {3, 2, 1, 0, 4})
-                for (int stage = difficulty == 4 ? 7 : 1; stage <= (difficulty == 4   ? 7
-                                                                    : difficulty == 0 ? 5
-                                                                                      : 6);
-                     ++stage)
-                    for (int shot = 0; shot < 4; ++shot) {
-                        const int power = stage == 1 ? 0 : stage == 2 ? 64 : 128;
-                        cases.push_back(
-                            {"s" + std::to_string(stage) + "-d" + std::to_string(difficulty) +
-                                 "-shot" + std::to_string(shot) + "-seed" + std::to_string(seed) +
-                                 "-p" + std::to_string(power),
-                             {stage, difficulty, shot, std::uint16_t(seed), power, false}});
-                    }
+            for (unsigned case_seed : seeds)
+                for (int difficulty : {3, 2, 1, 0, 4}) {
+                    if (selected_difficulty >= 0 && difficulty != selected_difficulty)
+                        continue;
+                    for (int stage = difficulty == 4 ? 7 : 1; stage <= (difficulty == 4   ? 7
+                                                                        : difficulty == 0 ? 5
+                                                                                          : 6);
+                         ++stage)
+                        for (int shot = 0; shot < 4; ++shot) {
+                            const int power = stage == 1 ? 0 : stage == 2 ? 64 : 128;
+                            cases.push_back(
+                                {"s" + std::to_string(stage) + "-d" + std::to_string(difficulty) +
+                                     "-shot" + std::to_string(shot) + "-seed" +
+                                     std::to_string(case_seed) + "-p" + std::to_string(power),
+                                 {stage, difficulty, shot, std::uint16_t(case_seed), power,
+                                  false}});
+                        }
+                }
         }
         if (suite != "stages")
-            for (int difficulty : {3, 2, 1, 0})
-                for (int shot = 0; shot < 4; ++shot)
-                    cases.push_back({"story-d" + std::to_string(difficulty) + "-shot" +
-                                         std::to_string(shot) + "-seed" + std::to_string(seed),
-                                     {1, difficulty, shot, std::uint16_t(seed), 0, true}});
+            for (unsigned case_seed : seeds)
+                for (int difficulty : {3, 2, 1, 0}) {
+                    if (selected_difficulty >= 0 && difficulty != selected_difficulty)
+                        continue;
+                    for (int shot = 0; shot < 4; ++shot)
+                        cases.push_back({"story-d" + std::to_string(difficulty) + "-shot" +
+                                             std::to_string(shot) + "-seed" +
+                                             std::to_string(case_seed),
+                                         {1, difficulty, shot, std::uint16_t(case_seed), 0, true}});
+                }
         if (!only.empty())
             cases.erase(std::remove_if(cases.begin(), cases.end(),
                                        [&](const auto &c) { return c.name != only; }),

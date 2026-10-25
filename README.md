@@ -10,17 +10,19 @@ See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. Current experiments focus
 only on Lunatic random-seed robustness.
+The preselected [random-seed experiment](docs/LUNATIC_RANDOM_SEEDS.md) covers
+four seeds across all Lunatic stages/shots and continuous stories.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.
 
 ```sh
-build/th06_campaign --data /path/to/th06-data --suite stages --jobs 2 \
+build/th06_campaign --data /path/to/th06-data --suite stages --difficulty 3 --jobs 2 \
   --output reports/local/stages --resume
 # Retry incomplete routes from a checked earlier prefix with a larger lookahead.
-build/th06_campaign --data /path/to/th06-data --suite stages --jobs 2 \
+build/th06_campaign --data /path/to/th06-data --suite stages --difficulty 3 --jobs 2 \
   --output reports/local/stages --resume --rewind 768 --horizon 180 --proposals 8 --frames 120000
-build/th06_campaign --data /path/to/th06-data --suite story --jobs 2 --frames 180000 \
+build/th06_campaign --data /path/to/th06-data --suite story --difficulty 3 --jobs 2 --frames 180000 \
   --reactive --horizon 120 --proposals 6 \
   --output reports/local/story --resume
 ```
