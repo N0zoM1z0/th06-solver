@@ -51,8 +51,10 @@ python3 scripts/compare_retail_trace.py --native reports/local/retail/native-lun
 The game directory and dedicated prefix must already be prepared. Development
 uses windowed, fixed-60-fps rendering with music/sound disabled. The runner requires
 an existing 32-bit prefix; it never uses or edits the user's default Wine prefix.
-Use a new output directory for each attempt. All assets, replays, logs and runtime
-snapshots remain under ignored `reports/local/`.
+Use a new output directory for each attempt. Assets, attempt replays, logs and
+runtime snapshots remain under ignored `reports/local/`. The owner-requested
+verified [`replays/th6_01.rpy`](../replays/th6_01.rpy) is the single published
+input-only replay exception.
 
 The runner takes an exclusive ownership lock and copies the launcher/observer into
 the attempt directory before starting. Atomic build outputs and immutable attempt

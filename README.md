@@ -7,6 +7,9 @@ continuous stories** at seed 0. Every case is NMNB with a complete fresh-process
 replay. **Wine retail playback also passes one complete Lunatic Reimu A story**:
 127,737 updates, six natural stage clears and zero misses/bombs.
 See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
+The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
+owner's request; original game assets remain private. Current experiments focus
+only on Lunatic random-seed robustness.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.

@@ -1,8 +1,9 @@
 # TH06 solver engineering rules
 
 Read README.md and docs/STATUS.md before changing behavior. The owner's current
-scope is the native runtime required by later shadow MPC: finish all legitimate
-stage/difficulty/shot combinations first, then complete continuous stories.
+scope is Lunatic-only random-seed robustness of the native runtime required by
+later shadow MPC: all six stages and four shots, then continuous stories.
+Retain the historical seed-0 matrix; do not schedule other difficulties now.
 The owner has now authorized retail replay interoperability under Wine, starting
 with a complete Lunatic story. Keep native and retail proof separate. Run one
 Wine instance at a time under a 2 GiB cgroup memory cap with swap disabled.
@@ -21,6 +22,8 @@ Wine instance at a time under a 2 GiB cgroup memory cap with swap disabled.
   must remain incomplete. Native agreement does not establish retail equivalence.
 - Keep all EXE/DAT/assets/archives and preparation notes out of Git. Keep generated
   tapes, logs and campaign reports under ignored reports/local/ or build/.
+  The owner explicitly requested publication of the verified input-only replay
+  at replays/th6_01.rpy; it is the single tracked replay exception.
 - Run focused regressions and CTest after behavioral changes; run affected real
   DAT cases when available. Preserve failed evidence and include all retries in
   campaign accounting. Use at most four concurrent solver jobs on this shared host.
