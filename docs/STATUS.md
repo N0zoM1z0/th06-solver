@@ -2,6 +2,8 @@
 
 Current scope: make the native runtime dependable for later shadow MPC.
 New trials focus only on [Lunatic random-seed robustness](LUNATIC_RANDOM_SEEDS.md).
+The four fixed random seeds pass 96/96 standalone cases after checked-prefix
+recovery (92/96 initially); their 16 continuous stories are in progress.
 The all-difficulty seed-0 results below remain historical controls.
 The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
 including fresh native replay of every entire route. The owner has now authorized

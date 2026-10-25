@@ -71,5 +71,113 @@
     "th06_plan": "6230049f78dfae950c2e8e3a269b46f901a8e4e8de2ef48fdd845485db7755ed",
     "th06_replay_check": "c57c0de3a165003f7bb0d5f45b9e56b65084ddbfcf853794b8c098e8f650b33a"
   },
-  "status": "selected; not yet run"
+  "status": "standalone complete; continuous stories in progress",
+  "stage_results": {
+    "expected": 96,
+    "initial_cleared": 92,
+    "initial_incomplete": 4,
+    "recovery1_total_cleared": 95,
+    "recovery2_total_cleared": 96,
+    "final_cleared": 96,
+    "failed": 0,
+    "per_seed": [
+      {
+        "seed": 5341,
+        "cases": 24,
+        "initial_cleared": 23,
+        "final_cleared": 24
+      },
+      {
+        "seed": 7589,
+        "cases": 24,
+        "initial_cleared": 23,
+        "final_cleared": 24
+      },
+      {
+        "seed": 30826,
+        "cases": 24,
+        "initial_cleared": 23,
+        "final_cleared": 24
+      },
+      {
+        "seed": 9674,
+        "cases": 24,
+        "initial_cleared": 23,
+        "final_cleared": 24
+      }
+    ],
+    "recovered_cases": [
+      {
+        "case": "s5-d3-shot3-seed5341-p128",
+        "first_stopped_frame": 10641,
+        "attempts": 2,
+        "final_updates": 19554,
+        "final_horizon": 180
+      },
+      {
+        "case": "s5-d3-shot1-seed7589-p128",
+        "first_stopped_frame": 10567,
+        "attempts": 3,
+        "final_updates": 20326,
+        "final_horizon": 240
+      },
+      {
+        "case": "s5-d3-shot2-seed30826-p128",
+        "first_stopped_frame": 10586,
+        "attempts": 2,
+        "final_updates": 21846,
+        "final_horizon": 180
+      },
+      {
+        "case": "s5-d3-shot0-seed9674-p128",
+        "first_stopped_frame": 10725,
+        "attempts": 2,
+        "final_updates": 18841,
+        "final_horizon": 180
+      }
+    ],
+    "native_updates": 1983722,
+    "search_attempts": 101,
+    "branches_including_retries": 1721318,
+    "simulated_updates_including_retries": 171990949,
+    "replayed_prefix_updates": 49297,
+    "planning_seconds_sum_including_retries": 14332.7920766,
+    "peak_cgroup_bytes": 127803392,
+    "oom": 0,
+    "oom_kill": 0,
+    "csv": "reports/lunatic-random-20261025-stages.csv"
+  },
+  "diagnostic_results": {
+    "original_prefix_exit": 2,
+    "original_prefix_verified": true,
+    "forged_completion_rejected": true,
+    "blocked_state_reproduced_without_progress": true,
+    "blocked_frames": 10641,
+    "matched_seed0_control_exit": 0,
+    "matched_seed0_control": {
+      "profile": "native-i386-v1",
+      "stage": 5,
+      "difficulty": 3,
+      "shot": 3,
+      "seed": 0,
+      "power": 128,
+      "frames": 21825,
+      "story": false,
+      "replayed_prefix_frames": 0,
+      "excluded_first_input": -1,
+      "cleared_stages": 1,
+      "complete": true,
+      "deaths": 0,
+      "bombs": 0,
+      "branches": 18009,
+      "simulated_frames": 1809836,
+      "horizon": 120,
+      "reactive": true,
+      "reactive_branches": 7556,
+      "commit": 8,
+      "proposals": 6,
+      "planning_seconds": 109.420266
+    }
+  },
+  "diagnostic_note": "Diagnostic replay/control work is separate from the 96 sampled cases and their search totals."
 }

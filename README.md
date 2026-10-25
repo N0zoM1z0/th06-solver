@@ -11,7 +11,8 @@ The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. Current experiments focus
 only on Lunatic random-seed robustness.
 The preselected [random-seed experiment](docs/LUNATIC_RANDOM_SEEDS.md) covers
-four seeds across all Lunatic stages/shots and continuous stories.
+four seeds across all Lunatic stages/shots and continuous stories. Its standalone
+matrix now passes **96/96** (92 first-pass, four recovered); stories are in progress.
 
 The resumable campaign runs the 96 standalone cases first, then 16 main-game
 stories. Existing tapes are rechecked by the current native binary when resuming.
