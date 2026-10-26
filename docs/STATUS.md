@@ -5,22 +5,20 @@ Immediate scope (owner clarification, 2026-10-26):
 with no MPC or native follower during playback. Online control acceptance stays
 separate. Native re-export revalidates the historical 127,737-update Lunatic
 Reimu A story and reproduces the published replay hash.
-The current Wine 11 new-WoW64 / DXVK 2.4 / 64-bit Mesa 25 lavapipe profile passes
-one complete Stage 4 with original CPU bullet drawing, bounded diffuse-color
-quad batches, six workers, scoped coarse sleeps and FIFO with a two-frame cap:
-28,296 native-matching updates, NMNB, actual window output 60.000 Hz / slowest 5 s 59.8 Hz / p99 19 ms.
-Peak is 295,067,648 bytes, OOM 0; group CPU time falls 27.1% in the retained
-comparison. The earlier four-worker hardware-draw Stage 6 profile passes separately
-(24,441 updates). Without coarse sleeps, the profile completes
-the entire 127,737-update story NMNB with all native fields matching, but fails
-full-story pacing: window mean 59.973 Hz / slowest 5 s 56.4 Hz / p99 20 ms,
-with the worst interval in dense Stage 4. Peak is 362,463,232 bytes, OOM 0.
-The coarse-sleep story also fails the same 56.4-Hz window and stops at 84,694
-native-matching NMNB updates; it remains incomplete. The new mapped collector
-removes per-frame Windows journal writes and defers CSV formatting. Its retained
-78,000-update diagnostic prefix matches native, but complete FPS acceptance is
-pending. Runtime package/DLL
-hashes and settings are pinned in [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
+The current profile passes one complete Lunatic Reimu A seed-0 story: 127,737
+native-matching updates, six natural clears and zero misses/bombs. API output is
+59.990 Hz / slowest 5 s 58.6 Hz / p99 17.130 ms; independent actual window output
+is 59.990 Hz / slowest 5 s 58.4 Hz / p99 18 ms. Both unchanged version-4 gates pass.
+The profile combines Wine 11 new WoW64, 64-bit Mesa 25 lavapipe, source CPU/diffuse
+bullet drawing, bounded batches, coarse sleeps, mapped journals, eight workers
+and an opt-in DXVK 2.4 D3D8 EndScene submission patch. Peak is 490,835,968 bytes
+(468.1 MiB), OOM/OOM-kill 0 under verified 2-GiB/no-swap limits. Whole-group CPU is
+3,993.08 seconds, 26.7% below the retained earlier complete-story profile.
+The earlier 56.4-Hz Stage 4 window now reaches 59.4 Hz, p99 18 ms. All handoff
+gaps remain; the largest window interval is 145 ms. That loading spike remains
+an optimization target. This one-case replay proof does not establish online
+MPC FPS or all-seed performance. Package/DLL hashes and settings are pinned in
+[REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
 
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation
 map and local evidence index, see [CONTINUATION.md](CONTINUATION.md).

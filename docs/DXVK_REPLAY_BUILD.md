@@ -3,7 +3,9 @@
 This is a locally altered DXVK 2.4 D3D8 bridge, not an upstream DXVK release.
 The source patch retains the zlib/libpng license and marks the DLL version
 resource as a TH06 replay experiment. No original game source, EXE or DAT changes.
-The new option defaults off. The complete normal-story timing result is pending.
+The new option defaults off. The normal complete 127,737-update Lunatic Reimu A story passes the unchanged
+API/window timing gates with this bridge enabled: window 59.990 Hz, slowest
+5 s 58.4 Hz, p99 18 ms, complete native agreement, NMNB and OOM 0.
 
 Upstream: https://github.com/doitsujin/dxvk
 Pinned revision: `008afc1c5f287e82a553108790da6e10b1159200` (`v2.4`).
@@ -51,8 +53,8 @@ Keep the private tool directory in the service PATH if needed for Meson
 regeneration. The D3D8 target links only its used utility and D3D9 import-library
 dependencies; it does not build unused D3D9/Vulkan core objects. The measured
 build takes 65 seconds under its own 2-GiB/no-swap limit. Clean patch application
-and the paired private Wine probes pass. These checks do not establish a complete
-story's FPS gate.
+and the paired private Wine probes pass. The separate normal full-story result
+establishes the declared local FPS gate; paired diagnostic prefixes alone do not.
 
 Copy the resulting x32 DLL to an owned private game copy alongside the official
 DXVK 2.4 x32 D3D9 DLL, preserving the original game configuration and assets.

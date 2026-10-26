@@ -21,16 +21,17 @@ successful clears and smooth capture timestamps do not establish game frame paci
 The current task isolates [Wine `.rpy` playback pacing](docs/REPLAY_PACING.md):
 native verifies/exports first, then the actual retail replay runs without MPC or
 a native follower. Playback FPS and online-controller FPS have separate acceptance.
-One complete Lunatic Stage 4 replay now passes both output clocks using private
-Wine 11 new WoW64, DXVK 2.4, 64-bit lavapipe, original CPU bullet drawing,
-bounded quad batches, scoped coarse sleeps and FIFO with a two-frame cap:
-60.00 Hz, slowest five seconds 59.8 Hz and window p99 19 ms. All 28,296 native-projected updates match, NMNB.
-Peak Wine-tree memory is 281 MiB with zero OOM events; group CPU time falls 27.1%
-in the retained Stage 4 comparison. The earlier Stage 6 profile passes separately.
-A complete 127,737-update NMNB story without coarse sleeps matches native but
-fails pacing at Stage 4 (slowest five seconds 56.4 Hz). The coarse-sleep story also fails the same dense Stage 4 window; its retained
-84,694-update prefix matches native. A new mapped collector removes per-frame
-Windows log writes and CSV formatting; complete-run FPS acceptance is pending.
+One complete **Lunatic Reimu A story now passes the replay presentation gate**:
+127,737 native-matching updates, six natural clears and zero misses/bombs.
+Actual window output is 59.990 Hz, slowest five seconds 58.4 Hz and p99 18 ms.
+The retained Stage 4 failure improves from 56.4 to 59.4 Hz over five seconds.
+The measured profile uses private Wine 11 new WoW64, 64-bit lavapipe, original
+CPU bullet drawing, bounded batches, scoped coarse sleeps, mapped journals and an
+opt-in [DXVK EndScene submission patch](docs/DXVK_REPLAY_BUILD.md).
+Peak Wine-tree memory is 468.1 MiB with zero OOM events; group CPU time falls
+26.7% in the retained complete-story comparison. All handoff gaps remain in the
+statistics, including a 145-ms maximum window interval. This is one measured
+replay under the declared local tolerance; online MPC remains unverified.
 See the [pinned runtime](docs/REPLAY_RUNTIME.json).
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after

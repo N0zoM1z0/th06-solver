@@ -65,7 +65,21 @@
     "sha256": "784eb023fb8da8868aa562c30ef5562989211fc9fda6bc5155d95e28049fccc7",
     "dll_sha256": {
       "d3d9.dll": "b2c451064705afa824b6b24e71b7bfa5dccbce92c326665a30482908abd6ec5c",
+      "d3d8.dll": "f857d2ea50658320ebe7cf0b03870f178391a09be5f73a2ac047df0c06df0d1f"
+    },
+    "official_dll_sha256": {
+      "d3d9.dll": "b2c451064705afa824b6b24e71b7bfa5dccbce92c326665a30482908abd6ec5c",
       "d3d8.dll": "b6b9801a5eea87c061f974f9c182cbb601ee624e90b8ab84f8a842f808a1d661"
+    },
+    "patched_d3d8": {
+      "upstream_revision": "008afc1c5f287e82a553108790da6e10b1159200",
+      "patch": "patches/dxvk-v2.4-early-flush.patch",
+      "patch_sha256": "8539f5ee9d9b1b05d16683d0f2429f71ddb732d476a73d427dae1a75b24fe689",
+      "build_guide": "docs/DXVK_REPLAY_BUILD.md",
+      "compiler": "i686-w64-mingw32-g++-posix 12, Meson release",
+      "marked_product_version": "2.4.0-th06.1",
+      "license": "zlib/libpng; altered DLL is explicitly marked",
+      "default_option": false
     }
   },
   "dxvk_license": "https://github.com/doitsujin/dxvk/blob/v2.4/LICENSE",
@@ -75,10 +89,11 @@
     "dxvk.numCompilerThreads": 1,
     "d3d9.maxFrameLatency": 2,
     "d3d9.maxFrameRate": -1,
-    "d3d9.presentInterval": 1
+    "d3d9.presentInterval": 1,
+    "d3d8.earlyFlush": true
   },
   "launcher_settings": {
-    "renderer_threads": 6,
+    "renderer_threads": 8,
     "vblank": "off",
     "precise_limiter": true,
     "display_timing": true,
@@ -118,8 +133,8 @@
     "frameskip": 0
   },
   "acceptance": {
-    "stage4": "Previous v1 collector: complete 28,296-update NMNB stage with coarse sleep, all native fields match; API/window pass, mean 60.000 Hz, slowest 5 s 59.8 Hz, window p99 19 ms. Peak 295,067,648 bytes, OOM 0. Mapped v2 complete-run acceptance pending.",
-    "story": "Unresolved. Coarse-sleep v1 story stops at 84,694 matching NMNB updates after the same 56.4-Hz Stage 4 failure. Without coarse sleep: complete 127,737-update matching NMNB story also fails at 56.4 Hz. Mapped v2 has a 78,000-update diagnostic matching prefix, not FPS acceptance.",
+    "stage4": "Stage 4 completes naturally inside the verified full story. Retained dense failure window improves from 56.4 to 59.4 Hz over five seconds, window p99 18 ms. Earlier standalone component results remain historical.",
+    "story": "PASS: normal complete 127,737-update Lunatic Reimu A seed-0 replay, six natural clears, NMNB; all 15 native-projected fields match. API mean 59.990 Hz, slowest 5 s 58.6 Hz, p99 17.130 ms. Window mean 59.990 Hz, slowest 5 s 58.4 Hz, p99 18 ms; all full-window events, count difference 1, flags 0. Both unchanged v4 gates pass. Peak 490,835,968 bytes, OOM 0; CPU 3993.08 s (26.7% lower than earlier complete profile). All later gaps retained, maximum window interval 145 ms.",
     "online_mpc": "Separate; stable FPS not established"
   }
 }

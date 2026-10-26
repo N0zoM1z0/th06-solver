@@ -6,11 +6,24 @@ input fixture runs during this acceptance. Online-controller deadlines, queue
 behavior and FPS remain separate unfinished work in
 [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
 
+The normal complete **Lunatic Reimu A seed-0 story passes both unchanged v4
+presentation gates**: 127,737 native-matching updates, six natural clears, NMNB.
+API output is 59.990 Hz / slowest 5 s 58.6 Hz / p99 17.130 ms; actual window
+output is 59.990 Hz / slowest 5 s 58.4 Hz / p99 18 ms. All window updates cover
+640×480, render error flags are zero and steady output counts differ by one.
+Peak is 490,835,968 bytes (468.1 MiB), OOM/OOM-kill 0 under verified 2-GiB/no-swap
+limits. Group CPU is 3,993.08 s, 26.7% lower than the retained earlier complete
+profile. This run uses no accelerated prefix, MPC or native follower.
+
+Every later gap remains in the gate, including a 145-ms maximum window interval
+at a stage handoff. The result establishes the declared local timing tolerance
+for one literal replay, not an every-frame 16.67-ms guarantee or online MPC FPS.
+
 A complete retail clear and a passing timing gate are independent requirements.
 Several complete Stage 6 runs match the native trace and still fail frame pacing.
 A good 3,000-update timing prefix is not a complete-stage result.
 
-## Run a selected replay
+## Run the measured replay
 
 Use the owned Japanese 1.02h game and original DATs described in
 [RETAIL_REPLAY.md](RETAIL_REPLAY.md). Game assets, runtime binaries and preparation
@@ -29,8 +42,9 @@ The verified story has 127,737 updates and reproduces the published replay hash
 `c29f3975d9b2744d3460c7946c7130bdc026dc3c47566c1e0d45bf7c14fb192d`.
 Playback does not launch that native binary again.
 
-The current runtime candidate uses private Wine 11.0 in new WoW64 mode, native
-DXVK 2.4 D3D8/D3D9 DLLs and 64-bit Mesa 25.0.7 lavapipe. Initialize a separate
+The accepted runtime uses private Wine 11.0 in new WoW64 mode, an
+[opt-in locally patched DXVK 2.4 D3D8 bridge](DXVK_REPLAY_BUILD.md), official
+D3D9 and 64-bit Mesa 25.0.7 lavapipe. Initialize a separate
 64-bit prefix under the same memory cap. Package/DLL hashes, upstream licenses
 and settings are pinned in [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json). Wine's
 [release notes](https://raw.githubusercontent.com/wine-mirror/wine/wine-11.0/ANNOUNCE.md)
@@ -43,20 +57,14 @@ dxvk.numCompilerThreads = 1
 d3d9.maxFrameLatency = 2
 d3d9.maxFrameRate = -1
 d3d9.presentInterval = 1
+d3d8.earlyFlush = True
 ```
 
-The tested Stage 4 profile additionally uses the original `dontUseVertexBuf`
-option: graphics opts `0x883` instead of the earlier `0x881`, selecting per-vertex
-diffuse colors. Keep the source game/config unchanged and use a private copy.
-Resolution, 32-bit color, frame skip and image quality are retained. The complete
-28,296-update NMNB stage passes both clocks and native comparison: window
-60.000 Hz / slowest 5 s 59.8 Hz / p99 19 ms with the optional coarse sleep
-described below. That option reduces the group CPU time by 27.1% in this retained
-stage comparison. The earlier full story without coarse sleep matches all
-127,737 native rows NMNB, but fails the timing gate: slowest 5 s 56.4 Hz in
-Stage 4. Coarse sleep alone also fails the same window; the retained 84,694-update
-matching NMNB prefix is incomplete. Mapped-collector complete-run acceptance is
-pending.
+The profile uses the original `dontUseVertexBuf` option: graphics opts `0x883`
+instead of the earlier `0x881`, selecting per-vertex diffuse colors. Keep the
+source game/config unchanged and use a private copy. Resolution, 32-bit color,
+frame skip and image quality are retained. The bridge option is implemented by
+the supplied source patch; stock DXVK 2.4 does not implement `d3d8.earlyFlush`.
 
 Point a private ICD JSON at the **64-bit** `libvulkan_lvp.so`. The Windows game,
 observer and D3D8/D3D9 DLLs remain 32-bit; the Unix graphics libraries are 64-bit.
@@ -69,18 +77,19 @@ WINE_D3D_CONFIG=csmt=0 python3 scripts/run_wine_replay.py \
   --wine /path/to/private-wine/bin/wine --wine-arch wow64 \
   --game /path/to/private-game --prefix /path/to/private-prefix64 \
   --dll-overrides 'd3d8,d3d9=n;mscoree,mshtml=' \
-  --replay replay/th6_paced.rpy --start-stage 4 --single-stage \
+  --replay replay/th6_paced.rpy \
   --native-trace reports/local/native-export.csv \
-  --renderer-threads 6 --vblank off --sleep-limiter --display-timing --batch-bullets \
+  --renderer-threads 8 --vblank off --sleep-limiter --display-timing --batch-bullets \
   --shader-cache reports/local/replay-cache --require-pacing \
-  --updates 35000 --seconds 900 --output reports/local/replay-stage4
+  --updates 180000 --seconds 3000 --output reports/local/replay-story
 ```
 
-`--start-stage` uses the original replay loader's stage records, including carried
+For a selected-stage diagnostic, add `--start-stage 4 --single-stage` and use
+`--updates 35000 --seconds 900`. `--start-stage` uses the original replay loader's stage records, including carried
 resources, rank, RNG and previous-stage score. It does not introduce a practice
 checkpoint or movement inputs. `--single-stage` stops at the natural clear and
-records that scope. Omit both stage-selection options for a full story; use
-`--updates 180000 --seconds 3000`. Budgets are limits, not completion criteria.
+records that scope. The measured full-story command omits both selection options.
+Budgets are limits, not completion criteria.
 Use a fresh output directory for every attempt. `--snapshot` adds one screenshot
 inside the initial 120-update warmup and the same capped group.
 
@@ -129,7 +138,8 @@ unchanged. The complete Stage 4 comparison reduces limiter polls from
 177,352,596 to 33,864,904 and whole-group CPU time from 1,195.52 to 871.67 seconds
 (27.1%); 304,422 sleeps are recorded. Both render clocks pass, all native fields
 match, and all 28,397 precision entries restore. This is one measured comparison,
-not a host-independent CPU reduction or a full-story pacing result.
+not a host-independent CPU reduction; coarse sleep alone still fails the
+earlier full-story counterexample. The final combined profile passes separately.
 
 ## Bounded mapped collection
 
@@ -154,7 +164,8 @@ consumption, invalid counts, unused-tail rejection and typed CSV conversion.
 A real Wine diagnostic prefix retains all 78,000 native-matching NMNB updates,
 peaks at 279,580,672 bytes and reports zero OOM events. Fast diagnostic prefixes
 skip early raster work and waits to reach the retained failure quickly; they
-are explicitly excluded from FPS acceptance. Full natural playback remains required.
+are explicitly excluded from FPS acceptance. The normal complete story above
+provides the separate final output proof.
 
 ## Acceptance and resource scope
 
@@ -229,7 +240,7 @@ requires both clocks. This replay queue does not establish an online latency pol
 Optional `--wine-nice`, `--wine-cpus` and `--display-cpus` record effective game
 priority/affinity and display-worker affinity. Non-overlapping physical cores
 must be chosen for the current host. Nice 5 and a separate display core did not
-pass the window gate in the retained controls; the FIFO candidate uses the
+pass the window gate in the retained controls; the final profile uses the
 default priority and affinity.
 
 ## Evidence and retained failures
@@ -238,8 +249,8 @@ The private ledger is `reports/local/pacing-20261026/rpy-attempt-ledger.json`;
 each attempt retains raw clocks, trace, logs, hashes and resource receipts.
 The earlier Wine 11 new-WoW64 / DXVK / 64-bit lavapipe profile passes a complete
 Stage 6 with four workers, original hardware drawing and immediate presentation.
-Full-story pacing has not yet passed. The newer CPU/diffuse-batch/FIFO candidate
-is separate from that legacy Stage 6 result and now passes a complete Stage 4.
+Those earlier results remain historical. The mapped/coarse-sleep/eight-worker
+profile with explicit EndScene submission now passes the entire natural story.
 
 | Attempt | Native-matching retail route | Mean Hz | Slowest 5 s Hz | p99 ms | Result |
 |---|---:|---:|---:|---:|---|
@@ -261,17 +272,18 @@ is separate from that legacy Stage 6 result and now passes a complete Stage 4.
 | Without coarse sleep, Stage 3→4 diagnostic | 52,000 prefix | 59.96 | 57.8 | 21 | Fail; route incomplete |
 | Stage 4 FIFO cap 2 plus coarse sleep | 28,296 complete | 60.00 | 59.8 | 19 | Pass; CPU time −27.1% |
 | Same coarse-sleep profile, story | 84,694 prefix | 59.98 | 56.4 | 19 | Fail; stopped after irreversible timing failure |
+| Mapped journals + early submission + eight workers, story | 127,737 complete | 59.990 | 58.4 | 18 | Pass both v4 clocks; complete native agreement |
 
 The passing Stage 6 run peaks at 350,384,128 bytes with zero OOM events; its
 24,536 precision entries all restore before gameplay. Steady output still contains
 a 119-ms maximum gap and five gaps above 50 ms, retained in the report. The gate
 does not certify that every frame is exactly 16.67 ms.
 
-The accepted Stage 4 profile peaks at 288,395,264 bytes (275 MiB), OOM 0. Its
+The earlier standalone Stage 4 profile peaks at 288,395,264 bytes (275 MiB), OOM 0. Its
 28,277 CPU-draw entries all restore, and all 28,397 limiter entries restore.
 The window report retains a 45-ms maximum gap, one gap above 33.3 ms and none
-above 50 ms. All 28,296 native-projected updates match. The full story still
-requires its own natural six-clear terminal and complete timing report.
+above 50 ms. All 28,296 native-projected updates match. The separate final normal-story case supplies its own six-clear terminal and
+complete timing report.
 
 The first full-story attempt fails inside Stage 4 around local update 21,800
 (global updates 76,521–76,809). Draw submission is about 2 ms, while Present
@@ -309,7 +321,7 @@ fixtures predate pure-RPY acceptance and never count as playback successes.
 
 | Artifact | Meaning |
 |---|---|
-| `retail.csv`, `native-comparison.json` | Actual replay projection; complete-route/prefix distinction |
+| `retail-states.bin`, deferred `retail.csv`, `native-comparison.json` | All 15 typed projection fields; complete-route/prefix distinction |
 | `update-times.bin` | Versioned header and three uint64 words per callback |
 | `render-times.bin` | Versioned header and eight uint64 words per API presentation |
 | `display-times.csv` | Raw XDamage server/receiver times, latest callback and geometry |
@@ -320,7 +332,7 @@ fixtures predate pure-RPY acceptance and never count as playback successes.
 | `resource-receipt.json` | Scope, limits, identities, cache state, peak memory/OOM and host conditions |
 
 ```sh
-python3 scripts/replay_pacing.py reports/local/replay-stage4
+python3 scripts/replay_pacing.py reports/local/replay-story
 ctest --test-dir build --output-on-failure \
   -E 'real_data_contracts|story_transition_contracts|story_terminal_contracts|extra_bootstrap_contracts'
 ```
@@ -347,7 +359,8 @@ exactly; sampled D3D render/texture/transform states also agree. DXVK 2.4's
 uses a strong flush hint, while its
 [flush tracker](https://github.com/doitsujin/dxvk/blob/v2.4/src/util/util_flush.cpp)
 can defer fewer than three command chunks. An optional explicit submission at
-EndScene is under investigation; no accepted result is claimed yet.
+EndScene is implemented by the opt-in bridge. The complete combined profile
+passes; the separate controls do not prove a universal single-change speedup.
 
 The [DXVK performance guidance](https://github.com/doitsujin/dxvk/wiki)
 recommends checking drivers, synchronization, logging and compositor overhead.
@@ -362,6 +375,9 @@ The opt-in [D3D8 source patch and private build](DXVK_REPLAY_BUILD.md) now have
 same-DLL on/off controls. With eight workers, the retained 1,201-frame target
 window improves from p99 21 ms to 19 ms; Present-call p99 falls from 13.70 to
 6.75 ms. Both 78,000-update diagnostic prefixes match native. The normal full
-story has now crossed that same window at slowest 5 s 59.4 Hz / p99 18 ms and
-completed Stage 4. Stage 5/6, the full comparison and whole-story gate remain
-pending; the bridge is experimental until those finish.
+story crosses that same window at slowest 5 s 59.4 Hz / p99 18 ms and completes
+all six stages with full native agreement and both gates passing. Its private
+case is `rpy-story-mapped-earlyflush-lp8-full001`. The acceptance receipt is
+`reports/local/pacing-20261026/replay-pacing-acceptance.json`; it cross-checks
+identities, counts, scopes, memory/OOM and raw artifact hashes. A raw-window
+comparison plot is retained alongside it as `replay-pacing-comparison.png`.
