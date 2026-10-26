@@ -15,7 +15,11 @@ comparison. The earlier four-worker hardware-draw Stage 6 profile passes separat
 the entire 127,737-update story NMNB with all native fields matching, but fails
 full-story pacing: window mean 59.973 Hz / slowest 5 s 56.4 Hz / p99 20 ms,
 with the worst interval in dense Stage 4. Peak is 362,463,232 bytes, OOM 0.
-Full-story pacing with coarse sleeps is pending. Runtime package/DLL
+The coarse-sleep story also fails the same 56.4-Hz window and stops at 84,694
+native-matching NMNB updates; it remains incomplete. The new mapped collector
+removes per-frame Windows journal writes and defers CSV formatting. Its retained
+78,000-update diagnostic prefix matches native, but complete FPS acceptance is
+pending. Runtime package/DLL
 hashes and settings are pinned in [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
 
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation

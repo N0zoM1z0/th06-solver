@@ -8,6 +8,8 @@ import statistics
 import struct
 import csv
 import math
+import mmap
+import os
 from itertools import zip_longest
 
 UPDATE = struct.Struct('<3Q')
@@ -15,11 +17,93 @@ RENDER_HEADER = struct.Struct('<4I')
 RENDER = struct.Struct('<8Q')
 
 
+def journal_count(data, magic, stride):
+    if len(data) < 16:
+        raise ValueError('truncated journal header')
+    found, version, width, count = RENDER_HEADER.unpack_from(data)
+    if found != magic or width != stride or (len(data) - 16) % stride:
+        raise ValueError('invalid journal layout')
+    capacity = (len(data) - 16) // stride
+    if version == 1 and count == 0:
+        return capacity
+    if version == 2 and count <= capacity:
+        return count
+    raise ValueError('invalid journal version or committed count')
+
+
+def journal_rows(path, magic, record):
+    # A mapped v2 file can retain an unused tail after a crash. Only a published
+    # record is evidence; normal close truncates the tail. Old v1 remains strict.
+    with Path(path).open('rb') as file:
+        if not os.fstat(file.fileno()).st_size:
+            raise ValueError('empty journal')
+        with mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ) as data:
+            count = journal_count(data, magic, record.size)
+            for index in range(count):
+                yield record.unpack_from(data, 16 + index * record.size)
+
+
+class LiveUpdates:
+    """Read the last immutable, committed record without per-event file opens."""
+    def __init__(self, path):
+        self.path, self.file, self.mapping = Path(path), None, None
+
+    def latest(self):
+        if self.file is None:
+            try:
+                self.file = self.path.open('rb', buffering=0)
+            except FileNotFoundError:
+                return (0, 0, 0)
+        if self.mapping is None:
+            self.file.seek(0)
+            header = self.file.read(16)
+            if len(header) < 16 or not any(header):
+                return (0, 0, 0)
+            magic, version, width, count = RENDER_HEADER.unpack(header)
+            if (magic, width) != (0x36545055, 24) or version not in (1, 2):
+                raise ValueError('invalid live update journal')
+            if version == 2:
+                self.mapping = mmap.mmap(self.file.fileno(), 0, access=mmap.ACCESS_READ)
+            else:
+                size = os.fstat(self.file.fileno()).st_size
+                if size < 40:
+                    return (0, 0, 0)
+                self.file.seek(16 + ((size - 16) // 24 - 1) * 24)
+                return UPDATE.unpack(self.file.read(24))
+        count = struct.unpack_from('<I', self.mapping, 12)[0]
+        if count > (len(self.mapping) - 16) // 24:
+            raise ValueError('live count exceeds mapped journal capacity')
+        if not count:
+            return (0, 0, 0)
+        row = UPDATE.unpack_from(self.mapping, 16 + (count - 1) * 24)
+        if row[0] != count or not 1 <= row[1] <= 6:
+            raise ValueError('invalid committed live record')
+        return row
+
+    def close(self):
+        if self.mapping:
+            self.mapping.close()
+        if self.file:
+            self.file.close()
+
+
+def export_state_csv(directory):
+    directory = Path(directory)
+    path = directory / 'retail-states.bin'
+    if not path.exists():
+        return
+    record = struct.Struct('<4I2fi3I2iI2i')
+    with (directory / 'retail.csv').open('x', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow('frame stage local_frame input x y timeline rng rng_calls power deaths bombs score rank player_state'.split())
+        for row in journal_rows(path, 0x36545354, record):
+            writer.writerow([*row[:4], format(row[4], '.9g'), format(row[5], '.9g'), *row[6:]])
+
+
 def update_rows(path):
-    data = Path(path).read_bytes()
-    if len(data) <= 16 or (len(data) - 16) % UPDATE.size or RENDER_HEADER.unpack(data[:16]) != (0x36545055, 1, 24, 0):
-        raise ValueError('empty, invalid or truncated update clock journal')
-    rows = list(UPDATE.iter_unpack(data[16:]))
+    rows = list(journal_rows(path, 0x36545055, UPDATE))
+    if not rows:
+        raise ValueError('empty update journal')
     for i, row in enumerate(rows, 1):
         if row[0] != i or not 1 <= row[1] <= 6:
             raise ValueError('invalid retail journal sequence/version')
@@ -76,10 +160,7 @@ def analyze(directory, warmup=120):
         report['update_steady'] = cadence(steady)
     path = directory / 'render-times.bin'
     if path.exists():
-        data = path.read_bytes()
-        if len(data) < 16 or RENDER_HEADER.unpack(data[:16]) != (0x36544d52, 1, 64, 0) or (len(data) - 16) % 64:
-            raise ValueError('invalid/truncated render journal')
-        samples = list(RENDER.iter_unpack(data[16:]))
+        samples = list(journal_rows(path, 0x36544d52, RENDER))
         if any(not 1 <= r[0] <= len(rows) or r[1] != rows[r[0] - 1][1] or r[7] & ~7 for r in samples):
             raise ValueError('render context does not match retail journal')
         report['render_sequence_skips'] = sum(max(0, b[0] - a[0] - 1) for a, b in zip(samples, samples[1:]))

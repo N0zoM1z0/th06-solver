@@ -2,13 +2,12 @@
 """Read actual X11 drawable damage events; never sample or drive game input."""
 import ctypes as C
 import csv
-import os
 import select
 import signal
-import struct
 import sys
 import time
 from pathlib import Path
+from replay_pacing import LiveUpdates
 
 
 class Rectangle(C.Structure):
@@ -70,7 +69,8 @@ def stop(*args):
 
 
 signal.signal(signal.SIGTERM, stop)
-with (root / 'display-times.csv').open('x', buffering=1) as file:
+updates = LiveUpdates(root / 'update-times.bin')
+with (root / 'display-times.csv').open('x', buffering=65536) as file:
     writer = csv.writer(file)
     writer.writerow(['event', 'server_ms', 'received_ns', 'latest_update', 'stage',
                      'x', 'y', 'width', 'height', 'geometry_width', 'geometry_height'])
@@ -86,20 +86,16 @@ with (root / 'display-times.csv').open('x', buffering=1) as file:
         if event.type != base.value:
             continue
         stamp = time.monotonic_ns()
-        seq = stage = 0
-        path = root / 'update-times.bin'
-        if path.exists():
-            with path.open('rb') as data:
-                size = os.fstat(data.fileno()).st_size
-                if size >= 40:
-                    data.seek(16 + ((size - 16) // 24 - 1) * 24)
-                    seq, stage, _ = struct.unpack('<3Q', data.read(24))
+        seq, stage, _ = updates.latest()
         event_damage = event.damage
         count += 1
         writer.writerow([count, event_damage.timestamp, stamp, seq, stage,
                          event_damage.area.x, event_damage.area.y,
                          event_damage.area.width, event_damage.area.height,
                          event_damage.geometry.width, event_damage.geometry.height])
+        if count % 60 == 0:
+            file.flush()
         subtract(display, damage, 0, 0)
         flush(display)
+updates.close()
 close(display)

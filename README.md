@@ -28,7 +28,9 @@ bounded quad batches, scoped coarse sleeps and FIFO with a two-frame cap:
 Peak Wine-tree memory is 281 MiB with zero OOM events; group CPU time falls 27.1%
 in the retained Stage 4 comparison. The earlier Stage 6 profile passes separately.
 A complete 127,737-update NMNB story without coarse sleeps matches native but
-fails pacing at Stage 4 (slowest five seconds 56.4 Hz). The new full story is pending.
+fails pacing at Stage 4 (slowest five seconds 56.4 Hz). The coarse-sleep story also fails the same dense Stage 4 window; its retained
+84,694-update prefix matches native. A new mapped collector removes per-frame
+Windows log writes and CSV formatting; complete-run FPS acceptance is pending.
 See the [pinned runtime](docs/REPLAY_RUNTIME.json).
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after

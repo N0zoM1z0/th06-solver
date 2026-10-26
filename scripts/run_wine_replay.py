@@ -12,7 +12,7 @@ import time
 import uuid
 import os
 import sys
-from replay_pacing import analyze, compare_native
+from replay_pacing import analyze, compare_native, export_state_csv, LiveUpdates
 
 
 def cache_state(directory):
@@ -106,9 +106,11 @@ def worker(directory):
     snapshot = False
     display_monitor = None
     libraries_recorded = False
+    updates = LiveUpdates(output / 'update-times.bin')
     try:
         while game.poll() is None:
-            if not libraries_recorded and (output / 'update-times.bin').exists() and (output / 'update-times.bin').stat().st_size >= 40:
+            update_count = updates.latest()[0]
+            if not libraries_recorded and update_count:
                 libraries = graphics_libraries()
                 if libraries:
                     (output / 'graphics-libraries.json').write_text(json.dumps(libraries, indent=2) + '\n')
@@ -123,8 +125,7 @@ def worker(directory):
                              windows.stdout.split()[0], str(output)], stdout=log, stderr=subprocess.STDOUT)
             if display_monitor and display_monitor.poll() not in (None, 0):
                 raise RuntimeError('owned display monitor failed; inspect display-monitor.log')
-            clock = output / 'update-times.bin'
-            if config.get('snapshot') and not snapshot and clock.exists() and clock.stat().st_size >= 16 + 60 * 24:
+            if config.get('snapshot') and not snapshot and update_count >= 60:
                 windows = subprocess.run(['xdotool', 'search', '--onlyvisible', '--class', '^th06.exe$'],
                                          capture_output=True, text=True)
                 for window in windows.stdout.split():
@@ -142,6 +143,7 @@ def worker(directory):
             time.sleep(.05)
         return game.returncode
     finally:
+        updates.close()
         if game.poll() is None:
             game.terminate()
             try:
@@ -415,6 +417,10 @@ if args.render_timing:
         receipt['pacing'] = pacing
     except (ValueError, OSError) as error:
         receipt['pacing_error'] = str(error)
+try:
+    export_state_csv(args.output)
+except (ValueError, OSError) as error:
+    receipt['state_trace_error'] = str(error)
 if args.native_trace and (args.output / 'retail.csv').exists():
     comparison = compare_native(args.native_trace, args.output / 'retail.csv',
                                 args.start_stage, args.single_stage)
@@ -424,6 +430,7 @@ if args.native_trace and (args.output / 'retail.csv').exists():
 print(json.dumps(receipt, indent=2), flush=True)
 raise SystemExit(child.returncode or (1 if receipt['oom_kill'] or not receipt['cgroup_limits_verified']
                                       or not receipt.get('outcome', {}).get('retail_nmnb_complete')
+                                      or receipt.get('state_trace_error')
                                       or receipt.get('native_comparison', {}).get('fields_match') is False
                                       or (args.native_trace and not receipt.get('native_comparison', {}).get('complete_route'))
                                       or (args.require_pacing and not receipt.get('pacing', {}).get('acceptance_gate'))

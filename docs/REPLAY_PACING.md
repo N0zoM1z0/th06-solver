@@ -54,7 +54,9 @@ Resolution, 32-bit color, frame skip and image quality are retained. The complet
 described below. That option reduces the group CPU time by 27.1% in this retained
 stage comparison. The earlier full story without coarse sleep matches all
 127,737 native rows NMNB, but fails the timing gate: slowest 5 s 56.4 Hz in
-Stage 4. Full-story pacing with coarse sleep is pending.
+Stage 4. Coarse sleep alone also fails the same window; the retained 84,694-update
+matching NMNB prefix is incomplete. Mapped-collector complete-run acceptance is
+pending.
 
 Point a private ICD JSON at the **64-bit** `libvulkan_lvp.so`. The Windows game,
 observer and D3D8/D3D9 DLLs remain 32-bit; the Unix graphics libraries are 64-bit.
@@ -128,6 +130,31 @@ unchanged. The complete Stage 4 comparison reduces limiter polls from
 (27.1%); 304,422 sleeps are recorded. Both render clocks pass, all native fields
 match, and all 28,397 precision entries restore. This is one measured comparison,
 not a host-independent CPU reduction or a full-story pacing result.
+
+## Bounded mapped collection
+
+The new collector copies fixed-size records into preallocated mapped journals and
+publishes their committed count with a 32-bit interlocked store. It removes the
+two per-frame Windows `WriteFile` calls and per-frame CSV number formatting.
+The 15-field state record is 60 bytes; update and render records retain their
+24/64-byte layouts. Version 2's 16-byte header is magic/version/stride/count;
+readers ignore the uncommitted tail, and normal close flushes/truncates it.
+Old version-1 journals remain readable with their original strict checks.
+
+Capacity derives from the declared update budget, with 512 extra render slots;
+exhaustion fails the run. The default 180,000-update budget reserves about
+25.4 MiB across all three files. The display observer keeps one read-only mapping
+and reads the last committed update, instead of reopening the timing file per
+window event. Its CSV flushes once per 60 events and on exit. State CSV conversion
+and native comparison run after Wine exits; every recorded field remains available.
+Clocks, timestamps and version-4 acceptance thresholds are unchanged.
+
+The mapped collector passes 26 focused contracts, including publication-before-
+consumption, invalid counts, unused-tail rejection and typed CSV conversion.
+A real Wine diagnostic prefix retains all 78,000 native-matching NMNB updates,
+peaks at 279,580,672 bytes and reports zero OOM events. Fast diagnostic prefixes
+skip early raster work and waits to reach the retained failure quickly; they
+are explicitly excluded from FPS acceptance. Full natural playback remains required.
 
 ## Acceptance and resource scope
 
@@ -233,6 +260,7 @@ is separate from that legacy Stage 6 result and now passes a complete Stage 4.
 | Without coarse sleep, natural full story | 127,737 complete | 59.97 | 56.4 | 20 | Fail in dense Stage 4 |
 | Without coarse sleep, Stage 3→4 diagnostic | 52,000 prefix | 59.96 | 57.8 | 21 | Fail; route incomplete |
 | Stage 4 FIFO cap 2 plus coarse sleep | 28,296 complete | 60.00 | 59.8 | 19 | Pass; CPU time −27.1% |
+| Same coarse-sleep profile, story | 84,694 prefix | 59.98 | 56.4 | 19 | Fail; stopped after irreversible timing failure |
 
 The passing Stage 6 run peaks at 350,384,128 bytes with zero OOM events; its
 24,536 precision entries all restore before gameplay. Steady output still contains
@@ -309,4 +337,23 @@ worst retained window is global updates 76,720–77,000 in Stage 4. This is a ti
 counterexample, not a gameplay divergence. Its Wine-tree peak is 362,463,232 bytes
 with zero OOM events. The optional coarse-sleep profile passes the complete
 Stage 4 and peaks at 295,067,648 bytes with zero OOM events. Its natural full
-story is still pending both clocks and complete native comparison.
+story fails the same dense interval and remains an incomplete 84,694-update
+native-matching NMNB prefix. This rules out CPU spinning as a sufficient fix.
+
+Source-guided follow-up compares selected-stage and natural-story drawing. Across
+1,201 target frames, quad counts, all vertex bytes and screen coverage agree
+exactly; sampled D3D render/texture/transform states also agree. DXVK 2.4's
+[EndScene](https://github.com/doitsujin/dxvk/blob/v2.4/src/d3d9/d3d9_device.cpp#L1656)
+uses a strong flush hint, while its
+[flush tracker](https://github.com/doitsujin/dxvk/blob/v2.4/src/util/util_flush.cpp)
+can defer fewer than three command chunks. An optional explicit submission at
+EndScene is under investigation; no accepted result is claimed yet.
+
+The [DXVK performance guidance](https://github.com/doitsujin/dxvk/wiki)
+recommends checking drivers, synchronization, logging and compositor overhead.
+The [OpenInputLagPatch author](https://github.com/khang06/OpenInputLagPatch)
+documents a sleep-based limiter and a changed update/draw order for TH06/07.
+Its waiting approach is useful prior art; adopting the entire patch would need
+to respect this project's original callback-order contract. This host exposes no
+DRI GPU device and uses software Vulkan. Desktop GPU/compositor recipes need
+separate applicability checks; they are not evidence for this replay profile.

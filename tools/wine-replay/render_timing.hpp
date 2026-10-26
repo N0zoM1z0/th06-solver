@@ -1,5 +1,6 @@
 #pragma once
 // Adapted from th08-solver 1c68dc9639f5 (MIT, N0zoM1z0).
+#include "mapped_journal.hpp"
 #include "th06/render_timing.hpp"
 #include <cstring>
 #include <windows.h>
@@ -13,7 +14,7 @@ class RenderTiming {
     inline static RenderTiming *instance_ = nullptr;
     Scene begin_ = nullptr, end_ = nullptr;
     Present present_ = nullptr;
-    HANDLE file_ = INVALID_HANDLE_VALUE;
+    MappedJournal<th06::render_timing::Sample> journal_;
     void *device_ = nullptr;
     LONGLONG frequency_ = 0, anchor_ = 0, draw_begin_ = 0, draw_ticks_ = 0, previous_end_ = 0;
     std::uint64_t sequence_ = 0, stage_ = 0, draw_calls_ = 0, last_sequence_ = 0;
@@ -28,11 +29,6 @@ class RenderTiming {
         return ticks > 0 ? th06::render_timing::nanoseconds(std::uint64_t(ticks),
                                                             std::uint64_t(frequency_))
                          : 0;
-    }
-    void write(const void *data, DWORD size) {
-        DWORD written = 0;
-        if (!WriteFile(file_, data, size, &written, nullptr) || written != size)
-            failed_ = true;
     }
     static HRESULT WINAPI begin_scene(void *device) {
         auto &self = *instance_;
@@ -82,7 +78,7 @@ class RenderTiming {
             row[t::Flags] = (!self.draw_calls_ ? t::NoDraw : 0) |
                             (FAILED(result) ? t::PresentFailed : 0) |
                             (self.sequence_ == self.last_sequence_ ? t::RepeatedReceipt : 0);
-            self.write(row.data(), sizeof(row));
+            self.failed_ = !self.journal_.append(row) || self.failed_;
             self.last_sequence_ = self.sequence_;
         }
         self.previous_end_ = finish;
@@ -98,21 +94,16 @@ class RenderTiming {
     void before_present(void (*callback)()) {
         before_present_ = callback;
     }
-    bool open(const char *path, LONGLONG frequency) {
+    bool open(const char *path, LONGLONG frequency, unsigned capacity) {
         if (frequency <= 0 || !th06::render_timing::frequency_valid(std::uint64_t(frequency)))
             return false;
         frequency_ = frequency;
-        file_ = CreateFileA(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
-                            FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (file_ == INVALID_HANDLE_VALUE)
-            return false;
-        write(th06::render_timing::header.data(), sizeof(th06::render_timing::Header));
-        return !failed_;
+        return journal_.open(path, th06::render_timing::header[0], capacity + 512);
     }
     bool install(void *device) {
         if (device_)
             return device_ == device;
-        if (!device || file_ == INVALID_HANDLE_VALUE)
+        if (!device || !frequency_)
             return false;
         auto **original = *static_cast<void ***>(device);
         DWORD protection;
@@ -138,11 +129,7 @@ class RenderTiming {
         return failed_;
     }
     bool close() {
-        if (file_ != INVALID_HANDLE_VALUE) {
-            failed_ = !FlushFileBuffers(file_) || failed_;
-            failed_ = !CloseHandle(file_) || failed_;
-            file_ = INVALID_HANDLE_VALUE;
-        }
+        failed_ = !journal_.close() || failed_;
         return !failed_;
     }
 };

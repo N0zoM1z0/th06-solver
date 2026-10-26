@@ -62,6 +62,44 @@ with tempfile.TemporaryDirectory() as temp:
     rejects(lambda: module.analyze(root))
     (root / 'update-times.bin').write_bytes(updates[:-1])
     rejects(lambda: module.update_rows(root / 'update-times.bin'))
+    # A live v2 journal publishes immutable records only after their payload.
+    mapped = root / 'mapped-updates.bin'
+    first = module.UPDATE.pack(1, 4, 100)
+    second = module.UPDATE.pack(2, 4, 200)
+    mapped.write_bytes(module.RENDER_HEADER.pack(0x36545055, 2, 24, 1) + first + second + b'Z' * 24)
+    assert module.update_rows(mapped) == [(1, 4, 100)]
+    live = module.LiveUpdates(mapped)
+    assert live.latest() == (1, 4, 100)
+    with mapped.open('r+b', buffering=0) as file:
+        file.seek(12)
+        file.write(struct.pack('<I', 2))
+    assert live.latest() == (2, 4, 200)
+    live.close()
+    assert module.update_rows(mapped) == [(1, 4, 100), (2, 4, 200)]
+    with mapped.open('r+b', buffering=0) as file:
+        file.seek(12)
+        file.write(struct.pack('<I', 4))
+    rejects(lambda: module.update_rows(mapped))
+    # The monitor can open the preallocated file before its header is published.
+    pending = root / 'pending-updates.bin'
+    pending.write_bytes(bytes(40))
+    early = module.LiveUpdates(pending)
+    assert early.latest() == (0, 0, 0)
+    with pending.open('r+b', buffering=0) as file:
+        file.write(module.RENDER_HEADER.pack(0x36545055, 2, 24, 1) + first)
+    assert early.latest() == (1, 4, 100)
+    early.close()
+    # Deferred state formatting preserves every typed field and float32 value.
+    states = root / 'binary-state'
+    states.mkdir()
+    state = struct.Struct('<4I2fi3I2iI2i')
+    payload = state.pack(1, 4, 0, 261, 192.125, 384.25, -3, 65535, 9000, 128, 0, 0, 123456789, 32, 0)
+    (states / 'retail-states.bin').write_bytes(module.RENDER_HEADER.pack(0x36545354, 2, 60, 1) + payload + b'Z' * 60)
+    module.export_state_csv(states)
+    with (states / 'retail.csv').open() as file:
+        converted = list(csv.DictReader(file))
+    assert len(converted) == 1 and converted[0]['x'] == '192.125'
+    assert converted[0]['timeline'] == '-3' and converted[0]['score'] == '123456789'
     fields = ['frame', 'stage', 'local_frame', 'input', 'x', 'y', 'timeline', 'rng',
               'rng_calls', 'power', 'deaths', 'bombs', 'score', 'rank', 'player_state']
     native = [dict.fromkeys(fields, '0') for _ in range(3)]

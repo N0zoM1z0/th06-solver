@@ -31,8 +31,18 @@ Callback original_bullets = nullptr;
 wine_replay::QuadBatch quad_batch;
 bool software_bullets = false, batch_bullets = false, software_drawing = false;
 unsigned software_entries = 0, software_restores = 0;
-FILE *rows = nullptr;
-HANDLE update_times = INVALID_HANDLE_VALUE;
+struct StateRow {
+    std::uint32_t frame, stage, local_frame, input;
+    float x, y;
+    std::int32_t timeline;
+    std::uint32_t rng, rng_calls, power;
+    std::int32_t deaths, bombs;
+    std::uint32_t score;
+    std::int32_t rank, player_state;
+};
+static_assert(sizeof(StateRow) == 60);
+wine_replay::MappedJournal<StateRow> states;
+wine_replay::MappedJournal<th06::render_timing::Update> update_times;
 wine_replay::RenderTiming render_timing;
 th06::retail::LimiterPrecision limiter_precision;
 LARGE_INTEGER frequency{}, first_tick{};
@@ -73,15 +83,10 @@ ChainElem observation;
         reason = "render_timing_write_failed";
         code = 9;
     }
-    if (update_times != INVALID_HANDLE_VALUE) {
-        FlushFileBuffers(update_times);
-        CloseHandle(update_times);
-        update_times = INVALID_HANDLE_VALUE;
-    }
-    if (rows) {
-        std::fflush(rows);
-        std::fclose(rows);
-        rows = nullptr;
+    const bool updates_good = update_times.close(), states_good = states.close();
+    if (!updates_good || !states_good) {
+        reason = "state_or_update_journal_close_failed";
+        code = 9;
     }
     char path[MAX_PATH];
     std::snprintf(path, sizeof(path), "%s/outcome.json", directory);
@@ -90,7 +95,8 @@ ChainElem observation;
             out,
             "{\"reason\":\"%s\",\"frames\":%u,\"stage\":%d,\"cleared_stages\":%u,"
             "\"deaths\":%d,\"bombs\":%d,\"supervisor_state\":%d,\"retail_nmnb_complete\":%s,"
-            "\"initial_stage\":%u,\"single_stage\":%s,\"precise_limiter\":%s,"
+            "\"journal_mode\":\"mapped_v2\",\"state_records\":%u,\"initial_stage\":%u,\"single_"
+            "stage\":%s,\"precise_limiter\":%s,"
             "\"limiter_entries\":%u,\"limiter_restores\":%u,\"limiter_polls\":%u,"
             "\"sleep_limiter\":%s,\"limiter_sleeps\":%u,"
             "\"software_bullets\":%s,\"software_entries\":%u,\"software_restores\":%u,"
@@ -100,12 +106,12 @@ ChainElem observation;
             at<int>(game_base, abi::GameManager_deaths),
             at<int>(game_base, abi::GameManager_bombsUsed),
             at<int>(supervisor_base, abi::Supervisor_curState), code == 0 ? "true" : "false",
-            initial_stage, single_stage ? "true" : "false", precise_limiter ? "true" : "false",
-            limiter_precision.entries, limiter_precision.restores, limiter_polls,
-            sleep_limiter ? "true" : "false", limiter_sleeps, software_bullets ? "true" : "false",
-            software_entries, software_restores, batch_bullets ? "true" : "false",
-            quad_batch.draw_calls, quad_batch.submitted, quad_batch.copied_quads,
-            quad_batch.scopes);
+            states.count(), initial_stage, single_stage ? "true" : "false",
+            precise_limiter ? "true" : "false", limiter_precision.entries,
+            limiter_precision.restores, limiter_polls, sleep_limiter ? "true" : "false",
+            limiter_sleeps, software_bullets ? "true" : "false", software_entries,
+            software_restores, batch_bullets ? "true" : "false", quad_batch.draw_calls,
+            quad_batch.submitted, quad_batch.copied_quads, quad_batch.scopes);
         std::fclose(out);
     }
     ExitProcess(code);
@@ -156,20 +162,26 @@ int __cdecl observe(void *) {
         render_timing.context(frame, unsigned(stage), first_tick.QuadPart);
         const auto ns = render_timing.elapsed_ns(time.QuadPart - first_tick.QuadPart);
         const th06::render_timing::Update row{frame, unsigned(stage), ns};
-        DWORD written;
-        if (!WriteFile(update_times, row.data(), sizeof(row), &written, nullptr) ||
-            written != sizeof(row) || render_timing.failed())
+        if (!update_times.append(row) || render_timing.failed())
             finish("render_timing_write_failed", 9);
     }
-    std::fprintf(rows, "%u,%d,%u,%u,%.9g,%.9g,%d,%u,%u,%u,%d,%d,%u,%d,%d\n", frame, stage,
-                 local_frame++, input, x, y,
-                 at<int>(enemy_base, abi::EnemyManager_timelineTime + abi::timer_current),
-                 unsigned(at<unsigned short>(rng_base)), at<unsigned>(rng_base + 4),
-                 unsigned(at<unsigned short>(game_base, abi::GameManager_currentPower)), deaths,
-                 bombs, at<unsigned>(game_base, abi::GameManager_score),
-                 at<int>(game_base, abi::GameManager_rank), int(player_state));
-    if (frame % 600 == 0)
-        std::fflush(rows);
+    const StateRow row{frame,
+                       unsigned(stage),
+                       local_frame++,
+                       input,
+                       x,
+                       y,
+                       at<int>(enemy_base, abi::EnemyManager_timelineTime + abi::timer_current),
+                       unsigned(at<unsigned short>(rng_base)),
+                       at<unsigned>(rng_base + 4),
+                       unsigned(at<unsigned short>(game_base, abi::GameManager_currentPower)),
+                       deaths,
+                       bombs,
+                       at<unsigned>(game_base, abi::GameManager_score),
+                       at<int>(game_base, abi::GameManager_rank),
+                       int(player_state)};
+    if (!states.append(row))
+        finish("state_journal_write_failed", 9);
     if (deaths || bombs || player_state == abi::player_dead)
         finish("hit_or_bomb", 2);
     if (state == 3 || state == 8 || state == 7 || state == 10)
@@ -380,26 +392,15 @@ bool setup() {
     char path[MAX_PATH];
     if (profile_render) {
         std::snprintf(path, sizeof(path), "%s/render-times.bin", directory);
-        if (!render_timing.open(path, frequency.QuadPart))
+        if (!render_timing.open(path, frequency.QuadPart, maximum))
             return false;
         std::snprintf(path, sizeof(path), "%s/update-times.bin", directory);
-        update_times = CreateFileA(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW,
-                                   FILE_ATTRIBUTE_NORMAL, nullptr);
-        DWORD written;
-        if (update_times == INVALID_HANDLE_VALUE ||
-            !WriteFile(update_times, th06::render_timing::update_header.data(), 16, &written,
-                       nullptr) ||
-            written != 16)
+        if (!update_times.open(path, th06::render_timing::update_header[0], maximum))
             return false;
     }
-    std::snprintf(path, sizeof(path), "%s/retail.csv", directory);
-    if (GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES)
+    std::snprintf(path, sizeof(path), "%s/retail-states.bin", directory);
+    if (!states.open(path, 0x36545354, maximum))
         return false;
-    rows = std::fopen(path, "w");
-    if (!rows)
-        return false;
-    std::fprintf(rows, "frame,stage,local_frame,input,x,y,timeline,rng,rng_calls,power,deaths,"
-                       "bombs,score,rank,player_state\n");
     const unsigned char menu[]{0x55, 0x8b, 0xec, 0x81, 0xec, 0xb4, 0x00, 0x00, 0x00};
     const unsigned char init[]{0x55, 0x8b, 0xec, 0x83, 0xec, 0x28};
     Hook hooks[]{{0x43579f, sizeof(menu), menu, reinterpret_cast<void *>(menu_hook)},

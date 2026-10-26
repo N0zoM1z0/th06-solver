@@ -26,7 +26,12 @@ the adapter remains active across handoffs, but its overall window p99 21 ms
 also fails. Balanced render/FPU scopes do not establish FPS acceptance.
 The original limiter still busy-polls hundreds of millions of times per story;
 the scoped coarse-sleep option reduces Stage 4 polls 80.9% with complete
-native agreement and both clocks passing. Its full story is now under evaluation;
+native agreement and both clocks passing. Its story still fails the same
+56.4-Hz window; the retained 84,694-update NMNB prefix matches native. New mapped
+journals remove per-frame Windows writes and CSV formatting. A diagnostic fast
+prefix retains 78,000 native-matching updates, but is never FPS acceptance. The
+1,201-frame target geometry matches the selected-stage run byte for byte, and
+sampled D3D states match. An explicit DXVK EndScene submission is under evaluation;
 see [REPLAY_PACING.md](REPLAY_PACING.md). Do not infer story acceptance from a
 component clear or a prefix's 59.99-Hz mean.
 
