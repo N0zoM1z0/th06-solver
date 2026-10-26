@@ -43,6 +43,12 @@
   The common-start follower, immutable lead, bounded child verification and
   separate X11/PulseAudio capture follow its `docs/PLANNER.md` design. TH06 uses
   its own input bits, source callbacks, projection, lifecycle and native planner.
+- `tools/wine-replay/render_timing.hpp`, its wire schema and SDK slot assertions
+  adapt TH08's independent D3D8 timing observer at revision
+  `1c68dc9639f5bbf19eb8458e591d91b692c33666` (MIT, copyright 2026 N0zoM1z0).
+  TH06 adds integer clock conversion and a separately scoped precision guard
+  for its original absolute-millisecond limiter. Replay inputs, collision/RNG
+  rules and source update order remain owned by the original EXE.
 - `src/shadow_recorded.cpp` references the same TH08 revision's conditional
   geometry recording, spatial beam diversity and independent native verification
   (`src/shadow_recorded.cpp`). It uses TH06's own collision phases, clockwise
@@ -52,3 +58,10 @@
 Touhou and its original game code/assets are by ZUN / Team Shanghai Alice. The
 repository contains reconstruction and solver code only. Original EXE/DAT/image/
 audio files and the development archive remain local and ignored.
+
+The private replay-pacing runtime additionally uses Wine 11 (LGPL-2.1-or-later),
+Mesa 25 and libdrm (upstream component licenses), and DXVK 2.4 (zlib/libpng).
+These external binaries are not distributed in this repository. Package, archive
+and selected DLL hashes, upstream license links and settings are recorded in
+[REPLAY_RUNTIME.json](REPLAY_RUNTIME.json). Original package notices remain with
+the private unpacked runtime.

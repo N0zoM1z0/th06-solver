@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "purpose": "Measured Lunatic retail replay runtime; online MPC remains separate",
+  "host": "Debian 12 amd64 with system LLVM 15 and Vulkan loader dependencies",
+  "windows_architecture": "i386",
+  "unix_graphics_architecture": "x86_64",
+  "wine_arch": "wow64",
+  "wine_signing_key": "D43F640145369C51D786DDEA76F1A20FF987672F",
+  "wine_packages": [
+    {
+      "package": "wine-stable",
+      "version": "11.0.0.0~bookworm-1",
+      "architecture": "amd64",
+      "url": "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine/wine-stable_11.0.0.0~bookworm-1_amd64.deb",
+      "size": 2307232,
+      "sha256": "9d7d50a25006af1793901369bb2119d5810389c0cb74c56142b27de44135835d"
+    },
+    {
+      "package": "wine-stable-amd64",
+      "version": "11.0.0.0~bookworm-1",
+      "architecture": "amd64",
+      "url": "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine/wine-stable-amd64_11.0.0.0~bookworm-1_amd64.deb",
+      "size": 117297604,
+      "sha256": "e9c3d15171cd8d3bb164d742cdab7af43c0159dd8a91cd7ef237c7e5c8259675"
+    },
+    {
+      "package": "wine-stable-i386",
+      "version": "11.0.0.0~bookworm-1",
+      "architecture": "i386",
+      "url": "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine/wine-stable-i386_11.0.0.0~bookworm-1_i386.deb",
+      "size": 107687672,
+      "sha256": "aec8a5d52308813118cab9ce4b3d34cd287dc13ff208571821c5320157c27421"
+    }
+  ],
+  "mesa_packages": [
+    {
+      "package": "libdrm-amdgpu1",
+      "version": "2.4.123-1~bpo12+1",
+      "architecture": "amd64",
+      "url": "https://deb.debian.org/debian/pool/main/libd/libdrm/libdrm-amdgpu1_2.4.123-1~bpo12+1_amd64.deb",
+      "size": 21912,
+      "sha256": "334e2ae389af0e9cb607c2ccfbbf7ae9feb34131ff998550baeffeeae6cda296"
+    },
+    {
+      "package": "libdrm2",
+      "version": "2.4.123-1~bpo12+1",
+      "architecture": "amd64",
+      "url": "https://deb.debian.org/debian/pool/main/libd/libdrm/libdrm2_2.4.123-1~bpo12+1_amd64.deb",
+      "size": 38648,
+      "sha256": "9cc2f341964286295124a32d3625edb76730500625e54a1e682761f883064d7b"
+    },
+    {
+      "package": "mesa-vulkan-drivers",
+      "version": "25.0.7-2~bpo12+1",
+      "architecture": "amd64",
+      "url": "https://deb.debian.org/debian/pool/main/m/mesa/mesa-vulkan-drivers_25.0.7-2~bpo12+1_amd64.deb",
+      "size": 11366132,
+      "sha256": "3899f1800424c60a05df5d6913076a526ca8fdbabec43672cd397563d1ca3263"
+    }
+  ],
+  "dxvk": {
+    "version": "v2.4",
+    "url": "https://github.com/doitsujin/dxvk/releases/download/v2.4/dxvk-2.4.tar.gz",
+    "bytes": 9215513,
+    "sha256": "784eb023fb8da8868aa562c30ef5562989211fc9fda6bc5155d95e28049fccc7",
+    "dll_sha256": {
+      "d3d9.dll": "b2c451064705afa824b6b24e71b7bfa5dccbce92c326665a30482908abd6ec5c",
+      "d3d8.dll": "b6b9801a5eea87c061f974f9c182cbb601ee624e90b8ab84f8a842f808a1d661"
+    }
+  },
+  "dxvk_license": "https://github.com/doitsujin/dxvk/blob/v2.4/LICENSE",
+  "wine_license": "https://github.com/wine-mirror/wine/blob/wine-11.0/COPYING.LIB",
+  "mesa_copyright": "Debian package usr/share/doc/mesa-vulkan-drivers/copyright",
+  "dxvk_configuration": {
+    "dxvk.numCompilerThreads": 1,
+    "d3d9.maxFrameLatency": 1,
+    "d3d9.maxFrameRate": -1,
+    "d3d9.presentInterval": 0
+  },
+  "launcher_settings": {
+    "renderer_threads": 4,
+    "vblank": "off",
+    "precise_limiter": true,
+    "display_timing": true,
+    "dll_overrides": "d3d8,d3d9=n;mscoree,mshtml=",
+    "memory_max_bytes": 2147483648,
+    "memory_high_bytes": 1610612736,
+    "swap_max_bytes": 0,
+    "shader_cache_max": "64M"
+  }
+}

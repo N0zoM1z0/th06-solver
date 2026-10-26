@@ -119,8 +119,12 @@ retail_archives = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                    for p in args.game.iterdir() if p.is_file() and p.suffix.lower() == '.dat'}
 if len(archives) != 6 or archives != retail_archives:
     parser.error('native and retail must use the same six DAT archives')
+shared_lock = Path(__file__).resolve().parents[1] / 'reports/local/.retail.lock'
+shared_lock.parent.mkdir(parents=True, exist_ok=True)
+runtime_ownership = shared_lock.open('a')
 ownership = (args.prefix.parent / '.retail.lock').open('a')
 try:
+    fcntl.flock(runtime_ownership, fcntl.LOCK_EX | fcntl.LOCK_NB)
     fcntl.flock(ownership, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except BlockingIOError:
     parser.error('another owned retail game is already running')

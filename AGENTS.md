@@ -1,9 +1,12 @@
 # TH06 solver engineering rules
 
-Read README.md and docs/STATUS.md before changing behavior. The owner's current
-scope is live Lunatic shadow MPC in the owned Wine retail game, using
-th08-solver as a reference. Measure actual decision deadlines and queue behavior;
-keep offline search and live execution evidence separate.
+Read README.md and docs/STATUS.md before changing behavior. The owner's immediate
+scope is stable 60-FPS Wine retail playback of native-generated Lunatic .rpy
+files, using th08-solver as a reference. Do not use online MPC or a native
+follower during this pacing acceptance. Verify the original replay loader,
+actual presentation clocks and native-export trace agreement. Online shadow MPC
+and its decision/queue optimization remain separate later work; replay FPS
+does not certify online FPS. Keep offline, playback and live evidence separate.
 Do not rerun the full matrix or story campaign for routine optimization.
 Retain the historical seed-0 matrix; do not schedule other difficulties now.
 The owner has now authorized retail replay interoperability under Wine, starting

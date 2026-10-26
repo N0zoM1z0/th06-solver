@@ -1,12 +1,23 @@
 # Native runtime status
 
+Immediate scope (owner clarification, 2026-10-26):
+[native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),
+with no MPC or native follower during playback. Online control acceptance stays
+separate. Native re-export revalidates the historical 127,737-update Lunatic
+Reimu A story and reproduces the published replay hash.
+The private Wine 11 new-WoW64 / DXVK 2.4 / 64-bit Mesa 25 lavapipe profile passes
+one complete Stage 6: 24,441 native-matching updates, NMNB, actual window output
+59.96 Hz / slowest 5 s 58.6 Hz / p99 19 ms. Peak is 350,384,128 bytes, OOM 0.
+Full-story output pacing remains the next acceptance check. Runtime package/DLL
+hashes and settings are pinned in [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
+
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation
 map and local evidence index, see [CONTINUATION.md](CONTINUATION.md).
 The active checklist is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
 **Online shadow MPC does not yet sustain stable 60 FPS.** Its live stage clears
 establish gameplay progress; frame pacing remains a separate high-priority task.
 
-Current scope: [live Lunatic shadow MPC in Wine](SHADOW_MPC.md), with bounded
+Separate live milestone: [Lunatic shadow MPC in Wine](SHADOW_MPC.md), with bounded
 decision time and actual input/queue accounting. Two complete Stage 5 / Reimu B
 runs and one Stage 6 / Marisa B run pass NMNB, including a Stage 5 live recording
 and independent complete native replay of all three actual routes. Stage 6 seed

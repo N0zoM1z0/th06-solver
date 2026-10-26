@@ -9,7 +9,7 @@ replay. **Wine retail playback also passes one complete Lunatic Reimu A story**:
 See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. Current experiments focus
-only on Lunatic random-seed robustness.
+only on Lunatic, with replay frame pacing as the immediate task.
 The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
 Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5
 recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-update
@@ -18,6 +18,14 @@ Failed Stage 6 seeds remain counterexamples. These component runs are separate
 from full-story retail replay and do not establish all-seed robustness.
 **Online shadow MPC does not yet sustain stable 60 FPS.** Search deadlines,
 successful clears and smooth capture timestamps do not establish game frame pacing.
+The current task isolates [Wine `.rpy` playback pacing](docs/REPLAY_PACING.md):
+native verifies/exports first, then the actual retail replay runs without MPC or
+a native follower. Playback FPS and online-controller FPS have separate acceptance.
+One complete Lunatic Stage 6 replay now passes the output gate using private
+Wine 11 new WoW64, DXVK 2.4 and 64-bit lavapipe: 59.96 Hz, slowest five seconds
+58.6 Hz, output p99 19 ms, with all 24,441 native-projected updates matching.
+Peak Wine-tree memory is 334 MiB with zero OOM events. Full-story pacing is the
+next check; see the [pinned runtime](docs/REPLAY_RUNTIME.json).
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
 recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass
@@ -30,6 +38,10 @@ matrix passes **96/96** (92 first-pass, four recovered), and its continuous stor
 pass **16/16** (11 first-pass, five recovered), all with full fresh native replay.
 
 ## Continue development
+
+The immediate work is [retail replay at 60 FPS](docs/REPLAY_PACING.md). Use its
+pure-playback commands and explicit presentation gate before returning to online
+decision scheduling or new policy searches.
 
 Start with the [engineering handoff and open work](docs/CONTINUATION.md): it maps
 completed work, all 13 live trials, retained failures, source entry points, private

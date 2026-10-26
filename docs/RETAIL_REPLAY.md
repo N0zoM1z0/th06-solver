@@ -1,5 +1,10 @@
 # Wine retail replay interoperability
 
+For current render-clock measurements, selected-stage playback, the scoped
+limiter precision fix and the 60-FPS gate, see [REPLAY_PACING.md](REPLAY_PACING.md).
+Those tests run only the original `.rpy` playback; they launch no MPC or native
+follower. The full-story interoperability result below predates that optimization.
+
 The complete seed-0 Lunatic Reimu A story now passes retail playback:
 127,737 updates, stage 1 / power 0 through six natural clears, zero misses/bombs,
 and every row matching the declared 15-field native projection.

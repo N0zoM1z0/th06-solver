@@ -22,11 +22,18 @@ add_custom_command(OUTPUT ${_wine_out}/launch.exe
     ${_wine_out}/retail_abi.hpp VERBATIM)
 add_custom_command(OUTPUT ${_wine_out}/observer.dll
   COMMAND ${TH06_MINGW_CXX} -std=c++17 -O2 -static -shared -I${_wine_out}
+    -I${CMAKE_CURRENT_SOURCE_DIR}/include
     ${_wine_src}/observer.cpp -ladvapi32 -Wl,--kill-at -o ${_wine_out}/observer.new.dll
   COMMAND ${CMAKE_COMMAND} -E rename ${_wine_out}/observer.new.dll ${_wine_out}/observer.dll
   DEPENDS tools/wine-replay/observer.cpp tools/wine-replay/identity.hpp
+    tools/wine-replay/render_timing.hpp include/th06/render_timing.hpp include/th06/retail_clock.hpp
     ${_wine_out}/retail_abi.hpp VERBATIM)
-add_custom_target(th06_wine_replay ALL DEPENDS ${_wine_out}/launch.exe ${_wine_out}/observer.dll)
+add_custom_command(OUTPUT ${_wine_out}/d3d8_timing_abi.o
+  COMMAND ${TH06_MINGW_CXX} -std=c++17 -c
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/wine-replay/d3d8_timing_abi.cpp
+    -o ${_wine_out}/d3d8_timing_abi.o
+  DEPENDS tools/wine-replay/d3d8_timing_abi.cpp VERBATIM)
+add_custom_target(th06_wine_replay ALL DEPENDS ${_wine_out}/launch.exe ${_wine_out}/observer.dll ${_wine_out}/d3d8_timing_abi.o)
 add_custom_command(OUTPUT ${_wine_out}/shadow.dll
   COMMAND ${TH06_MINGW_CXX} -std=c++17 -O2 -static -shared -I${_wine_out}
     -I${CMAKE_CURRENT_SOURCE_DIR}/include

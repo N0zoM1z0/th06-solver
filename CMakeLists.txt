@@ -77,7 +77,13 @@ if(BUILD_TESTING)
   if(Python3_Interpreter_FOUND)
     add_test(NAME retail_trace_contracts COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/retail_trace_tests.py)
+    add_test(NAME replay_pacing_contracts COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/replay_pacing_tests.py)
   endif()
+  add_executable(retail_clock_tests tests/retail_clock_tests.cpp)
+  target_include_directories(retail_clock_tests PRIVATE include)
+  target_compile_features(retail_clock_tests PRIVATE cxx_std_17)
+  add_test(NAME retail_clock_contracts COMMAND retail_clock_tests)
   add_executable(resources_tests tests/resources_tests.cpp)
   target_link_libraries(resources_tests PRIVATE th06_resources)
   add_test(NAME resource_contracts COMMAND resources_tests ${CMAKE_CURRENT_BINARY_DIR}/resource-fixture)
