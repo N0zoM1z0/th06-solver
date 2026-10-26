@@ -1,0 +1,142 @@
+diff --git a/build-th06-win32.txt b/build-th06-win32.txt
+new file mode 100644
+index 0000000..5a301ab
+--- /dev/null
++++ b/build-th06-win32.txt
+@@ -0,0 +1,15 @@
++[binaries]
++c = 'i686-w64-mingw32-gcc-posix'
++cpp = 'i686-w64-mingw32-g++-posix'
++ar = 'i686-w64-mingw32-ar'
++strip = 'i686-w64-mingw32-strip'
++windres = 'i686-w64-mingw32-windres'
++
++[properties]
++needs_exe_wrapper = true
++
++[host_machine]
++system = 'windows'
++cpu_family = 'x86'
++cpu = 'x86'
++endian = 'little'
+diff --git a/meson.build b/meson.build
+index 0548a48..aa1afa4 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1,4 +1,4 @@
+-project('dxvk', ['c', 'cpp'], version : 'v2.4.0', meson_version : '>= 0.58', default_options : [ 'cpp_std=c++17', 'warning_level=2' ])
++project('dxvk', ['c', 'cpp'], version : 'v2.4.0-th06-earlyflush1', meson_version : '>= 0.58', default_options : [ 'cpp_std=c++17', 'warning_level=2' ])
+ 
+ pkg = import('pkgconfig')
+ cpu_family = target_machine.cpu_family()
+diff --git a/src/d3d8/d3d8_device.cpp b/src/d3d8/d3d8_device.cpp
+index 86ca46b..b006991 100644
+--- a/src/d3d8/d3d8_device.cpp
++++ b/src/d3d8/d3d8_device.cpp
+@@ -8,6 +8,8 @@
+ 
+ namespace dxvk {
+ 
++  HRESULT D3D8FlushRenderingCommands(IUnknown* device);
++
+   static constexpr DWORD isFVF(DWORD Handle) {
+     return (Handle & D3DFVF_RESERVED0) == 0;
+   }
+@@ -898,7 +900,15 @@ namespace dxvk {
+ 
+   HRESULT STDMETHODCALLTYPE D3D8Device::BeginScene() { return GetD3D9()->BeginScene(); }
+   
+-  HRESULT STDMETHODCALLTYPE D3D8Device::EndScene() { StateChange(); return GetD3D9()->EndScene(); }
++  HRESULT STDMETHODCALLTYPE D3D8Device::EndScene() {
++    StateChange();
++    HRESULT result = GetD3D9()->EndScene();
++    if (FAILED(result))
++      return result;
++    // Submit before the application's frame limiter waits. This preserves
++    // command order and does not wait for the submitted GPU work to finish.
++    return m_d3d8Options.earlyFlush ? D3D8FlushRenderingCommands(GetD3D9()) : result;
++  }
+ 
+   HRESULT STDMETHODCALLTYPE D3D8Device::Clear(
+           DWORD    Count,
+diff --git a/src/d3d8/d3d8_early_flush.cpp b/src/d3d8/d3d8_early_flush.cpp
+new file mode 100644
+index 0000000..9c390d6
+--- /dev/null
++++ b/src/d3d8/d3d8_early_flush.cpp
+@@ -0,0 +1,13 @@
++#include "../d3d9/d3d9_interfaces.h"
++#include "../util/com/com_pointer.h"
++
++namespace dxvk {
++  HRESULT D3D8FlushRenderingCommands(IUnknown* device) {
++    Com<ID3D9VkInteropDevice> interop;
++    HRESULT result = device->QueryInterface(__uuidof(ID3D9VkInteropDevice),
++      reinterpret_cast<void**>(&interop));
++    if (SUCCEEDED(result))
++      interop->FlushRenderingCommands();
++    return result;
++  }
++}
+diff --git a/src/d3d8/d3d8_options.h b/src/d3d8/d3d8_options.h
+index 67bdf35..4d70e99 100644
+--- a/src/d3d8/d3d8_options.h
++++ b/src/d3d8/d3d8_options.h
+@@ -6,6 +6,7 @@
+ 
+ namespace dxvk {
+   struct D3D8Options {
++    bool earlyFlush = false;
+ 
+     /// Some games rely on undefined behavior by using undeclared vertex shader inputs.
+     /// The simplest way to fix them is to simply modify their vertex shader decl.
+@@ -36,6 +37,7 @@ namespace dxvk {
+ 
+     D3D8Options() {}
+     D3D8Options(const Config& config) {
++      earlyFlush = config.getOption<bool>("d3d8.earlyFlush", false);
+       auto forceVsDeclStr     = config.getOption<std::string>("d3d8.forceVsDecl",            "");
+       batching                = config.getOption<bool>       ("d3d8.batching",               batching);
+       placeP8InScratch        = config.getOption<bool>       ("d3d8.placeP8InScratch",       placeP8InScratch);
+diff --git a/src/d3d8/meson.build b/src/d3d8/meson.build
+index 6a0e0bf..e5a3ee2 100644
+--- a/src/d3d8/meson.build
++++ b/src/d3d8/meson.build
+@@ -4,6 +4,7 @@ d3d8_src = [
+   'd3d8_main.cpp',
+   'd3d8_interface.cpp',
+   'd3d8_device.cpp',
++  'd3d8_early_flush.cpp',
+   'd3d8_options.cpp',
+   'd3d8_surface.cpp',
+   'd3d8_state_block.cpp',
+@@ -20,7 +21,7 @@ if platform != 'windows'
+ endif
+ 
+ d3d8_dll = shared_library(dxvk_name_prefix+'d3d8', d3d8_src, d3d8_res,
+-  dependencies        : [ lib_d3d9, util_dep, dxso_dep, dxvk_dep ],
++  dependencies        : [ lib_d3d9, util_dep ],
+   include_directories : dxvk_include_path,
+   install             : true,
+   vs_module_defs      : 'd3d8'+def_spec_ext,
+diff --git a/src/d3d8/version.rc b/src/d3d8/version.rc
+index 9e2b099..9b147aa 100644
+--- a/src/d3d8/version.rc
++++ b/src/d3d8/version.rc
+@@ -15,13 +15,13 @@ BEGIN
+     BLOCK "080904b0"
+     BEGIN
+       VALUE "CompanyName",      "DXVK"
+-      VALUE "FileDescription",  "Direct3D 8 Runtime"
++      VALUE "FileDescription",  "Direct3D 8 Runtime (TH06 replay early-flush experiment)"
+       VALUE "FileVersion",      "10.0.17763.1 (WinBuild.160101.0800)"
+       VALUE "InternalName",     "D3D8.dll"
+       VALUE "LegalCopyright",   "zlib/libpng license"
+       VALUE "OriginalFilename", "D3D8.dll"
+-      VALUE "ProductName",      "DXVK"
+-      VALUE "ProductVersion",   "10.0.17763.1"
++      VALUE "ProductName",      "DXVK v2.4 + TH06 replay early-flush"
++      VALUE "ProductVersion",   "2.4.0-th06.1"
+     END
+   END
+   BLOCK "VarFileInfo"

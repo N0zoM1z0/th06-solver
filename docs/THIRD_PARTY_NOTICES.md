@@ -65,3 +65,10 @@ These external binaries are not distributed in this repository. Package, archive
 and selected DLL hashes, upstream license links and settings are recorded in
 [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json). Original package notices remain with
 the private unpacked runtime.
+
+An optional, locally altered DXVK 2.4 D3D8 bridge is supplied as a
+[source patch](../patches/dxvk-v2.4-early-flush.patch), based on upstream revision
+`008afc1c5f287e82a553108790da6e10b1159200`. It retains the zlib/libpng license
+and marks altered DLL version resources. The opt-in EndScene submission and
+private build are described in [DXVK_REPLAY_BUILD.md](DXVK_REPLAY_BUILD.md).
+No compiled bridge or original game binary is distributed here.

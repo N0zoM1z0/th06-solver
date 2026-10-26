@@ -357,3 +357,11 @@ Its waiting approach is useful prior art; adopting the entire patch would need
 to respect this project's original callback-order contract. This host exposes no
 DRI GPU device and uses software Vulkan. Desktop GPU/compositor recipes need
 separate applicability checks; they are not evidence for this replay profile.
+
+The opt-in [D3D8 source patch and private build](DXVK_REPLAY_BUILD.md) now have
+same-DLL on/off controls. With eight workers, the retained 1,201-frame target
+window improves from p99 21 ms to 19 ms; Present-call p99 falls from 13.70 to
+6.75 ms. Both 78,000-update diagnostic prefixes match native. The normal full
+story has now crossed that same window at slowest 5 s 59.4 Hz / p99 18 ms and
+completed Stage 4. Stage 5/6, the full comparison and whole-story gate remain
+pending; the bridge is experimental until those finish.
