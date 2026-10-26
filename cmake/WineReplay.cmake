@@ -27,6 +27,7 @@ add_custom_command(OUTPUT ${_wine_out}/observer.dll
   COMMAND ${CMAKE_COMMAND} -E rename ${_wine_out}/observer.new.dll ${_wine_out}/observer.dll
   DEPENDS tools/wine-replay/observer.cpp tools/wine-replay/identity.hpp
     tools/wine-replay/render_timing.hpp include/th06/render_timing.hpp include/th06/retail_clock.hpp
+    tools/wine-replay/quad_batch.hpp include/th06/retail_quads.hpp
     ${_wine_out}/retail_abi.hpp VERBATIM)
 add_custom_command(OUTPUT ${_wine_out}/d3d8_timing_abi.o
   COMMAND ${TH06_MINGW_CXX} -std=c++17 -c

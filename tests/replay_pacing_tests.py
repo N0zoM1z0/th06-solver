@@ -83,6 +83,20 @@ with tempfile.TemporaryDirectory() as temp:
     actual[1]['rng'] = '1'
     write(r, actual)
     assert module.compare_native(n, r, 5, True)['first_difference'] == {'frame': 2, 'field': 'rng', 'native': '0', 'retail': '1'}
+    assert module.compare_native(n, r, 5, True)['expected_rows'] == 3
+    actual[1]['rng'] = '0'
+    write(r, actual + [actual[-1]])
+    extra = module.compare_native(n, r, 5, True)
+    assert not extra['fields_match'] and extra['first_difference'] == {'frame': 4, 'field': 'extra_retail_row'}
+    for position in ('nan', 'inf', '192.026'):
+        actual[1]['x'] = position
+        write(r, actual)
+        assert module.compare_native(n, r, 5, True)['first_difference']['field'] == 'x'
+    actual[1]['x'] = '192.024'
+    write(r, actual)
+    assert module.compare_native(n, r, 5, True)['complete_route']
+    write(r, [])
+    assert module.compare_native(n, r, 5, True)['error'] == 'empty trace'
     # A declared setting missing at the service boundary must fail before
     # even attempting a controller or Wine launch (no launch keys supplied).
     (root / 'worker.json').write_text(json.dumps({'expected_environment': {'TH06_PACING_TEST_MISSING': 'required'}}))

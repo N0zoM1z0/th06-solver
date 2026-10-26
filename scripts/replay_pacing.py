@@ -8,6 +8,7 @@ import statistics
 import struct
 import csv
 import math
+from itertools import zip_longest
 
 UPDATE = struct.Struct('<3Q')
 RENDER_HEADER = struct.Struct('<4I')
@@ -145,38 +146,43 @@ def compare(directories):
 
 
 def compare_native(native_path, retail_path, start_stage=1, single_stage=False):
-    with Path(native_path).open() as file:
-        expected = [row for row in csv.DictReader(file) if int(row['stage']) >= start_stage
-                    and (not single_stage or int(row['stage']) == start_stage)]
-    with Path(retail_path).open() as file:
-        actual = list(csv.DictReader(file))
-    if not expected or not actual:
-        return {'fields_match': False, 'complete_route': False, 'error': 'empty trace'}
-    fields = list(expected[0])
-    if fields != list(actual[0]):
-        return {'fields_match': False, 'complete_route': False, 'error': 'trace field mismatch'}
     difference = None
-    for i, row in enumerate(actual):
-        if i >= len(expected):
-            difference = {'frame': i + 1, 'field': 'extra_retail_row'}
-            break
-        target = dict(expected[i], frame=str(i + 1))
-        if set(row) != set(fields):
-            difference = {'frame': i + 1, 'field': 'malformed_retail_row'}
-            break
-        for name in fields:
-            try:
-                a, b = float(row[name]), float(target[name])
-                same = math.isfinite(a) and math.isfinite(b) and (abs(a-b) <= .025 if name in ('x', 'y') else a == b)
-            except (ValueError, TypeError):
-                same = False
-            if not same:
-                difference = {'frame': i + 1, 'field': name, 'native': target[name], 'retail': row[name]}
-                break
-        if difference:
-            break
-    return {'fields_match': difference is None, 'complete_route': difference is None and len(actual) == len(expected),
-            'rows': len(actual), 'expected_rows': len(expected), 'first_difference': difference,
+    expected_rows = actual_rows = 0
+    # Keep full-story validation bounded independently of route length. Continue
+    # counting after a mismatch so failed/prefix receipts retain exact scope.
+    with Path(native_path).open() as native_file, Path(retail_path).open() as retail_file:
+        native = csv.DictReader(native_file)
+        actual = csv.DictReader(retail_file)
+        fields = native.fieldnames
+        if fields != actual.fieldnames:
+            return {'fields_match': False, 'complete_route': False, 'error': 'trace field mismatch'}
+        expected = (row for row in native if int(row['stage']) >= start_stage
+                    and (not single_stage or int(row['stage']) == start_stage))
+        for i, (target, row) in enumerate(zip_longest(expected, actual), 1):
+            expected_rows += target is not None
+            actual_rows += row is not None
+            if difference is not None or row is None:
+                continue
+            if target is None:
+                difference = {'frame': i, 'field': 'extra_retail_row'}
+                continue
+            target['frame'] = str(i)
+            if set(row) != set(fields):
+                difference = {'frame': i, 'field': 'malformed_retail_row'}
+                continue
+            for name in fields:
+                try:
+                    a, b = float(row[name]), float(target[name])
+                    same = math.isfinite(a) and math.isfinite(b) and (abs(a-b) <= .025 if name in ('x', 'y') else a == b)
+                except (ValueError, TypeError):
+                    same = False
+                if not same:
+                    difference = {'frame': i, 'field': name, 'native': target[name], 'retail': row[name]}
+                    break
+    if not expected_rows or not actual_rows:
+        return {'fields_match': False, 'complete_route': False, 'error': 'empty trace'}
+    return {'fields_match': difference is None, 'complete_route': difference is None and actual_rows == expected_rows,
+            'rows': actual_rows, 'expected_rows': expected_rows, 'first_difference': difference,
             'start_stage': start_stage, 'single_stage': single_stage}
 
 

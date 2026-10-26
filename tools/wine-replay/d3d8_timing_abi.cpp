@@ -8,3 +8,6 @@ static_assert(sizeof(IDirect3DDevice8Vtbl) == 97 * sizeof(void *));
 static_assert(offsetof(IDirect3DDevice8Vtbl, Present) == 15 * sizeof(void *));
 static_assert(offsetof(IDirect3DDevice8Vtbl, BeginScene) == 34 * sizeof(void *));
 static_assert(offsetof(IDirect3DDevice8Vtbl, EndScene) == 35 * sizeof(void *));
+static_assert(offsetof(IDirect3DDevice8Vtbl, DrawPrimitiveUP) == 72 * sizeof(void *));
+static_assert(offsetof(IDirect3DDevice8Vtbl, SetVertexShader) == 76 * sizeof(void *));
+static_assert(offsetof(IDirect3DDevice8Vtbl, GetVertexShader) == 77 * sizeof(void *));

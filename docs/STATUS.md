@@ -5,10 +5,13 @@ Immediate scope (owner clarification, 2026-10-26):
 with no MPC or native follower during playback. Online control acceptance stays
 separate. Native re-export revalidates the historical 127,737-update Lunatic
 Reimu A story and reproduces the published replay hash.
-The private Wine 11 new-WoW64 / DXVK 2.4 / 64-bit Mesa 25 lavapipe profile passes
-one complete Stage 6: 24,441 native-matching updates, NMNB, actual window output
-59.96 Hz / slowest 5 s 58.6 Hz / p99 19 ms. Peak is 350,384,128 bytes, OOM 0.
-Full-story output pacing remains the next acceptance check. Runtime package/DLL
+The current Wine 11 new-WoW64 / DXVK 2.4 / 64-bit Mesa 25 lavapipe profile passes
+one complete Stage 4 with original CPU bullet drawing, bounded diffuse-color
+quad batches, six workers and FIFO with a two-frame cap: 28,296 native-matching
+updates, NMNB, actual window output 59.998 Hz / slowest 5 s 59.8 Hz / p99 19 ms.
+Peak is 288,395,264 bytes, OOM 0. The earlier four-worker hardware-draw Stage 6
+profile passes separately (24,441 updates). Full-story output pacing remains
+the next acceptance check. Runtime package/DLL
 hashes and settings are pinned in [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
 
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation

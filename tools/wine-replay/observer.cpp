@@ -1,4 +1,5 @@
 #include "identity.hpp"
+#include "quad_batch.hpp"
 #include "render_timing.hpp"
 #include "retail_abi.hpp"
 #include "th06/retail_clock.hpp"
@@ -26,6 +27,10 @@ struct ChainElem {
 static_assert(sizeof(ChainElem) == 0x20);
 using Callback = int(__cdecl *)(void *);
 Callback original_menu = nullptr, original_init = nullptr;
+Callback original_bullets = nullptr;
+wine_replay::QuadBatch quad_batch;
+bool software_bullets = false, batch_bullets = false, software_drawing = false;
+unsigned software_entries = 0, software_restores = 0;
 FILE *rows = nullptr;
 HANDLE update_times = INVALID_HANDLE_VALUE;
 wine_replay::RenderTiming render_timing;
@@ -77,13 +82,19 @@ ChainElem observation;
             "{\"reason\":\"%s\",\"frames\":%u,\"stage\":%d,\"cleared_stages\":%u,"
             "\"deaths\":%d,\"bombs\":%d,\"supervisor_state\":%d,\"retail_nmnb_complete\":%s,"
             "\"initial_stage\":%u,\"single_stage\":%s,\"precise_limiter\":%s,"
-            "\"limiter_entries\":%u,\"limiter_restores\":%u,\"limiter_polls\":%u}\n",
+            "\"limiter_entries\":%u,\"limiter_restores\":%u,\"limiter_polls\":%u,"
+            "\"software_bullets\":%s,\"software_entries\":%u,\"software_restores\":%u,"
+            "\"batch_bullets\":%s,\"batch_draw_calls\":%llu,\"batch_submitted\":%llu,"
+            "\"batch_quads\":%llu,\"batch_scopes\":%llu}\n",
             reason, frame, at<int>(game_base, abi::GameManager_currentStage), cleared,
             at<int>(game_base, abi::GameManager_deaths),
             at<int>(game_base, abi::GameManager_bombsUsed),
             at<int>(supervisor_base, abi::Supervisor_curState), code == 0 ? "true" : "false",
             initial_stage, single_stage ? "true" : "false", precise_limiter ? "true" : "false",
-            limiter_precision.entries, limiter_precision.restores, limiter_polls);
+            limiter_precision.entries, limiter_precision.restores, limiter_polls,
+            software_bullets ? "true" : "false", software_entries, software_restores,
+            batch_bullets ? "true" : "false", quad_batch.draw_calls, quad_batch.submitted,
+            quad_batch.copied_quads, quad_batch.scopes);
         std::fclose(out);
     }
     ExitProcess(code);
@@ -93,6 +104,8 @@ int __cdecl observe(void *) {
         return 1;
     if (limiter_precision.active)
         finish("limiter_precision_reached_gameplay", 9);
+    if (software_drawing || quad_batch.active())
+        finish("software_draw_scope_reached_gameplay", 9);
     const auto stage = at<int>(game_base, abi::GameManager_currentStage);
     const auto input = at<unsigned short>(0x69d904);
     const auto x = at<float>(player_base, abi::Player_positionCenter);
@@ -163,6 +176,29 @@ int __cdecl observe(void *) {
         finish("frame_budget", 4);
     return 1;
 }
+int __cdecl bullets_hook(void *manager) {
+    if (software_drawing)
+        finish("software_draw_scope_reentered", 9);
+    if (batch_bullets && !quad_batch.enter())
+        finish("quad_batch_scope_failed", 9);
+    // Use the source's CPU-transformed branch only within its draw callback.
+    // The one-byte flag and every draw submission are restored before gameplay.
+    auto &hardware =
+        at<unsigned char>(supervisor_base, abi::Supervisor_hasD3dHardwareVertexProcessing);
+    const auto previous = hardware;
+    software_drawing = true;
+    ++software_entries;
+    hardware = 0;
+    const auto result = original_bullets(manager);
+    hardware = previous;
+    software_drawing = false;
+    ++software_restores;
+    if (batch_bullets)
+        quad_batch.leave();
+    if (quad_batch.failed())
+        finish("quad_batch_submission_failed", 9);
+    return result;
+}
 int __cdecl init_hook(void *manager) {
     const auto result = original_init(manager);
     if (result != 0)
@@ -172,6 +208,29 @@ int __cdecl init_hook(void *manager) {
         finish("replay_load_rejected", 5);
     if (!at<int>(game_base, abi::GameManager_isInReplay))
         finish("not_replay_mode", 6);
+    if (software_bullets) {
+        auto *root = reinterpret_cast<ChainElem *>(0x69d938);
+        ChainElem *found = nullptr;
+        unsigned visited = 0;
+        for (auto *node = root->next; node && node != root; node = node->next) {
+            if (++visited > 128)
+                finish("software_draw_chain_invalid", 9);
+            if (node->priority == 9) {
+                if (found)
+                    finish("software_draw_chain_ambiguous", 9);
+                found = node;
+            }
+        }
+        if (!found || !found->callback || !found->arg)
+            finish("software_draw_chain_missing", 9);
+        if (found->callback != bullets_hook) {
+            const auto address = reinterpret_cast<std::uintptr_t>(found->callback);
+            if (address < 0x401000 || address >= 0x469000)
+                finish("software_draw_callback_identity_failed", 9);
+            original_bullets = found->callback;
+            found->callback = bullets_hook;
+        }
+    }
     local_frame = 0;
     initialized = true;
     if (!attached) {
@@ -187,6 +246,9 @@ int __cdecl menu_hook(void *menu) {
     if (profile_render &&
         !render_timing.install(at<void *>(supervisor_base, abi::Supervisor_d3dDevice)))
         finish("render_timing_install_failed", 9);
+    if (batch_bullets &&
+        !quad_batch.install(at<void *>(supervisor_base, abi::Supervisor_d3dDevice)))
+        finish("quad_batch_install_failed", 9);
     if (precise_limiter && !timer_hooked) {
         if (at<unsigned char>(supervisor_base,
                               abi::Supervisor_cfg + abi::GameConfiguration_frameskipConfig))
@@ -248,6 +310,13 @@ bool setup() {
     precise_limiter =
         GetEnvironmentVariableA("TH06_REPLAY_PRECISE_LIMITER", option, sizeof(option)) &&
         std::strcmp(option, "1") == 0;
+    software_bullets =
+        GetEnvironmentVariableA("TH06_REPLAY_SOFTWARE_BULLETS", option, sizeof(option)) &&
+        std::strcmp(option, "1") == 0;
+    batch_bullets = GetEnvironmentVariableA("TH06_REPLAY_BATCH_BULLETS", option, sizeof(option)) &&
+                    std::strcmp(option, "1") == 0;
+    if (batch_bullets && !software_bullets)
+        return false;
     single_stage = GetEnvironmentVariableA("TH06_REPLAY_SINGLE_STAGE", option, sizeof(option)) &&
                    std::strcmp(option, "1") == 0;
     if (precise_limiter && !profile_render)

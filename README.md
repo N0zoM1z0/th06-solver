@@ -21,11 +21,13 @@ successful clears and smooth capture timestamps do not establish game frame paci
 The current task isolates [Wine `.rpy` playback pacing](docs/REPLAY_PACING.md):
 native verifies/exports first, then the actual retail replay runs without MPC or
 a native follower. Playback FPS and online-controller FPS have separate acceptance.
-One complete Lunatic Stage 6 replay now passes the output gate using private
-Wine 11 new WoW64, DXVK 2.4 and 64-bit lavapipe: 59.96 Hz, slowest five seconds
-58.6 Hz, output p99 19 ms, with all 24,441 native-projected updates matching.
-Peak Wine-tree memory is 334 MiB with zero OOM events. Full-story pacing is the
-next check; see the [pinned runtime](docs/REPLAY_RUNTIME.json).
+One complete Lunatic Stage 4 replay now passes both output clocks using private
+Wine 11 new WoW64, DXVK 2.4, 64-bit lavapipe, original CPU bullet drawing,
+bounded quad batches and FIFO with a two-frame cap: 60.00 Hz, slowest five seconds
+59.8 Hz and window p99 19 ms. All 28,296 native-projected updates match, NMNB.
+Peak Wine-tree memory is 275 MiB with zero OOM events. The earlier Stage 6 profile
+passes separately. Full-story pacing is the next check; see the
+[pinned runtime](docs/REPLAY_RUNTIME.json).
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
 recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass

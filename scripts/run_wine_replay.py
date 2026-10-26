@@ -24,6 +24,25 @@ def cache_state(directory):
             'file_size_manifest_sha256': hashlib.sha256(json.dumps(entries).encode()).hexdigest()}
 
 
+def parse_cpus(value):
+    available = os.sched_getaffinity(0)
+    selected = set()
+    try:
+        for item in value.split(','):
+            bounds = [int(v) for v in item.split('-')]
+            if len(bounds) not in (1, 2):
+                raise ValueError()
+            first, last = bounds[0], bounds[-1]
+            if not 0 <= first <= last <= max(available):
+                raise ValueError()
+            selected.update(range(first, last + 1))
+        if not selected or not selected <= available:
+            raise ValueError()
+    except ValueError:
+        raise argparse.ArgumentTypeError('CPU list is outside the available affinity')
+    return sorted(selected)
+
+
 def graphics_libraries():
     relative = next(line.split(':', 2)[2] for line in Path('/proc/self/cgroup').read_text().splitlines()
                     if line.startswith('0::'))
@@ -39,9 +58,13 @@ def graphics_libraries():
                 with (process / 'exe').open('rb') as executable:
                     header = executable.read(5)
                 return {'pid': int(pid), 'unix_executable': str((process / 'exe').resolve()),
+                        'nice': os.getpriority(os.PRIO_PROCESS, int(pid)),
+                        'cpus': sorted(os.sched_getaffinity(int(pid))),
+                        'thread_nice': {task.name: os.getpriority(os.PRIO_PROCESS, int(task.name))
+                                        for task in (process / 'task').iterdir()},
                         'unix_elf_bits': 64 if header == b'\x7fELF\x02' else 32 if header == b'\x7fELF\x01' else None,
                         'libraries': {path: hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in paths}}
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
             continue
     return None
 
@@ -54,6 +77,11 @@ def worker(directory):
     if actual != config['expected_environment']:
         (output / 'effective-environment.json').write_text(json.dumps(actual, indent=2) + '\n')
         raise RuntimeError('owned worker did not receive the declared rendering environment')
+    priority = {'nice': os.getpriority(os.PRIO_PROCESS, 0),
+                'cpus': sorted(os.sched_getaffinity(0))}
+    (output / 'effective-worker-priority.json').write_text(json.dumps(priority, indent=2) + '\n')
+    if config.get('display_cpus') and priority['cpus'] != config['display_cpus']:
+        raise RuntimeError('owned display worker did not receive the declared CPU affinity')
     wine_env = os.environ.copy()
     for name, value in config.get('wine_environment', {}).items():
         if value is None:
@@ -68,7 +96,13 @@ def worker(directory):
     version = subprocess.run([str(wine_path), '--version'], capture_output=True, text=True, check=True)
     (output / 'wine-runtime.json').write_text(json.dumps({'launcher': str(wine_path),
         'launcher_sha256': hashlib.sha256(wine_path.read_bytes()).hexdigest(), 'version': version.stdout.strip()}, indent=2) + '\n')
-    game = subprocess.Popen(config['wine'], env=wine_env)
+    wine_command = config['wine']
+    if config.get('wine_nice', 0):
+        wine_command = ['/usr/bin/nice', '-n', str(config['wine_nice']), *wine_command]
+    if config.get('wine_cpus'):
+        wine_command = ['/usr/bin/taskset', '--cpu-list',
+                        ','.join(map(str, config['wine_cpus'])), *wine_command]
+    game = subprocess.Popen(wine_command, env=wine_env)
     snapshot = False
     display_monitor = None
     libraries_recorded = False
@@ -141,7 +175,12 @@ parser.add_argument('--start-stage', type=int, default=1)
 parser.add_argument('--single-stage', action='store_true', help='stop at the selected stage natural clear')
 parser.add_argument('--render-timing', action='store_true')
 parser.add_argument('--precise-limiter', action='store_true', help='restore double precision only in the original frame limiter')
+parser.add_argument('--software-bullets', action='store_true', help='original CPU bullet draw path only inside its render callback')
+parser.add_argument('--batch-bullets', action='store_true', help='batch adjacent CPU-transformed bullet quads; implies --software-bullets')
 parser.add_argument('--renderer-threads', type=int, default=2)
+parser.add_argument('--wine-nice', type=int, default=0, help='lower Wine CPU priority relative to the owned display server (0..19)')
+parser.add_argument('--wine-cpus', type=parse_cpus, help='owned Wine CPU affinity, e.g. 0-3,8-11')
+parser.add_argument('--display-cpus', type=parse_cpus, help='owned display/observer affinity; use separate physical cores')
 parser.add_argument('--vblank', choices=['inherit', 'off'], default='inherit')
 parser.add_argument('--shader-cache', type=Path)
 parser.add_argument('--native-trace', type=Path, help='compare with a fresh native export CSV')
@@ -149,12 +188,18 @@ parser.add_argument('--snapshot', action='store_true', help='one screenshot duri
 parser.add_argument('--display-timing', action='store_true', help='independent XDamage window update clock inside the same cap')
 parser.add_argument('--require-pacing', action='store_true', help='also fail acceptance if the declared presentation gate fails')
 args = parser.parse_args()
-if args.precise_limiter or args.snapshot or args.require_pacing or args.display_timing:
+if args.batch_bullets:
+    args.software_bullets = True
+if args.precise_limiter or args.snapshot or args.require_pacing or args.display_timing or args.software_bullets:
     args.render_timing = True
 if not 1 <= args.updates <= 1000000 or not 1 <= args.seconds <= 7200:
     parser.error('invalid frame/time budget')
 if not 1 <= args.start_stage <= 6 or not 1 <= args.renderer_threads <= 8:
     parser.error('invalid stage/render threads')
+if not 0 <= args.wine_nice <= 19:
+    parser.error('invalid Wine nice value')
+if args.wine_cpus and args.display_cpus and set(args.wine_cpus) & set(args.display_cpus):
+    parser.error('Wine and display CPU affinity must not overlap')
 if args.shader_cache:
     args.shader_cache = args.shader_cache.resolve()
     args.shader_cache.mkdir(parents=True, exist_ok=True)
@@ -231,6 +276,8 @@ command = ['systemd-run', '--user', '--unit=' + unit, '--wait', '--pipe',
            'TH06_REPLAY_SINGLE_STAGE=' + str(int(args.single_stage)),
            'TH06_REPLAY_RENDER_TIMING=' + str(int(args.render_timing)),
            'TH06_REPLAY_PRECISE_LIMITER=' + str(int(args.precise_limiter)),
+           'TH06_REPLAY_SOFTWARE_BULLETS=' + str(int(args.software_bullets)),
+           'TH06_REPLAY_BATCH_BULLETS=' + str(int(args.batch_bullets)),
            '/usr/bin/xvfb-run', '-a', sys.executable, str(frozen / 'run_wine_replay.py'),
            '--worker', str(args.output)]
 render_names = ['WINE_D3D_CONFIG', 'mesa_glthread', 'GALLIUM_THREAD', 'LP_NATIVE_VECTOR_WIDTH', 'VK_ICD_FILENAMES',
@@ -247,6 +294,9 @@ if args.shader_cache:
     extra.extend(['MESA_SHADER_CACHE_DIR=' + str(args.shader_cache), 'MESA_SHADER_CACHE_MAX_SIZE=64M'])
 index = command.index('/usr/bin/xvfb-run')
 command[index:index] = extra
+if args.display_cpus:
+    index = command.index('/usr/bin/xvfb-run')
+    command[index:index] = ['/usr/bin/taskset', '--cpu-list', ','.join(map(str, args.display_cpus))]
 expected_environment = {**{name: os.environ.get(name) for name in render_names},
                         'WINEPREFIX': str(args.prefix), 'WINEARCH': args.wine_arch, 'WINESERVER': str(wine_server),
                         'WINEDLLOVERRIDES': args.dll_overrides,
@@ -256,9 +306,13 @@ expected_environment = {**{name: os.environ.get(name) for name in render_names},
                         'MESA_SHADER_CACHE_MAX_SIZE': '64M' if args.shader_cache else None,
                         'MESA_SHADER_CACHE_DISABLE': 'false' if args.shader_cache else 'true',
                         'TH06_REPLAY_RENDER_TIMING': str(int(args.render_timing)),
-                        'TH06_REPLAY_PRECISE_LIMITER': str(int(args.precise_limiter))}
+                        'TH06_REPLAY_PRECISE_LIMITER': str(int(args.precise_limiter)),
+                        'TH06_REPLAY_SOFTWARE_BULLETS': str(int(args.software_bullets)),
+                        'TH06_REPLAY_BATCH_BULLETS': str(int(args.batch_bullets))}
 worker_environment = dict(expected_environment, **{name: None for name in wine_only})
 config = {'expected_environment': worker_environment, 'expected_wine_environment': expected_environment,
+          'wine_nice': args.wine_nice,
+          'wine_cpus': args.wine_cpus, 'display_cpus': args.display_cpus,
           'wine_environment': {name: expected_environment[name] for name in wine_only},
           'snapshot': args.snapshot,
           'display_timing': args.display_timing,
@@ -273,7 +327,10 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'retail_sha256': pinned, 'replay_sha256': hashlib.sha256((args.game / args.replay).read_bytes()).hexdigest(),
            'binaries': binary_hashes, 'mode': 'retail-rpy-playback', 'start_stage': args.start_stage,
            'wine_arch': args.wine_arch, 'wine_loader': str(wine_loader), 'wineserver': str(wine_server),
+           'wine_nice': args.wine_nice,
+           'wine_cpus': args.wine_cpus, 'display_cpus': args.display_cpus,
            'single_stage': args.single_stage, 'precise_limiter': args.precise_limiter,
+           'software_bullets': args.software_bullets, 'batch_bullets': args.batch_bullets,
            'render_environment': expected_environment, 'native_controller_running': False,
            'shader_cache_before': cache_state(args.shader_cache),
            'config_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()

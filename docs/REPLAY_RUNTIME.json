@@ -73,12 +73,12 @@
   "mesa_copyright": "Debian package usr/share/doc/mesa-vulkan-drivers/copyright",
   "dxvk_configuration": {
     "dxvk.numCompilerThreads": 1,
-    "d3d9.maxFrameLatency": 1,
+    "d3d9.maxFrameLatency": 2,
     "d3d9.maxFrameRate": -1,
-    "d3d9.presentInterval": 0
+    "d3d9.presentInterval": 1
   },
   "launcher_settings": {
-    "renderer_threads": 4,
+    "renderer_threads": 6,
     "vblank": "off",
     "precise_limiter": true,
     "display_timing": true,
@@ -86,6 +86,38 @@
     "memory_max_bytes": 2147483648,
     "memory_high_bytes": 1610612736,
     "swap_max_bytes": 0,
-    "shader_cache_max": "64M"
+    "shader_cache_max": "64M",
+    "software_bullets": true,
+    "batch_bullets": true,
+    "wine_nice": 0,
+    "wine_cpus": null,
+    "display_cpus": null
+  },
+  "historical_stage6_profile": {
+    "renderer_threads": 4,
+    "graphics_opts": 2177,
+    "software_bullets": false,
+    "batch_bullets": false,
+    "dxvk_configuration": {
+      "dxvk.numCompilerThreads": 1,
+      "d3d9.maxFrameLatency": 1,
+      "d3d9.maxFrameRate": -1,
+      "d3d9.presentInterval": 0
+    },
+    "scope": "Complete 24,441-update NMNB stage; window 59.958 Hz, slowest 5 s 58.6 Hz, p99 19 ms. Separate from current Stage 4 and story acceptance."
+  },
+  "graphics_configuration": {
+    "opts": 2179,
+    "baseline_opts": 2177,
+    "changed_original_option": "dontUseVertexBuf: original per-vertex diffuse colors",
+    "window_width": 640,
+    "window_height": 480,
+    "color_bits": 32,
+    "frameskip": 0
+  },
+  "acceptance": {
+    "stage4": "Complete 28,296-update NMNB stage; all 15 native-projected fields match. API and window gates pass: mean 59.998 Hz, slowest 5 s 59.8 Hz, window p99 19 ms. Peak 288,395,264 bytes, OOM 0.",
+    "story": "Pending full 127,737-update natural six-clear playback with this profile.",
+    "online_mpc": "Separate; stable FPS not established"
   }
 }

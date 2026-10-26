@@ -40,10 +40,17 @@ external DLLs and `dxvk.conf`:
 
 ```ini
 dxvk.numCompilerThreads = 1
-d3d9.maxFrameLatency = 1
+d3d9.maxFrameLatency = 2
 d3d9.maxFrameRate = -1
-d3d9.presentInterval = 0
+d3d9.presentInterval = 1
 ```
+
+The accepted Stage 4 profile additionally uses the original `dontUseVertexBuf`
+option: graphics opts `0x883` instead of the earlier `0x881`, selecting per-vertex
+diffuse colors. Keep the source game/config unchanged and use a private copy.
+Resolution, 32-bit color, frame skip and image quality are retained. The complete
+28,296-update NMNB stage passes both clocks and native comparison: window
+59.998 Hz / slowest 5 s 59.8 Hz / p99 19 ms. Full-story acceptance is pending.
 
 Point a private ICD JSON at the **64-bit** `libvulkan_lvp.so`. The Windows game,
 observer and D3D8/D3D9 DLLs remain 32-bit; the Unix graphics libraries are 64-bit.
@@ -56,11 +63,11 @@ WINE_D3D_CONFIG=csmt=0 python3 scripts/run_wine_replay.py \
   --wine /path/to/private-wine/bin/wine --wine-arch wow64 \
   --game /path/to/private-game --prefix /path/to/private-prefix64 \
   --dll-overrides 'd3d8,d3d9=n;mscoree,mshtml=' \
-  --replay replay/th6_paced.rpy --start-stage 6 --single-stage \
+  --replay replay/th6_paced.rpy --start-stage 4 --single-stage \
   --native-trace reports/local/native-export.csv \
-  --renderer-threads 4 --vblank off --precise-limiter --display-timing \
+  --renderer-threads 6 --vblank off --precise-limiter --display-timing --batch-bullets \
   --shader-cache reports/local/replay-cache --require-pacing \
-  --updates 30000 --seconds 900 --output reports/local/replay-stage6
+  --updates 35000 --seconds 900 --output reports/local/replay-stage4
 ```
 
 `--start-stage` uses the original replay loader's stage records, including carried
@@ -150,12 +157,48 @@ Xvfb/Python tools keep their own library environment. Wine version, prefix mode,
 loaded Unix ELF class, actual graphics-library hashes, EXE/RPY/DAT/config/DLL
 identities and frozen tooling accompany each run.
 
+## Original CPU drawing and bounded batching
+
+The original hardware bullet draw changes its world matrix for each sprite.
+`--software-bullets` selects the original `DrawBulletNoHwVertex` branch only in
+the priority-9 BulletManager draw callback, restoring the exact one-byte hardware
+flag afterward. A guard rejects any scope reaching gameplay. ECL, inputs, RNG,
+collision predicates and callback order remain owned by the original EXE.
+The pinned DXVK fixed-function implementation
+[bypasses texture transforms for XYZRHW positions](https://github.com/doitsujin/dxvk/blob/v2.4/src/d3d9/d3d9_fixed_function.cpp#L1130),
+so the source's CPU-generated UVs are not transformed twice.
+
+`--batch-bullets` implies that drawing branch and copies at most 512 adjacent
+compatible quads into a triangle list, preserving every vertex byte, triangle
+order and winding. Both original 24-byte factor-color and 28-byte diffuse-color
+formats are supported. Every other SDK method flushes first, including state
+changes and queries; scope exit flushes before the original hardware flag can
+reach subsequent gameplay. Deferred draw failures reject the run. No gameplay
+objects or textures are copied or modified by the batch adapter.
+
+Per-vertex colors matter: the complete Stage 4 factor-color control submits
+6,587,465 quads in 369,121 batches and fails pacing. Diffuse colors reduce that
+same geometry to 30,925 batches. Six workers plus diffuse batching pass the API
+gate (59.998 Hz, p99 17.144 ms), but immediate-mode window output still fails at
+p99 21 ms. FIFO with one queued frame also fails the complete stage despite a
+passing prefix. FIFO with a two-frame cap passes the complete stage at window
+p99 19 ms. Presentation mode is checked in the actual Vulkan log; acceptance
+requires both clocks. This replay queue does not establish an online latency policy.
+
+Optional `--wine-nice`, `--wine-cpus` and `--display-cpus` record effective game
+priority/affinity and display-worker affinity. Non-overlapping physical cores
+must be chosen for the current host. Nice 5 and a separate display core did not
+pass the window gate in the retained controls; the FIFO candidate uses the
+default priority and affinity.
+
 ## Evidence and retained failures
 
 The private ledger is `reports/local/pacing-20261026/rpy-attempt-ledger.json`;
 each attempt retains raw clocks, trace, logs, hashes and resource receipts.
-The Wine 11 new-WoW64 / DXVK / 64-bit lavapipe profile passes a complete
-Stage 6. Full-story pacing is the next acceptance check; it has not yet passed.
+The earlier Wine 11 new-WoW64 / DXVK / 64-bit lavapipe profile passes a complete
+Stage 6 with four workers, original hardware drawing and immediate presentation.
+Full-story pacing has not yet passed. The newer CPU/diffuse-batch/FIFO candidate
+is separate from that legacy Stage 6 result and now passes a complete Stage 4.
 
 | Attempt | Native-matching retail route | Mean Hz | Slowest 5 s Hz | p99 ms | Result |
 |---|---:|---:|---:|---:|---|
@@ -166,18 +209,50 @@ Stage 6. Full-story pacing is the next acceptance check; it has not yet passed.
 | Wine 8 + DXVK / 32-bit lavapipe Stage 6 window | 24,441 complete | 59.47 | 51.6 | 22 | Fail |
 | Wine 11 WoW64 OpenGL Stage 6 window | 24,441 complete | 56.69 | 39.8 | 30 | Fail |
 | Wine 11 WoW64 + DXVK / 64-bit lavapipe Stage 6 window | 24,441 complete | 59.96 | 58.6 | 19 | Pass |
+| Same four-thread profile, story window | 91,553 prefix | 59.97 | 57.4 | 20 | Fail; stopped after irreversible pacing failure |
+| Stage 4 CPU/diffuse batch, six workers, immediate | 28,296 complete | 59.99 | 59.8 | 21 | API passes; window fails |
+| Same Stage 4 profile, nice 5 | 28,296 complete | 59.98 | 59.0 | 21 | Fail |
+| Same Stage 4 profile, separate display core | 28,296 complete | 59.96 | 59.2 | 22 | Fail |
+| Stage 4 CPU/diffuse batch, six workers, FIFO | 3,600 prefix | 59.99 | 59.8 | 18 | Timing passes; route incomplete |
+| Same FIFO profile, one-frame cap | 28,296 complete | 59.93 | 54.2 | 21 | Fail |
+| Stage 4 CPU/diffuse batch, FIFO, two-frame cap | 28,296 complete | 60.00 | 59.8 | 19 | Pass |
 
 The passing Stage 6 run peaks at 350,384,128 bytes with zero OOM events; its
 24,536 precision entries all restore before gameplay. Steady output still contains
 a 119-ms maximum gap and five gaps above 50 ms, retained in the report. The gate
 does not certify that every frame is exactly 16.67 ms.
 
-Earlier vertex-color, CPU-transform and quad-batch experiments, limiter-sleep
-variants and one/eight-thread controls also failed; their code is archived
-privately and is absent from the current implementation. A two-thread GDB trial
+The accepted Stage 4 profile peaks at 288,395,264 bytes (275 MiB), OOM 0. Its
+28,277 CPU-draw entries all restore, and all 28,397 limiter entries restore.
+The window report retains a 45-ms maximum gap, one gap above 33.3 ms and none
+above 50 ms. All 28,296 native-projected updates match. The full story still
+requires its own natural six-clear terminal and complete timing report.
+
+The first full-story attempt fails inside Stage 4 around local update 21,800
+(global updates 76,521–76,809). Draw submission is about 2 ms, while Present
+repeatedly takes 20–28 ms. This is separate from loading gaps; the numerical gate
+is unchanged. The stopped NMNB prefix matches all 91,553 native rows, peaks at
+385,306,624 bytes and has zero OOM events. It is not a completed story.
+Selected Stage 4 controls using two/six/eight workers without batching fail at
+32.6/53.8/46.6 Hz over five seconds. More workers alone are not an improvement.
+A four-worker control changing only `d3d9.maxFrameLatency` from 1 to 2 also fails
+at 52 Hz. DXVK's
+[frame-latency synchronization](https://github.com/doitsujin/dxvk/blob/v2.4/src/d3d9/d3d9_swapchain.cpp#L1127)
+waits on completed frames at this cap, but a larger queue did not fix output.
+DXVK 3.1.1 completes Stage 4 with matching native rows and zero misses/bombs, yet
+fails both a cold shader stall (window maximum 4.822 seconds) and later dense
+output (53.6-Hz API five-second diagnostic after update 1,000). It is not adopted.
+
+Earlier Wine 8 vertex-color, CPU-transform and quad-batch experiments, limiter-sleep
+variants and one/eight-thread controls also failed; those frozen implementations
+remain private. The current CPU batch adapter is retested with the new WoW64/DXVK
+backend and supports both source vertex formats. A two-thread GDB trial
 was already failing before read-only profiling; it is diagnostic, not a timing
 control. A timer API microbenchmark ruled out repeated resolution calls as a
 meaningful cost (149 versus 112 ns per poll). Its cleanup timeout is retained.
+Wine 11's [timer implementation](https://github.com/wine-mirror/wine/blob/wine-11.0/dlls/kernel32/sync.c#L838)
+returns success for these 1-ms resolution requests without changing resolution;
+no speculative permanent-resolution patch is added.
 
 Three early renderer controls missed the systemd environment boundary and are
 explicitly marked invalid. The builtin Vulkan control failed before its first
@@ -200,12 +275,13 @@ fixtures predate pure-RPY acceptance and never count as playback successes.
 | `resource-receipt.json` | Scope, limits, identities, cache state, peak memory/OOM and host conditions |
 
 ```sh
-python3 scripts/replay_pacing.py reports/local/replay-stage6
+python3 scripts/replay_pacing.py reports/local/replay-stage4
 ctest --test-dir build --output-on-failure \
   -E 'real_data_contracts|story_transition_contracts|story_terminal_contracts|extra_bootstrap_contracts'
 ```
 
-Twenty-five focused contracts pass, including the real x87 regression/restoration,
+Twenty-six focused contracts pass, including raw-vertex byte order/winding and
+buffer bounds, the real x87 regression/restoration,
 integer timing, synthetic 60/30-Hz discrimination, rejection of asynchronous API
 receipts without output proof, malformed streams, selected native-route comparison
 and missing service environment rejection. Actual retail cases remain necessary.

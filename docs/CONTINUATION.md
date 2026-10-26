@@ -6,12 +6,21 @@ verified native export and no MPC/native follower during playback. The online
 roadmap below remains later work; playback performance does not close online
 frame-pacing or policy-robustness tasks.
 
-The pure-playback milestone now passes one complete Lunatic Stage 6 / Reimu A:
-24,441 native-matching updates, NMNB, actual window output 59.96 Hz, slowest five
-seconds 58.6 Hz and p99 19 ms. Wine-tree peak is 334 MiB, OOM 0. Full-story pacing
+The pure-playback milestone now passes one complete Lunatic Stage 4 / Reimu A:
+28,296 native-matching updates, NMNB, actual window output 59.998 Hz, slowest five
+seconds 59.8 Hz and p99 19 ms. Wine-tree peak is 275 MiB, OOM 0. Full-story pacing
 remains the next check. See [REPLAY_PACING.md](REPLAY_PACING.md) and its
 [pinned runtime manifest](REPLAY_RUNTIME.json); private evidence lives under
 `reports/local/pacing-20261026/`, including failed controls and raw window clocks.
+The first story pacing attempt is a retained failure: a 91,553-update matching
+NMNB prefix stops after Stage 4 output falls to 57.4 Hz over five seconds. A
+focused thread-count, larger-queue, DXVK 3.1.1 and display scheduling controls
+also fail. Source-guided CPU bullet drawing and diffuse batching with six workers
+fix the dense-stage API cadence, but immediate output still fails at p99 21 ms.
+FIFO with a two-frame cap passes the complete Stage 4; a one-frame cap fails
+despite its passing prefix. Full-story pacing still needs acceptance;
+see [REPLAY_PACING.md](REPLAY_PACING.md). Do not infer story acceptance from a
+component clear or a prefix's 59.99-Hz mean.
 
 Handoff written 2026-10-26, based on implementation
 [`3880700`](https://github.com/N0zoM1z0/th06-solver/commit/388070073e0e0c4cae1bf0af66e6e567916a4841)
@@ -34,7 +43,7 @@ work added collision-phase proposals, long-plan transport and a Stage 6 clear.
 | Native Lunatic random-seed campaign | 96/96 stages and 16/16 stories after recovery; first passes 92/96 and 11/16 | Four sampled seeds, with all failed attempts/retries retained |
 | Native search optimization | Unchanged-input replays about 1.5–2× faster; optional `--reuse 32` reduces speculative updates 71.75% and planner CPU 64.83% in 20 paired cases | First-pass success falls 18/20 to 16/20; not an online speedup claim |
 | Offline route → retail replay | Complete Lunatic Reimu A story, 127,737 updates, six natural clears, zero misses/bombs | Actual Wine playback of the tracked [input-only replay](../replays/th6_01.rpy); decisions were made offline |
-| Pure replay frame pacing | Complete Stage 6, 59.96 Hz / slowest 5 s 58.6 Hz / window p99 19 ms | Wine 11 new WoW64 + DXVK 2.4 + 64-bit lavapipe; full-story and online pacing separate |
+| Pure replay frame pacing | Complete Stage 4, 60.00 Hz / slowest 5 s 59.8 Hz / window p99 19 ms | Source CPU draw + bounded batches + six-worker WoW64/DXVK/lavapipe + FIFO cap 2; full-story and online pacing separate |
 | Live Wine shadow MPC | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear, all NMNB with full independent native replay of actual inputs | Three finite component successes; five actual Stage 6 failures remain |
 | Live story lifecycle | Natural Stage 1 → 2 handoff; 20,000-update NMNB prefix with fresh native replay | One handoff, not a six-stage live story |
 | Sakuya video | Actual live Stage 5, game audio, 640×480 H.264/AAC, 22,602 captured frames, about 377 seconds | Zero duplicate capture timestamps; capture cadence does not certify game FPS |

@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
     static_assert(sizeof(th06::GameConfiguration) == 56);
     static_assert(offsetof(th06::GameConfiguration, version) == 20);
     static_assert(offsetof(th06::GameConfiguration, opts) == 52);
+    static_assert(sizeof(decltype(th06::Supervisor::hasD3dHardwareVertexProcessing)) == 1);
     if (argc != 2)
         return 2;
     std::ofstream out(argv[1]);
@@ -40,6 +41,7 @@ int main(int argc, char **argv) {
     FIELD(Supervisor, framerateMultiplier);
     FIELD(Supervisor, effectiveFramerateMultiplier);
     FIELD(Supervisor, d3dDevice);
+    FIELD(Supervisor, hasD3dHardwareVertexProcessing);
     FIELD(Supervisor, cfg);
     FIELD(GameConfiguration, frameskipConfig);
     FIELD(GameConfiguration, opts);
