@@ -9,6 +9,11 @@ inline std::uint16_t x87_control() {
 inline void x87_control(std::uint16_t value) {
     asm volatile("fldcw %0" : : "m"(value));
 }
+// Call only in the limiter's widened precision scope. Never sleep through the
+// original final deadline checks, after an overdue frame, or across clock wrap.
+inline bool coarse_wait_has_slack(std::uint32_t now, double previous) {
+    return double(now) >= previous && double(now) - previous < 1000. / 60. - 4.;
+}
 // D3D8 selects 24-bit arithmetic. The source limiter accumulates an absolute
 // millisecond timestamp in a double: at long uptimes 16.67-ms additions lose
 // precision. Widen only that arithmetic, restoring before Present/BeginScene

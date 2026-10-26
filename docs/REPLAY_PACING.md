@@ -45,12 +45,16 @@ d3d9.maxFrameRate = -1
 d3d9.presentInterval = 1
 ```
 
-The accepted Stage 4 profile additionally uses the original `dontUseVertexBuf`
+The tested Stage 4 profile additionally uses the original `dontUseVertexBuf`
 option: graphics opts `0x883` instead of the earlier `0x881`, selecting per-vertex
 diffuse colors. Keep the source game/config unchanged and use a private copy.
 Resolution, 32-bit color, frame skip and image quality are retained. The complete
 28,296-update NMNB stage passes both clocks and native comparison: window
-59.998 Hz / slowest 5 s 59.8 Hz / p99 19 ms. Full-story acceptance is pending.
+60.000 Hz / slowest 5 s 59.8 Hz / p99 19 ms with the optional coarse sleep
+described below. That option reduces the group CPU time by 27.1% in this retained
+stage comparison. The earlier full story without coarse sleep matches all
+127,737 native rows NMNB, but fails the timing gate: slowest 5 s 56.4 Hz in
+Stage 4. Full-story pacing with coarse sleep is pending.
 
 Point a private ICD JSON at the **64-bit** `libvulkan_lvp.so`. The Windows game,
 observer and D3D8/D3D9 DLLs remain 32-bit; the Unix graphics libraries are 64-bit.
@@ -65,7 +69,7 @@ WINE_D3D_CONFIG=csmt=0 python3 scripts/run_wine_replay.py \
   --dll-overrides 'd3d8,d3d9=n;mscoree,mshtml=' \
   --replay replay/th6_paced.rpy --start-stage 4 --single-stage \
   --native-trace reports/local/native-export.csv \
-  --renderer-threads 6 --vblank off --precise-limiter --display-timing --batch-bullets \
+  --renderer-threads 6 --vblank off --sleep-limiter --display-timing --batch-bullets \
   --shader-cache reports/local/replay-cache --require-pacing \
   --updates 35000 --seconds 900 --output reports/local/replay-stage4
 ```
@@ -114,6 +118,16 @@ clock values, frame skip, input, collisions and RNG intact. The option requires
 zero frame skip. Entry/restoration counters and a gameplay scope guard check the
 boundary. Integer quotient/remainder conversion keeps profiling timestamps
 independent of the game's x87 mode.
+
+`--sleep-limiter` implies that precision correction and adds `Sleep(1)` only
+when the same millisecond clock is more than 4 ms before the original deadline.
+The original final checks still busy-wait; overdue frames and clock wrap skip
+the sleep. It leaves the deadline accumulator and original Present decision
+unchanged. The complete Stage 4 comparison reduces limiter polls from
+177,352,596 to 33,864,904 and whole-group CPU time from 1,195.52 to 871.67 seconds
+(27.1%); 304,422 sleeps are recorded. Both render clocks pass, all native fields
+match, and all 28,397 precision entries restore. This is one measured comparison,
+not a host-independent CPU reduction or a full-story pacing result.
 
 ## Acceptance and resource scope
 
@@ -216,6 +230,9 @@ is separate from that legacy Stage 6 result and now passes a complete Stage 4.
 | Stage 4 CPU/diffuse batch, six workers, FIFO | 3,600 prefix | 59.99 | 59.8 | 18 | Timing passes; route incomplete |
 | Same FIFO profile, one-frame cap | 28,296 complete | 59.93 | 54.2 | 21 | Fail |
 | Stage 4 CPU/diffuse batch, FIFO, two-frame cap | 28,296 complete | 60.00 | 59.8 | 19 | Pass |
+| Without coarse sleep, natural full story | 127,737 complete | 59.97 | 56.4 | 20 | Fail in dense Stage 4 |
+| Without coarse sleep, Stage 3→4 diagnostic | 52,000 prefix | 59.96 | 57.8 | 21 | Fail; route incomplete |
+| Stage 4 FIFO cap 2 plus coarse sleep | 28,296 complete | 60.00 | 59.8 | 19 | Pass; CPU time −27.1% |
 
 The passing Stage 6 run peaks at 350,384,128 bytes with zero OOM events; its
 24,536 precision entries all restore before gameplay. Steady output still contains
@@ -285,3 +302,11 @@ buffer bounds, the real x87 regression/restoration,
 integer timing, synthetic 60/30-Hz discrimination, rejection of asynchronous API
 receipts without output proof, malformed streams, selected native-route comparison
 and missing service environment rejection. Actual retail cases remain necessary.
+
+The full-story render/FPU entry and restoration counters balance, and unpaused
+read-only process diagnostics confirm the batch adapter survives handoffs. The
+worst retained window is global updates 76,720–77,000 in Stage 4. This is a timing
+counterexample, not a gameplay divergence. Its Wine-tree peak is 362,463,232 bytes
+with zero OOM events. The optional coarse-sleep profile passes the complete
+Stage 4 and peaks at 295,067,648 bytes with zero OOM events. Its natural full
+story is still pending both clocks and complete native comparison.

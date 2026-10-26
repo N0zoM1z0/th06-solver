@@ -23,11 +23,13 @@ native verifies/exports first, then the actual retail replay runs without MPC or
 a native follower. Playback FPS and online-controller FPS have separate acceptance.
 One complete Lunatic Stage 4 replay now passes both output clocks using private
 Wine 11 new WoW64, DXVK 2.4, 64-bit lavapipe, original CPU bullet drawing,
-bounded quad batches and FIFO with a two-frame cap: 60.00 Hz, slowest five seconds
-59.8 Hz and window p99 19 ms. All 28,296 native-projected updates match, NMNB.
-Peak Wine-tree memory is 275 MiB with zero OOM events. The earlier Stage 6 profile
-passes separately. Full-story pacing is the next check; see the
-[pinned runtime](docs/REPLAY_RUNTIME.json).
+bounded quad batches, scoped coarse sleeps and FIFO with a two-frame cap:
+60.00 Hz, slowest five seconds 59.8 Hz and window p99 19 ms. All 28,296 native-projected updates match, NMNB.
+Peak Wine-tree memory is 281 MiB with zero OOM events; group CPU time falls 27.1%
+in the retained Stage 4 comparison. The earlier Stage 6 profile passes separately.
+A complete 127,737-update NMNB story without coarse sleeps matches native but
+fails pacing at Stage 4 (slowest five seconds 56.4 Hz). The new full story is pending.
+See the [pinned runtime](docs/REPLAY_RUNTIME.json).
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
 recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass

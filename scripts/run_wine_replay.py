@@ -175,6 +175,7 @@ parser.add_argument('--start-stage', type=int, default=1)
 parser.add_argument('--single-stage', action='store_true', help='stop at the selected stage natural clear')
 parser.add_argument('--render-timing', action='store_true')
 parser.add_argument('--precise-limiter', action='store_true', help='restore double precision only in the original frame limiter')
+parser.add_argument('--sleep-limiter', action='store_true', help='sleep 1 ms only outside the original final 4-ms deadline checks; implies --precise-limiter')
 parser.add_argument('--software-bullets', action='store_true', help='original CPU bullet draw path only inside its render callback')
 parser.add_argument('--batch-bullets', action='store_true', help='batch adjacent CPU-transformed bullet quads; implies --software-bullets')
 parser.add_argument('--renderer-threads', type=int, default=2)
@@ -188,6 +189,8 @@ parser.add_argument('--snapshot', action='store_true', help='one screenshot duri
 parser.add_argument('--display-timing', action='store_true', help='independent XDamage window update clock inside the same cap')
 parser.add_argument('--require-pacing', action='store_true', help='also fail acceptance if the declared presentation gate fails')
 args = parser.parse_args()
+if args.sleep_limiter:
+    args.precise_limiter = True
 if args.batch_bullets:
     args.software_bullets = True
 if args.precise_limiter or args.snapshot or args.require_pacing or args.display_timing or args.software_bullets:
@@ -276,6 +279,7 @@ command = ['systemd-run', '--user', '--unit=' + unit, '--wait', '--pipe',
            'TH06_REPLAY_SINGLE_STAGE=' + str(int(args.single_stage)),
            'TH06_REPLAY_RENDER_TIMING=' + str(int(args.render_timing)),
            'TH06_REPLAY_PRECISE_LIMITER=' + str(int(args.precise_limiter)),
+           'TH06_REPLAY_SLEEP_LIMITER=' + str(int(args.sleep_limiter)),
            'TH06_REPLAY_SOFTWARE_BULLETS=' + str(int(args.software_bullets)),
            'TH06_REPLAY_BATCH_BULLETS=' + str(int(args.batch_bullets)),
            '/usr/bin/xvfb-run', '-a', sys.executable, str(frozen / 'run_wine_replay.py'),
@@ -307,6 +311,7 @@ expected_environment = {**{name: os.environ.get(name) for name in render_names},
                         'MESA_SHADER_CACHE_DISABLE': 'false' if args.shader_cache else 'true',
                         'TH06_REPLAY_RENDER_TIMING': str(int(args.render_timing)),
                         'TH06_REPLAY_PRECISE_LIMITER': str(int(args.precise_limiter)),
+                        'TH06_REPLAY_SLEEP_LIMITER': str(int(args.sleep_limiter)),
                         'TH06_REPLAY_SOFTWARE_BULLETS': str(int(args.software_bullets)),
                         'TH06_REPLAY_BATCH_BULLETS': str(int(args.batch_bullets))}
 worker_environment = dict(expected_environment, **{name: None for name in wine_only})
@@ -330,6 +335,7 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'wine_nice': args.wine_nice,
            'wine_cpus': args.wine_cpus, 'display_cpus': args.display_cpus,
            'single_stage': args.single_stage, 'precise_limiter': args.precise_limiter,
+           'sleep_limiter': args.sleep_limiter,
            'software_bullets': args.software_bullets, 'batch_bullets': args.batch_bullets,
            'render_environment': expected_environment, 'native_controller_running': False,
            'shader_cache_before': cache_state(args.shader_cache),

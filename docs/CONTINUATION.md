@@ -7,9 +7,12 @@ roadmap below remains later work; playback performance does not close online
 frame-pacing or policy-robustness tasks.
 
 The pure-playback milestone now passes one complete Lunatic Stage 4 / Reimu A:
-28,296 native-matching updates, NMNB, actual window output 59.998 Hz, slowest five
-seconds 59.8 Hz and p99 19 ms. Wine-tree peak is 275 MiB, OOM 0. Full-story pacing
-remains the next check. See [REPLAY_PACING.md](REPLAY_PACING.md) and its
+28,296 native-matching updates, NMNB, actual window output 60.000 Hz, slowest five
+seconds 59.8 Hz and p99 19 ms. The optional coarse-sleep profile reduces group
+CPU time 27.1%; peak is 281 MiB, OOM 0. The earlier full story without coarse
+sleeps completes all 127,737 updates NMNB and matches native, but
+fails pacing at Stage 4: slowest 5 s 56.4 Hz, window p99 20 ms, mean 59.973 Hz.
+Peak is 362,463,232 bytes, OOM 0. See [REPLAY_PACING.md](REPLAY_PACING.md) and its
 [pinned runtime manifest](REPLAY_RUNTIME.json); private evidence lives under
 `reports/local/pacing-20261026/`, including failed controls and raw window clocks.
 The first story pacing attempt is a retained failure: a 91,553-update matching
@@ -18,7 +21,12 @@ focused thread-count, larger-queue, DXVK 3.1.1 and display scheduling controls
 also fail. Source-guided CPU bullet drawing and diffuse batching with six workers
 fix the dense-stage API cadence, but immediate output still fails at p99 21 ms.
 FIFO with a two-frame cap passes the complete Stage 4; a one-frame cap fails
-despite its passing prefix. Full-story pacing still needs acceptance;
+despite its passing prefix. A 52,000-update Stage 3→4 diagnostic prefix confirms
+the adapter remains active across handoffs, but its overall window p99 21 ms
+also fails. Balanced render/FPU scopes do not establish FPS acceptance.
+The original limiter still busy-polls hundreds of millions of times per story;
+the scoped coarse-sleep option reduces Stage 4 polls 80.9% with complete
+native agreement and both clocks passing. Its full story is now under evaluation;
 see [REPLAY_PACING.md](REPLAY_PACING.md). Do not infer story acceptance from a
 component clear or a prefix's 59.99-Hz mean.
 

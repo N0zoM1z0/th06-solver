@@ -37,7 +37,11 @@ wine_replay::RenderTiming render_timing;
 th06::retail::LimiterPrecision limiter_precision;
 LARGE_INTEGER frequency{}, first_tick{};
 bool profile_render = false, precise_limiter = false, timer_hooked = false;
+bool sleep_limiter = false;
+using Milliseconds = DWORD(WINAPI *)();
+Milliseconds limiter_milliseconds = nullptr;
 unsigned limiter_polls = 0;
+unsigned limiter_sleeps = 0;
 unsigned initial_stage = 1;
 bool single_stage = false;
 using BeginPeriod = unsigned(WINAPI *)(unsigned);
@@ -47,6 +51,11 @@ unsigned WINAPI begin_period(unsigned period) {
     if (__builtin_return_address(0) == reinterpret_cast<void *>(0x4208f5)) {
         limiter_precision.enter();
         ++limiter_polls;
+        if (sleep_limiter &&
+            th06::retail::coarse_wait_has_slack(limiter_milliseconds(), at<double>(0x6c6bf8))) {
+            Sleep(1);
+            ++limiter_sleeps;
+        }
     }
     return result;
 }
@@ -83,6 +92,7 @@ ChainElem observation;
             "\"deaths\":%d,\"bombs\":%d,\"supervisor_state\":%d,\"retail_nmnb_complete\":%s,"
             "\"initial_stage\":%u,\"single_stage\":%s,\"precise_limiter\":%s,"
             "\"limiter_entries\":%u,\"limiter_restores\":%u,\"limiter_polls\":%u,"
+            "\"sleep_limiter\":%s,\"limiter_sleeps\":%u,"
             "\"software_bullets\":%s,\"software_entries\":%u,\"software_restores\":%u,"
             "\"batch_bullets\":%s,\"batch_draw_calls\":%llu,\"batch_submitted\":%llu,"
             "\"batch_quads\":%llu,\"batch_scopes\":%llu}\n",
@@ -92,9 +102,10 @@ ChainElem observation;
             at<int>(supervisor_base, abi::Supervisor_curState), code == 0 ? "true" : "false",
             initial_stage, single_stage ? "true" : "false", precise_limiter ? "true" : "false",
             limiter_precision.entries, limiter_precision.restores, limiter_polls,
-            software_bullets ? "true" : "false", software_entries, software_restores,
-            batch_bullets ? "true" : "false", quad_batch.draw_calls, quad_batch.submitted,
-            quad_batch.copied_quads, quad_batch.scopes);
+            sleep_limiter ? "true" : "false", limiter_sleeps, software_bullets ? "true" : "false",
+            software_entries, software_restores, batch_bullets ? "true" : "false",
+            quad_batch.draw_calls, quad_batch.submitted, quad_batch.copied_quads,
+            quad_batch.scopes);
         std::fclose(out);
     }
     ExitProcess(code);
@@ -250,6 +261,12 @@ int __cdecl menu_hook(void *menu) {
         !quad_batch.install(at<void *>(supervisor_base, abi::Supervisor_d3dDevice)))
         finish("quad_batch_install_failed", 9);
     if (precise_limiter && !timer_hooked) {
+        if (sleep_limiter) {
+            limiter_milliseconds = reinterpret_cast<Milliseconds>(
+                GetProcAddress(GetModuleHandleA("winmm.dll"), "timeGetTime"));
+            if (!limiter_milliseconds)
+                finish("limiter_clock_identity_failed", 9);
+        }
         if (at<unsigned char>(supervisor_base,
                               abi::Supervisor_cfg + abi::GameConfiguration_frameskipConfig))
             finish("precise_limiter_requires_no_frameskip", 9);
@@ -310,6 +327,10 @@ bool setup() {
     precise_limiter =
         GetEnvironmentVariableA("TH06_REPLAY_PRECISE_LIMITER", option, sizeof(option)) &&
         std::strcmp(option, "1") == 0;
+    sleep_limiter = GetEnvironmentVariableA("TH06_REPLAY_SLEEP_LIMITER", option, sizeof(option)) &&
+                    std::strcmp(option, "1") == 0;
+    if (sleep_limiter && !precise_limiter)
+        return false;
     software_bullets =
         GetEnvironmentVariableA("TH06_REPLAY_SOFTWARE_BULLETS", option, sizeof(option)) &&
         std::strcmp(option, "1") == 0;

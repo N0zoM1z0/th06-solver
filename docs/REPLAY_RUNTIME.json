@@ -91,7 +91,8 @@
     "batch_bullets": true,
     "wine_nice": 0,
     "wine_cpus": null,
-    "display_cpus": null
+    "display_cpus": null,
+    "sleep_limiter": true
   },
   "historical_stage6_profile": {
     "renderer_threads": 4,
@@ -116,8 +117,8 @@
     "frameskip": 0
   },
   "acceptance": {
-    "stage4": "Complete 28,296-update NMNB stage; all 15 native-projected fields match. API and window gates pass: mean 59.998 Hz, slowest 5 s 59.8 Hz, window p99 19 ms. Peak 288,395,264 bytes, OOM 0.",
-    "story": "Pending full 127,737-update natural six-clear playback with this profile.",
+    "stage4": "Complete 28,296-update NMNB stage with coarse sleep; all 15 native-projected fields match. API and window gates pass: mean 60.000 Hz, slowest 5 s 59.8 Hz, window p99 19 ms. Peak 295,067,648 bytes, OOM 0. Group CPU 871.67 s vs 1195.52 s without sleep (27.1% lower).",
+    "story": "Coarse-sleep profile pending. Without coarse sleep: complete 127,737-update NMNB story and all native fields match, but pacing FAIL: window mean 59.973 Hz, slowest 5 s 56.4 Hz, p99 20 ms; dense Stage 4 counterexample. Peak 362,463,232 bytes, OOM 0.",
     "online_mpc": "Separate; stable FPS not established"
   }
 }

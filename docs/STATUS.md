@@ -7,11 +7,15 @@ separate. Native re-export revalidates the historical 127,737-update Lunatic
 Reimu A story and reproduces the published replay hash.
 The current Wine 11 new-WoW64 / DXVK 2.4 / 64-bit Mesa 25 lavapipe profile passes
 one complete Stage 4 with original CPU bullet drawing, bounded diffuse-color
-quad batches, six workers and FIFO with a two-frame cap: 28,296 native-matching
-updates, NMNB, actual window output 59.998 Hz / slowest 5 s 59.8 Hz / p99 19 ms.
-Peak is 288,395,264 bytes, OOM 0. The earlier four-worker hardware-draw Stage 6
-profile passes separately (24,441 updates). Full-story output pacing remains
-the next acceptance check. Runtime package/DLL
+quad batches, six workers, scoped coarse sleeps and FIFO with a two-frame cap:
+28,296 native-matching updates, NMNB, actual window output 60.000 Hz / slowest 5 s 59.8 Hz / p99 19 ms.
+Peak is 295,067,648 bytes, OOM 0; group CPU time falls 27.1% in the retained
+comparison. The earlier four-worker hardware-draw Stage 6 profile passes separately
+(24,441 updates). Without coarse sleeps, the profile completes
+the entire 127,737-update story NMNB with all native fields matching, but fails
+full-story pacing: window mean 59.973 Hz / slowest 5 s 56.4 Hz / p99 20 ms,
+with the worst interval in dense Stage 4. Peak is 362,463,232 bytes, OOM 0.
+Full-story pacing with coarse sleeps is pending. Runtime package/DLL
 hashes and settings are pinned in [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
 
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation
