@@ -2,6 +2,13 @@
 
 ## Live shadow decision costs
 
+**Stable 60-FPS online shadow MPC remains unresolved.** The current search costs
+below measure decision latency, not game update or render/present intervals.
+Across the three live clear routes, retail receipt gap p99 is 25.49–31.00 ms and
+full-run maximum is 403.65–477.50 ms. Startup/combat/transition attribution and
+render/present instrumentation remain open; see the
+[frame-pacing work and acceptance gate](CONTINUATION.md#p0-attribute-frame-pacing-and-establish-a-60-fps-gate).
+
 The [Wine shadow MPC](SHADOW_MPC.md) clears two Stage 5 / Reimu B live runs under
 the initial 128-tail/16-lead/110-ms profile. A fresh-proposal Stage 6 / Marisa B
 run now also clears NMNB: 64 tail, eight lead, 80-ms cap, interval four and a

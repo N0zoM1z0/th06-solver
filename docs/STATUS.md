@@ -1,5 +1,11 @@
 # Native runtime status
 
+For the 2026-10-26 restart point, prioritized unfinished tasks, implementation
+map and local evidence index, see [CONTINUATION.md](CONTINUATION.md).
+The active checklist is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
+**Online shadow MPC does not yet sustain stable 60 FPS.** Its live stage clears
+establish gameplay progress; frame pacing remains a separate high-priority task.
+
 Current scope: [live Lunatic shadow MPC in Wine](SHADOW_MPC.md), with bounded
 decision time and actual input/queue accounting. Two complete Stage 5 / Reimu B
 runs and one Stage 6 / Marisa B run pass NMNB, including a Stage 5 live recording

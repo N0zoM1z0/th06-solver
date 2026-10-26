@@ -16,6 +16,8 @@ recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-
 tail, eight-update lead and 80-ms search cap; search median/p99 is 29.07/77.70 ms.
 Failed Stage 6 seeds remain counterexamples. These component runs are separate
 from full-story retail replay and do not establish all-seed robustness.
+**Online shadow MPC does not yet sustain stable 60 FPS.** Search deadlines,
+successful clears and smooth capture timestamps do not establish game frame pacing.
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
 recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass
@@ -27,8 +29,24 @@ four seeds across all Lunatic stages/shots and continuous stories. Its standalon
 matrix passes **96/96** (92 first-pass, four recovered), and its continuous stories
 pass **16/16** (11 first-pass, five recovered), all with full fresh native replay.
 
-The resumable campaign runs the 96 standalone cases first, then 16 main-game
-stories. Existing tapes are rechecked by the current native binary when resuming.
+## Continue development
+
+Start with the [engineering handoff and open work](docs/CONTINUATION.md): it maps
+completed work, all 13 live trials, retained failures, source entry points, private
+evidence and acceptance criteria. Priorities are stable 60-FPS online pacing,
+repeatable failure/queue diagnostics, hard-seed robustness, then broader Lunatic
+stage/shot coverage and natural live stories. The
+[controller guide](docs/SHADOW_MPC.md) contains current run profiles.
+Track follow-up work in
+[issue #1: 60-FPS pacing, hard seeds and full-story control](https://github.com/N0zoM1z0/th06-solver/issues/1).
+
+## Historical offline campaign
+
+The commands below reproduce the earlier offline campaign; routine online work
+should use selected hard cases rather than rerun the full matrix or other
+difficulties. The resumable campaign runs 96 standalone cases first, then 16
+main-game stories. Existing tapes are rechecked by the current native binary
+when resuming.
 
 ```sh
 build/th06_campaign --data /path/to/th06-data --suite stages --difficulty 3 --jobs 2 \
@@ -44,8 +62,9 @@ build/th06_campaign --data /path/to/th06-data --suite story --difficulty 3 --job
 The runtime imports [N0zoM1z0/th06](https://github.com/N0zoM1z0/th06) at
 `9e79eb8d784b6346233f2e98e1bcda1d2f04da15`, targeting Japanese 1.02h. It executes
 the reconstructed ECL, ANM, player, enemy, bullet, laser, item and GUI update code.
-Linux i386 preserves the original layouts and inline x87 helpers. No window,
-graphics/audio device, Wine or Python runtime is needed.
+Linux i386 preserves the original layouts and inline x87 helpers. The headless
+runtime needs no window, graphics/audio device, Wine or Python runtime. The live
+controller and capture use the separate Wine/Python tooling described above.
 
 ## Build
 

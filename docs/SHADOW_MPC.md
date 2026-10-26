@@ -5,6 +5,13 @@ Two complete Lunatic Stage 5 / Reimu B runs and one Stage 6 / Marisa B run pass
 NMNB, including a Stage 5 live recording. All three actual input tapes pass
 independent complete native replay. Five failed Stage 6 controls remain in the
 evidence; this is not all-seed, all-stage or full-story retail certification.
+**Stable 60-FPS online play remains unresolved.** Retail receipt interval p99 is
+25.49–31.00 ms across the three clear runs, with full-run maxima of 403.65–477.50 ms.
+These summaries do not isolate combat, startup or rendering causes. Search latency
+and video sample cadence are separate from game update/presentation cadence.
+See the [continuation plan](CONTINUATION.md) for frame-pacing diagnosis, failed
+windows, coverage gaps and acceptance criteria; follow progress in
+[issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
 
 ## Run
 
@@ -239,7 +246,8 @@ The complete Stage 5 recording contains 22,602 video frames over about 377 secon
 with no duplicate timestamps, p99 interval 17 ms and maximum interval 32 ms.
 The compressed 640×480 H.264/AAC delivery retains every frame, passes full decode,
 and includes audible game music/effects. Capture cadence does not itself prove
-60-Hz gameplay. All movies, audio, raw journals, failed attempts and native tapes
+60-Hz gameplay: stable online 60 FPS has not been achieved or accepted. All movies,
+audio, raw journals, failed attempts and native tapes
 remain under ignored `reports/local/`.
 
 Tests cover torn map writes, stale/changed leads, stage identity, input bounds,
