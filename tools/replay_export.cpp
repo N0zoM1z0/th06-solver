@@ -36,8 +36,11 @@ int main(int argc, char **argv) {
         if (data.empty() || path.empty() || output.empty())
             throw std::invalid_argument("--data, --tape and --output are required");
         const auto tape = read_tape(path);
-        if (!tape.start.story || !tape.complete)
-            throw std::runtime_error("retail export requires a complete native story");
+        const bool extra = tape.start.stage == 7 && tape.start.difficulty == 4 &&
+                           !tape.start.story && tape.start.power == 0;
+        if ((!tape.start.story && !extra) || !tape.complete)
+            throw std::runtime_error(
+                "retail export requires a complete story or normal-start Extra");
         Resources resources(data);
         if (resources.fingerprint() != tape.resource_fingerprint)
             throw std::runtime_error("DAT fingerprint mismatch");
@@ -99,7 +102,7 @@ int main(int argc, char **argv) {
             ++local_frame;
         }
         if (!state.complete)
-            throw std::runtime_error("story did not complete");
+            throw std::runtime_error("native run did not complete");
         if (csv.is_open() && !csv)
             throw std::runtime_error("native trace write failed");
         auto &last = replay.stages.back();

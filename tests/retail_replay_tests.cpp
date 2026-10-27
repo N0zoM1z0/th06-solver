@@ -63,6 +63,29 @@ int main() {
         r.stages.resize(5);
         check(decode_retail_replay(encode_retail_replay(r)).stages.size() == 5,
               "Easy five-stage replay rejected");
+        r.shot = 1;
+        r.difficulty = 4;
+        r.stages.resize(1);
+        const auto extra_bytes = encode_retail_replay(r);
+        const auto extra = decode_retail_replay(extra_bytes);
+        check(extra.difficulty == 4 && extra.shot == 1 && extra.stages.size() == 1 &&
+                  extra.stages[0].seed == r.stages[0].seed,
+              "Extra uses its original stage-seven replay slot");
+        // Decode the original header pointer table independently of our reader.
+        auto plain = extra_bytes;
+        unsigned char key = plain[14];
+        for (std::size_t i = 15; i < plain.size(); ++i, key = static_cast<unsigned char>(key + 7))
+            plain[i] = static_cast<unsigned char>(plain[i] - key);
+        for (unsigned i = 52; i < 76; ++i)
+            check(plain[i] == 0, "Extra must leave all main-game stage pointers empty");
+        check(plain[76] == 0x50 && plain[77] == 0 && plain[78] == 0 && plain[79] == 0,
+              "Extra stage pointer must target the first record from slot seven");
+        bad = r;
+        bad.stages.resize(6);
+        rejects([&] { encode_retail_replay(bad); }, "Extra accepted main-game stage count");
+        bad = r;
+        bad.difficulty = 5;
+        rejects([&] { encode_retail_replay(bad); }, "unknown replay difficulty accepted");
         std::cout << "retail replay format contracts passed\n";
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';

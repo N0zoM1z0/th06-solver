@@ -190,7 +190,7 @@ int __cdecl observe(void *) {
         finish(stage == int(initial_stage) && cleared == 1 ? "complete" : "premature_terminal",
                stage == int(initial_stage) && cleared == 1 ? 0 : 3);
     if (state == 8 || state == 7 || state == 10) {
-        const auto required = difficulty == 0 ? 5u : 6u;
+        const auto required = difficulty == 4 ? 7u : difficulty == 0 ? 5u : 6u;
         const auto remaining = required - initial_stage + 1;
         finish(stage == int(required) && cleared == remaining ? "complete" : "premature_terminal",
                stage == int(required) && cleared == remaining ? 0 : 3);
@@ -361,7 +361,7 @@ bool setup() {
     if (stage_size) {
         char *end;
         const auto n = std::strtoul(option, &end, 10);
-        if (*end || n < 1 || n > 6)
+        if (*end || n < 1 || n > 7)
             return false;
         initial_stage = unsigned(n);
     }
@@ -383,10 +383,14 @@ bool setup() {
         unsigned char header[8];
         const auto n = std::fread(header, 1, sizeof(header), rpy);
         std::fclose(rpy);
-        if (n != sizeof(header) || std::memcmp(header, "T6RP", 4) || header[6] > 3 || header[7] > 3)
+        if (n != sizeof(header) || std::memcmp(header, "T6RP", 4) || header[6] > 3 || header[7] > 4)
             return false;
         shot = header[6];
         difficulty = header[7];
+        if ((difficulty == 4) != (initial_stage == 7) || initial_stage > (difficulty == 4   ? 7u
+                                                                          : difficulty == 0 ? 5u
+                                                                                            : 6u))
+            return false;
     } else
         return false;
     char path[MAX_PATH];

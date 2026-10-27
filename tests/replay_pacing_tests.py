@@ -80,6 +80,21 @@ with tempfile.TemporaryDirectory() as temp:
         file.seek(12)
         file.write(struct.pack('<I', 4))
     rejects(lambda: module.update_rows(mapped))
+    # Extra is source stage 7. The old live reader rejected its first committed
+    # update and stopped a valid replay recording; stage 8 remains invalid.
+    extra_path = root / 'extra-updates.bin'
+    extra_path.write_bytes(module.RENDER_HEADER.pack(0x36545055, 2, 24, 1) +
+                           module.UPDATE.pack(1, 7, 100))
+    extra_live = module.LiveUpdates(extra_path)
+    assert extra_live.latest() == (1, 7, 100)
+    extra_live.close()
+    assert module.update_rows(extra_path) == [(1, 7, 100)]
+    extra_path.write_bytes(module.RENDER_HEADER.pack(0x36545055, 2, 24, 1) +
+                           module.UPDATE.pack(1, 8, 100))
+    invalid_live = module.LiveUpdates(extra_path)
+    rejects(invalid_live.latest)
+    invalid_live.close()
+    rejects(lambda: module.update_rows(extra_path))
     # The monitor can open the preallocated file before its header is published.
     pending = root / 'pending-updates.bin'
     pending.write_bytes(bytes(40))

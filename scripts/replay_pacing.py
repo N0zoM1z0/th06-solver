@@ -76,7 +76,7 @@ class LiveUpdates:
         if not count:
             return (0, 0, 0)
         row = UPDATE.unpack_from(self.mapping, 16 + (count - 1) * 24)
-        if row[0] != count or not 1 <= row[1] <= 6:
+        if row[0] != count or not 1 <= row[1] <= 7:
             raise ValueError('invalid committed live record')
         return row
 
@@ -105,7 +105,7 @@ def update_rows(path):
     if not rows:
         raise ValueError('empty update journal')
     for i, row in enumerate(rows, 1):
-        if row[0] != i or not 1 <= row[1] <= 6:
+        if row[0] != i or not 1 <= row[1] <= 7:
             raise ValueError('invalid retail journal sequence/version')
     return rows
 

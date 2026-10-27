@@ -187,6 +187,7 @@ parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--replay', default='replay/th6_01.rpy')
 parser.add_argument('--updates', type=int, default=180000)
 parser.add_argument('--seconds', type=int, default=3000)
+parser.add_argument('--memory-gib', type=int, choices=[2, 4], default=2, help='owned replay/capture cgroup limit; swap remains disabled')
 parser.add_argument('--start-stage', type=int, default=1)
 parser.add_argument('--single-stage', action='store_true', help='stop at the selected stage natural clear')
 parser.add_argument('--render-timing', action='store_true')
@@ -221,7 +222,7 @@ if args.precise_limiter or args.snapshot or args.require_pacing or args.display_
     args.render_timing = True
 if not 1 <= args.updates <= 1000000 or not 1 <= args.seconds <= 7200:
     parser.error('invalid frame/time budget')
-if not 1 <= args.start_stage <= 6 or not 1 <= args.renderer_threads <= 8:
+if not 1 <= args.start_stage <= 7 or not 1 <= args.renderer_threads <= 8:
     parser.error('invalid stage/render threads')
 if not 0 <= args.wine_nice <= 19:
     parser.error('invalid Wine nice value')
@@ -291,7 +292,7 @@ def windows(path):
 
 unit = 'th06-replay-' + uuid.uuid4().hex[:12]
 command = ['systemd-run', '--user', '--unit=' + unit, '--wait', '--pipe',
-           '-p', 'MemoryMax=2G', '-p', 'MemoryHigh=1536M', '-p', 'MemorySwapMax=0',
+           '-p', f'MemoryMax={args.memory_gib}G', '-p', f'MemoryHigh={args.memory_gib * 768}M', '-p', 'MemorySwapMax=0',
            '-p', 'TasksMax=256', '-p', 'RuntimeMaxSec=' + str(args.seconds),
            '-p', 'TimeoutStopSec=5', '-p', 'KillMode=control-group',
            '--working-directory=' + str(args.game), '/usr/bin/env',
@@ -351,7 +352,7 @@ config = {'expected_environment': worker_environment, 'expected_wine_environment
           'wine': [str(wine_loader), str(frozen / 'launch.exe'), 'th06.exe',
                    windows(frozen / 'observer.dll'), windows(args.output)]}
 (args.output / 'worker.json').write_text(json.dumps(config, indent=2) + '\n')
-receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
+receipt = {'unit': unit, 'memory_max_bytes': args.memory_gib * 1024**3, 'swap_max_bytes': 0,
            'peak_cgroup_bytes': 0, 'oom': 0, 'oom_kill': 0,
            'cgroup_cpu_usage_usec': 0,
            'cgroup_limits_verified': False,

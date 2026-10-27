@@ -11,6 +11,7 @@
 *.wav
 *.rpy
 !/replays/th6_01.rpy
+!/replays/th6_02.rpy
 *.o
 *.a
 *.so

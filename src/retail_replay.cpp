@@ -27,8 +27,11 @@ std::uint32_t checksum(const std::vector<std::uint8_t> &b) {
 }
 } // namespace
 std::vector<std::uint8_t> encode_retail_replay(const RetailReplay &r) {
-    require(r.shot < 4 && r.difficulty < 4 && r.stages.size() == (r.difficulty ? 6u : 5u),
-            "retail export requires a complete standard story");
+    require(r.shot < 4 && r.difficulty <= 4 &&
+                r.stages.size() == (r.difficulty == 4 ? 1u
+                                    : r.difficulty    ? 6u
+                                                      : 5u),
+            "retail export requires a complete story or Extra");
     std::vector<std::uint8_t> b(header_size);
     std::memcpy(b.data(), "T6RP", 4);
     put(b, 4, 0x102, 2);
@@ -47,7 +50,8 @@ std::vector<std::uint8_t> encode_retail_replay(const RetailReplay &r) {
         require(s.inputs.front().frame == 0 && s.inputs.back().frame == 9999999,
                 "retail stage requires frame-zero input and terminal sentinel");
         const auto start = b.size();
-        put(b, 52 + 4 * i, start);
+        const auto slot = r.difficulty == 4 ? 6u : unsigned(i);
+        put(b, 52 + 4 * slot, start);
         b.resize(start + stage_size + s.inputs.size() * 8);
         put(b, start, s.score);
         put(b, start + 4, s.seed, 2);
@@ -88,12 +92,13 @@ RetailReplay decode_retail_replay(std::vector<std::uint8_t> b) {
     r.shot = b[6];
     r.difficulty = b[7];
     r.score = std::int32_t(get(b, 36));
-    require(r.shot < 4 && r.difficulty < 4, "unsupported retail story profile");
-    const unsigned count = r.difficulty ? 6 : 5;
+    require(r.shot < 4 && r.difficulty <= 4, "unsupported retail replay profile");
+    const unsigned first = r.difficulty == 4 ? 6 : 0;
+    const unsigned count = r.difficulty == 4 ? 1 : r.difficulty ? 6 : 5;
     std::size_t expected = header_size;
     for (unsigned i = 0; i < 7; ++i) {
         const auto offset = get(b, 52 + 4 * i);
-        if (i >= count) {
+        if (i < first || i >= first + count) {
             require(offset == 0, "unexpected retail stage");
             continue;
         }
