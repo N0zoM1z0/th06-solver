@@ -10,6 +10,8 @@ struct PlannerOptions {
     bool reactive = false;
     bool profile = false;
     bool diverse_first = false;
+    bool laser_aware = false;
+    bool laser_orbits = false;
     // Retain a literal native future prefix only after a full horizon or terminal.
     // Zero preserves the commit-sized action; nonzero requires commit..horizon.
     unsigned reuse = 0;
@@ -37,6 +39,8 @@ struct Decision {
     unsigned certified_frames = 0;
     std::uint64_t branches = 0, simulated_frames = 0;
     std::uint64_t reactive_branches = 0;
+    std::uint64_t orbital_branches = 0;
+    bool orbital_selected = false;
     unsigned lookahead_frames = 0, unique_inputs = 0;
     bool future_complete = false;
     std::vector<std::uint64_t> expected_digests;

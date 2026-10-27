@@ -22,11 +22,59 @@ struct Candidate {
     unsigned moving;
     double rank;
     bool reactive = false;
+    float orbit_radius = 0, orbit_direction = 1;
 };
+struct Orbit {
+    float x = 0, y = 0, radius = 0, direction = 1, axis = 4, diagonal = 2.8284271f;
+};
+const LaserForecast *orbit_laser(const Observation &o) {
+    const LaserForecast *best = nullptr;
+    for (const auto &l : o.lasers)
+        if (l.present && l.duration >= 60 && l.end - l.start >= 128 &&
+            (!best || (best->state == 2 && l.state != 2) ||
+             ((best->state == 2) == (l.state == 2) && l.width > best->width)))
+            best = &l;
+    return best;
+}
+std::uint16_t orbit_input(const Orbit &o, float x, float y) {
+    const float angle = std::atan2(y - o.y, x - o.x);
+    const float cosine = std::cos(angle), sine = std::sin(angle);
+    const float tangent = o.radius * 1.03f * o.direction;
+    const float goal_x = o.x + o.radius * cosine - tangent * sine;
+    const float goal_y = o.y + o.radius * sine + tangent * cosine;
+    constexpr unsigned directions[]{0, 16, 32, 64, 128, 80, 144, 96, 160};
+    float best = std::numeric_limits<float>::infinity();
+    std::uint16_t selected = 257;
+    for (auto d : directions) {
+        const int dx = bool(d & 128) - bool(d & 64), dy = bool(d & 32) - bool(d & 16);
+        const float speed = dx && dy ? o.diagonal : o.axis;
+        const float px = std::clamp(x + dx * speed, 8.f, 376.f);
+        const float py = std::clamp(y + dy * speed, 16.f, 432.f);
+        const float cost = (px - goal_x) * (px - goal_x) + (py - goal_y) * (py - goal_y);
+        if (cost < best) {
+            best = cost;
+            selected = std::uint16_t(d | 257);
+        }
+    }
+    return selected;
+}
 // Inexpensive, deliberately approximate proposal ranking. Native rollouts still
 // resolve future spawns, acceleration, lasers, collisions and action-dependent RNG.
+std::vector<LaserShape> laser_samples(const Observation &o, unsigned horizon, unsigned stride) {
+    if (o.lasers.empty())
+        return {};
+    auto lasers = o.lasers;
+    std::vector<LaserShape> samples(((horizon + stride - 1) / stride) * lasers.size());
+    for (unsigned t = 1; t <= horizon; ++t)
+        for (unsigned i = 0; i < lasers.size(); ++i) {
+            const auto shape = advance_laser(lasers[i]);
+            if ((t - 1) % stride == 0)
+                samples[((t - 1) / stride) * lasers.size() + i] = shape;
+        }
+    return samples;
+}
 double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving, unsigned horizon,
-                     unsigned stride = 4) {
+                     const std::vector<LaserShape> &lasers, unsigned stride = 4) {
     const int dx = bool(input & 128) - bool(input & 64), dy = bool(input & 32) - bool(input & 16);
     const bool focus = input & 4;
     const float speed =
@@ -46,6 +94,8 @@ double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving,
             if (d2 < hazard.radius * hazard.radius)
                 local += 100;
         }
+        for (unsigned i = 0; i < o.lasers.size(); ++i)
+            local += laser_proposal_cost(lasers[samples * o.lasers.size() + i], x, y);
         const double edge = std::max(0.f, 40.f - std::min(x - 8.f, 376.f - x));
         result += local + std::abs(x - o.target_x) * 0.003 + std::abs(y - 380.f) * 0.006 +
                   edge * edge * 0.002;
@@ -58,13 +108,16 @@ std::uint16_t reactive_input(const Observation &observation) {
                                                          16 | 64, 16 | 128, 32 | 64, 32 | 128};
     double best = std::numeric_limits<double>::infinity();
     std::uint16_t selected = 261;
+    // Every direction shares one conditional forecast from this same native
+    // branch state. Reuse geometry, never actor memory or another branch's RNG.
+    const auto lasers = laser_samples(observation, 40, 8);
     for (const auto direction : directions)
         for (unsigned focus : {4u, 0u}) {
             if (!direction && !focus)
                 continue;
             const auto input = std::uint16_t(direction | focus | 1u | 256u);
-            const double cost = std::min(proposal_rank(observation, input, 16, 40, 8),
-                                         proposal_rank(observation, input, 40, 40, 8));
+            const double cost = std::min(proposal_rank(observation, input, 16, 40, lasers, 8),
+                                         proposal_rank(observation, input, 40, 40, lasers, 8));
             if (cost < best) {
                 best = cost;
                 selected = input;
@@ -94,7 +147,8 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
                unsigned commit, unsigned retained, bool reactive, bool profile, bool digests,
-               const std::vector<std::uint16_t> *literal = nullptr) {
+               bool laser_aware, const std::vector<std::uint16_t> *literal = nullptr,
+               Orbit orbit = {}) {
     int pipefd[2];
     if (::pipe(pipefd))
         throw std::runtime_error("pipe failed");
@@ -111,16 +165,26 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
         try {
             Result result;
             std::uint16_t action = input;
+            auto current = game.state();
             for (unsigned frame = 0; frame < horizon; ++frame) {
                 auto start = profile ? Clock::now() : Clock::time_point{};
                 if (literal)
                     action = (*literal)[frame];
-                else if (reactive) {
+                else if (orbit.radius > 0) {
+                    if (frame % 8 == 0) {
+                        const auto observed = game.observe(true);
+                        if (const auto *laser = orbit_laser(observed)) {
+                            orbit.x = laser->x;
+                            orbit.y = laser->y;
+                        }
+                    }
+                    action = orbit_input(orbit, current.x, current.y);
+                } else if (reactive) {
                     // Future observations and their action-dependent RNG belong
                     // to this branch. Retention records the literal actions,
                     // including turns; it never repeats just the initial input.
                     if (frame >= commit && (frame - commit) % 16 == 0)
-                        action = reactive_input(game.observe());
+                        action = reactive_input(game.observe(laser_aware));
                 } else
                     action = frame < moving ? input : std::uint16_t(input & ~std::uint16_t(0xf0));
                 if (profile) {
@@ -128,6 +192,7 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                     start = Clock::now();
                 }
                 const auto state = game.step(action);
+                current = state;
                 if (profile)
                     result.timings.native_step += seconds_since(start);
                 ++result.attempted;
@@ -143,7 +208,7 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                 }
                 ++result.safe;
                 start = profile ? Clock::now() : Clock::time_point{};
-                result.cost += game.proposal_cost();
+                result.cost += game.proposal_cost(laser_aware);
                 if (profile)
                     result.timings.scoring += seconds_since(start);
                 if (state.complete) {
@@ -153,7 +218,7 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
             }
             if (result.safe) {
                 const auto start = profile ? Clock::now() : Clock::time_point{};
-                result.cost = result.cost / result.safe + game.proposal_cost();
+                result.cost = result.cost / result.safe + game.proposal_cost(laser_aware);
                 if (profile)
                     result.timings.scoring += seconds_since(start);
             }
@@ -200,7 +265,10 @@ Decision choose(Session &game, const PlannerOptions &options) {
     double best_cost = std::numeric_limits<double>::infinity();
     bool best_complete = false;
     std::vector<Candidate> candidates;
-    const auto observation = game.observe();
+    if (options.laser_aware)
+        game.enable_laser_guidance();
+    const auto observation = game.observe(options.laser_aware);
+    const auto lasers = laser_samples(observation, options.horizon, 4);
     for (const auto direction : directions) {
         for (unsigned focus : {4u, 0u}) {
             if (!direction && !focus)
@@ -212,7 +280,8 @@ Decision choose(Session &game, const PlannerOptions &options) {
                 if (int(input) == options.excluded_input)
                     continue;
                 candidates.push_back(
-                    {input, moving, proposal_rank(observation, input, moving, options.horizon)});
+                    {input, moving,
+                     proposal_rank(observation, input, moving, options.horizon, lasers)});
             }
         }
     }
@@ -245,17 +314,51 @@ Decision choose(Session &game, const PlannerOptions &options) {
         distinct.insert(distinct.end(), repeated.begin(), repeated.end());
         candidates = std::move(distinct);
     }
+    // A rotating long beam can outrun a distant player. Propose an inward
+    // approach followed by a small orbit, instead of only held/stop motions.
+    // These literal, multi-turn futures still require full native execution.
+    if (options.laser_orbits)
+        if (const auto *laser = orbit_laser(observation)) {
+            std::vector<Candidate> orbits;
+            const float reach = std::abs(laser->angular_speed) >= .002f
+                                    ? observation.axis / std::abs(laser->angular_speed)
+                                    : 80.f;
+            for (float direction : {1.f, -1.f})
+                for (float fraction : {.5f, .65f, .8f}) {
+                    Orbit orbit{laser->x,
+                                laser->y,
+                                std::clamp(reach * fraction, 48.f, 128.f),
+                                direction * (laser->angular_speed >= 0 ? 1.f : -1.f),
+                                observation.axis,
+                                observation.diagonal};
+                    const auto input = orbit_input(orbit, observation.x, observation.y);
+                    if (int(input) != options.excluded_input)
+                        orbits.push_back(
+                            {input, options.horizon, 0, false, orbit.radius, orbit.direction});
+                }
+            candidates.insert(candidates.begin(), orbits.begin(), orbits.end());
+        }
     if (options.profile)
         decision.timings.ranking = seconds_since(start);
     std::array<bool, 512> evaluated{};
     for (const auto &candidate : candidates) {
         const auto input = candidate.input;
         const auto moving = candidate.moving;
+        Orbit orbit;
+        if (candidate.orbit_radius > 0) {
+            const auto *laser = orbit_laser(observation);
+            orbit = {laser->x,
+                     laser->y,
+                     candidate.orbit_radius,
+                     candidate.orbit_direction,
+                     observation.axis,
+                     observation.diagonal};
+        }
         const bool digests = !options.defer_later_digests || decision.branches == 0;
         start = options.profile ? Clock::now() : Clock::time_point{};
         const auto result = rollout(game, input, moving, options.horizon, options.commit,
                                     std::max(options.commit, options.reuse), candidate.reactive,
-                                    options.profile, digests);
+                                    options.profile, digests, options.laser_aware, nullptr, orbit);
         if (options.profile) {
             decision.timings.rollout_wall += seconds_since(start);
             decision.timings += result.timings;
@@ -264,6 +367,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
         decision.unique_inputs += !evaluated[input];
         evaluated[input] = true;
         decision.reactive_branches += candidate.reactive;
+        decision.orbital_branches += candidate.orbit_radius > 0;
         decision.simulated_frames += result.attempted;
         const double cost = result.cost + ((input & 0xf0) ? 0.02 : 0);
         if ((result.complete && !best_complete) ||
@@ -271,6 +375,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
              (result.safe > best_safe || (result.safe == best_safe && cost < best_cost)))) {
             best_complete = result.complete;
             decision.future_complete = result.complete;
+            decision.orbital_selected = candidate.orbit_radius > 0;
             best_safe = result.safe;
             decision.lookahead_frames = best_safe;
             best_cost = cost;
@@ -296,7 +401,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
         const auto verified =
             rollout(game, decision.input, decision.certified_frames, decision.certified_frames,
                     options.commit, decision.certified_frames, false, options.profile, true,
-                    &decision.expected_inputs);
+                    options.laser_aware, &decision.expected_inputs);
         if (verified.safe != decision.certified_frames ||
             verified.complete != (decision.future_complete &&
                                   decision.certified_frames == decision.lookahead_frames))

@@ -69,6 +69,7 @@ int main(int argc, char **argv) {
         unsigned horizon = 128, lead = 16, budget = 110, interval = 16;
         bool pulse = false;
         bool pulse_on_failure = false;
+        bool laser_aware = false;
         bool recorded = false;
         bool fresh = false;
         unsigned proposals = 1;
@@ -90,10 +91,15 @@ int main(int argc, char **argv) {
                 pulse_on_failure = true;
                 continue;
             }
+            if (key == "--laser-aware") {
+                laser_aware = true;
+                continue;
+            }
             if (key == "--help") {
-                std::cout << "th06_shadow_online --data DIR --directory DIR [--horizon 32..592] "
-                             "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
-                             "[--fresh] [--pulse | --pulse-on-failure] [--recorded]\n";
+                std::cout
+                    << "th06_shadow_online --data DIR --directory DIR [--horizon 32..592] "
+                       "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
+                       "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware]\n";
                 return 0;
             }
             if (++i == argc)
@@ -168,6 +174,7 @@ int main(int argc, char **argv) {
         unsigned timeouts = 0, attempts = 0, submitted = 0, stale = 0, failed = 0, reused = 0;
         unsigned motion_attempts = 0, motion_selected = 0, motion_cursor = 0;
         unsigned recovery_searches = 0, recovery_publications = 0;
+        unsigned orbital_publications = 0;
         bool recovery_armed = false;
         unsigned forecasts = 0, checks = 0, recorded_selected = 0;
         std::array<unsigned, 8> timeouts_by_phase{};
@@ -264,7 +271,7 @@ int main(int argc, char **argv) {
                 recovery_searches += recovery;
                 const auto result =
                     b::search(game, active, previous, lead, horizon, budget, reuse,
-                              pulse || recovery, motion_cursor, recorded, proposals);
+                              pulse || recovery, motion_cursor, recorded, proposals, laser_aware);
                 // Try motion once after an unsuccessful ordinary search, then
                 // restore ordinary proposals even when that rescue also fails.
                 recovery_armed = pulse_on_failure && !recovery && !result.prediction.count;
@@ -305,6 +312,7 @@ int main(int argc, char **argv) {
                     motion_selected += result.prediction.motion;
                     recorded_selected += result.prediction.recorded;
                     recovery_publications += recovery;
+                    orbital_publications += result.prediction.orbital;
                 } else if (result.prediction.count)
                     ++stale;
                 else if (!result.timeout)
@@ -314,6 +322,7 @@ int main(int argc, char **argv) {
                           << ",\"timeout\":" << (result.timeout ? "true" : "false")
                           << ",\"certified\":" << result.prediction.count
                           << ",\"pulse_recovery\":" << (recovery ? "true" : "false")
+                          << ",\"orbital\":" << (result.prediction.orbital ? "true" : "false")
                           << ",\"published\":" << (published ? "true" : "false") << "}\n";
                 decisions.flush();
             }
@@ -356,6 +365,8 @@ int main(int argc, char **argv) {
                << ",\"pulse_on_failure\":" << pulse_on_failure
                << ",\"recovery_searches\":" << recovery_searches
                << ",\"recovery_publications\":" << recovery_publications
+               << ",\"laser_aware\":" << laser_aware
+               << ",\"orbital_publications\":" << orbital_publications
                << ",\"motion_attempts\":" << motion_attempts
                << ",\"motion_publications\":" << motion_selected
                << ",\"motion_cursor\":" << motion_cursor

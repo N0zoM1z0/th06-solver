@@ -86,12 +86,14 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 } // namespace
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
-              bool recorded, unsigned proposals) {
+              bool recorded, unsigned proposals, bool laser_aware) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
     if (prctl(PR_SET_CHILD_SUBREAPER, 1))
         throw std::runtime_error("set child subreaper");
+    if (laser_aware)
+        game.enable_laser_guidance();
     const auto begin = Clock::now();
     struct Progress {
         std::uint32_t *words = static_cast<std::uint32_t *>(
@@ -202,12 +204,15 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     options.proposals = proposals;
                     options.reactive = true;
                     options.defer_later_digests = true;
+                    options.laser_aware = laser_aware;
+                    options.laser_orbits = laser_aware;
                     const auto decision = choose(game, options);
                     result.branches += unsigned(decision.branches);
                     result.updates += unsigned(decision.simulated_frames);
                     // A safe short prefix of a failed future never publishes.
                     if (decision.lookahead_frames == horizon || decision.future_complete) {
                         tail.count = decision.certified_frames;
+                        tail.orbital = decision.orbital_selected;
                         std::copy(decision.expected_inputs.begin(), decision.expected_inputs.end(),
                                   tail.inputs.begin());
                         std::copy(decision.expected_digests.begin(),
@@ -219,6 +224,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     result.nominal = tail.nominal;
                     result.motion = tail.motion;
                     result.recorded = tail.recorded;
+                    result.orbital = tail.orbital;
                     std::copy_n(tail.inputs.begin(), tail.count, result.inputs.begin() + lead);
                     std::copy_n(tail.digests.begin(), tail.count, result.digests.begin() + lead);
                 }

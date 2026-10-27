@@ -78,6 +78,7 @@ parser.add_argument('--shot', type=int, default=1)
 parser.add_argument('--story', action='store_true')
 parser.add_argument('--pulse', action='store_true', help='try rotating native motion recovery before heuristic proposals')
 parser.add_argument('--pulse-on-failure', action='store_true', help='try motion once after an unsuccessful ordinary search')
+parser.add_argument('--laser-aware', action='store_true', help='guide native proposals with observed laser motion and orbital futures')
 parser.add_argument('--recorded', action='store_true', help='propose multi-turn paths from conditional native collision geometry')
 parser.add_argument('--record', action='store_true', help='capture owned Xvfb video and private audio separately')
 parser.add_argument('--horizon', type=int, default=128)
@@ -175,6 +176,8 @@ if args.pulse:
     worker_config['controller'].append('--pulse')
 if args.pulse_on_failure:
     worker_config['controller'].append('--pulse-on-failure')
+if args.laser_aware:
+    worker_config['controller'].append('--laser-aware')
 if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:

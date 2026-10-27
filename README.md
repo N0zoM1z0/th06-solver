@@ -10,7 +10,9 @@ See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. The current experiment is
 Extra online shadow MPC, starting with Reimu A and the original retail entry.
-Its first three full attempts all hit; **Extra online NMNB is not yet established**.
+Its first four full attempts all hit; **Extra online NMNB is not yet established**.
+Optional [laser-aware search](docs/EXTRA_SEARCH.md) passes the former Flandre
+spell-55 failure in the latest Wine sample, which later hits on spell 62.
 The separate 2,400-update prefix passes follow and fresh native replay. Failed
 cases, decision budgets and conditional recovery results are retained in the
 [live controller guide](docs/SHADOW_MPC.md).

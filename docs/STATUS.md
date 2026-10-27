@@ -1,5 +1,14 @@
 # Native runtime status
 
+Latest Extra optimization: optional `--laser-aware` fills the missing laser
+proposal geometry and adds native-verified orbital futures, with shared forecast
+work across directions. Two captured native latency models pass the former
+spell-55 window; the first actual Wine trial (seed 5092, normal power 0) also
+passes it, then hits at update 43,521 on spell 62 / ECL subroutine 60. Four full
+Extra trials now hit, with no whole Extra online NMNB clear established. All
+31 CTest contracts and four historical Extra tapes pass. See
+[controlled evidence and limits](EXTRA_SEARCH.md).
+
 Current experiment (owner request, 2026-10-27): Extra online shadow MPC, beginning
 with Reimu A. Stage 7 uses the original normal Extra entry and captured retail
 seed/power, separately from historical power-128 native checkpoints. Its first

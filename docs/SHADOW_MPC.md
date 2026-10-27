@@ -1,5 +1,10 @@
 # Live Wine shadow MPC
 
+Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
+optional observed-laser guidance and native-verified curved futures. The first
+Wine sample passes the previous spell-55 failure, then hits on spell 62 at update
+43,521. No complete Extra online NMNB or stable online 60-FPS claim follows.
+
 The controller now drives the owned Japanese 1.02h retail process under Wine.
 Two complete Lunatic Stage 5 / Reimu B runs and one Stage 6 / Marisa B run pass
 NMNB, including a Stage 5 live recording. All three actual input tapes pass

@@ -1,4 +1,6 @@
 #pragma once
+#include "th06/laser_guidance.hpp"
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -25,6 +27,7 @@ struct MovingHazard {
 struct Observation {
     float x, y, axis, diagonal, focused_axis, focused_diagonal, target_x;
     std::vector<MovingHazard> hazards;
+    std::vector<LaserForecast> lasers;
 };
 // One source game per process. Branches use fork(), never byte copies of the
 // managers: their pointers refer to mutable actors and loaded script storage.
@@ -37,8 +40,11 @@ class Session {
     State state() const;
     State step(std::uint16_t input);
     std::uint64_t observation_digest() const;
-    double proposal_cost() const;
-    Observation observe() const;
+    double proposal_cost(bool laser_aware = false) const;
+    Observation observe(bool laser_aware = false) const;
+    void enable_laser_guidance() {
+        track_lasers_ = true;
+    }
     unsigned cleared_stages() const {
         return cleared_stages_;
     }
@@ -52,5 +58,11 @@ class Session {
     bool story_ = false;
     unsigned cleared_stages_ = 0;
     unsigned required_stages_ = 1;
+    bool track_lasers_ = false;
+    struct LaserMotion {
+        float dx = 0, dy = 0, angular_speed = 0;
+    };
+    std::array<LaserMotion, 64> laser_motion_{};
+    std::array<LaserForecast, 64> previous_lasers_{};
 };
 } // namespace th06::solver

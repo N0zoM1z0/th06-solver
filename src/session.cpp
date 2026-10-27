@@ -23,6 +23,27 @@ void require(ZunResult result, const char *message) {
     if (result != ZUN_SUCCESS)
         throw std::runtime_error(message);
 }
+LaserForecast laser_snapshot(const Laser &l) {
+    LaserForecast out;
+    out.x = l.pos.x;
+    out.y = l.pos.y;
+    out.angle = l.angle;
+    out.start = l.startOffset;
+    out.end = l.endOffset;
+    out.length = l.startLength;
+    out.width = l.width;
+    out.speed = l.speed;
+    out.timer = l.timer.current;
+    out.state = l.state;
+    out.activation = l.startTime;
+    out.hitbox_start = l.hitboxStartTime;
+    out.duration = l.duration;
+    out.despawn = l.despawnDuration;
+    out.hitbox_end = l.hitboxEndDelay;
+    out.flags = l.flags;
+    out.present = l.inUse;
+    return out;
+}
 } // namespace
 Session::Session(const StartConfig &c) {
     if (active)
@@ -175,11 +196,29 @@ State Session::step(std::uint16_t input) {
         throw std::invalid_argument("unsupported input (bomb/menu disallowed)");
     if (story_ && g_Supervisor.curState == SUPERVISOR_STATE_NEXT_STAGE)
         advance_stage();
+    if (track_lasers_)
+        for (unsigned i = 0; i < previous_lasers_.size(); ++i)
+            previous_lasers_[i] = laser_snapshot(g_BulletManager.lasers[i]);
     g_PreviousFrameKeys = g_CurFrameInput;
     g_CurFrameInput = input;
     if (g_FuncChain.RunCalcChain() < 0)
         throw std::runtime_error("calc chain failed");
     ++frame_;
+    if (track_lasers_)
+        for (unsigned i = 0; i < laser_motion_.size(); ++i) {
+            auto &motion = laser_motion_[i];
+            motion = {};
+            const auto &before = previous_lasers_[i];
+            const auto &after = g_BulletManager.lasers[i];
+            // Pooled/restarted lasers and phase resets have no measured motion.
+            if (before.present && after.inUse && before.state == after.state &&
+                after.timer.current == before.timer + 1 && before.width == after.width &&
+                before.activation == after.startTime && before.duration == after.duration) {
+                motion.dx = after.pos.x - before.x;
+                motion.dy = after.pos.y - before.y;
+                motion.angular_speed = std::remainder(after.angle - before.angle, 6.28318530718f);
+            }
+        }
     if (g_Supervisor.curState == SUPERVISOR_STATE_NEXT_STAGE || terminal())
         ++cleared_stages_;
     if (story_ && terminal() &&
@@ -282,7 +321,7 @@ std::uint64_t Session::observation_digest() const {
     return hash;
 }
 
-double Session::proposal_cost() const {
+double Session::proposal_cost(bool laser_aware) const {
     const float x = g_Player.positionCenter.x, y = g_Player.positionCenter.y;
     double cost = 0;
     for (const auto &bullet : g_BulletManager.bullets) {
@@ -307,9 +346,20 @@ double Session::proposal_cost() const {
     cost += std::abs(x - target_x) * 0.003 + std::abs(y - 380.f) * 0.006;
     const double edge = std::max(0.f, 40.f - std::min(x - 8.f, 376.f - x));
     cost += edge * edge * 0.002;
+    if (laser_aware)
+        for (unsigned i = 0; i < laser_motion_.size(); ++i) {
+            const auto &laser = g_BulletManager.lasers[i];
+            if (!laser.inUse)
+                continue;
+            auto forecast = laser_snapshot(laser);
+            forecast.dx = laser_motion_[i].dx;
+            forecast.dy = laser_motion_[i].dy;
+            forecast.angular_speed = laser_motion_[i].angular_speed;
+            cost += laser_proposal_cost(advance_laser(forecast), x, y);
+        }
     return cost;
 }
-Observation Session::observe() const {
+Observation Session::observe(bool laser_aware) const {
     const auto &speed = g_Player.characterData;
     Observation out{g_Player.positionCenter.x,
                     g_Player.positionCenter.y,
@@ -318,6 +368,7 @@ Observation Session::observe() const {
                     speed.orthogonalMovementSpeedFocus,
                     speed.diagonalMovementSpeedFocus,
                     192,
+                    {},
                     {}};
     out.hazards.reserve(700);
     for (const auto &bullet : g_BulletManager.bullets) {
@@ -337,6 +388,16 @@ Observation Session::observe() const {
                 {enemy.position.x, enemy.position.y, enemy.axisSpeed.x, enemy.axisSpeed.y,
                  std::max(enemy.hitboxDimensions.x, enemy.hitboxDimensions.y) * 0.5f + 1.25f});
     }
+    if (laser_aware)
+        for (unsigned i = 0; i < laser_motion_.size(); ++i) {
+            if (!g_BulletManager.lasers[i].inUse)
+                continue;
+            auto laser = laser_snapshot(g_BulletManager.lasers[i]);
+            laser.dx = laser_motion_[i].dx;
+            laser.dy = laser_motion_[i].dy;
+            laser.angular_speed = laser_motion_[i].angular_speed;
+            out.lasers.push_back(laser);
+        }
     return out;
 }
 } // namespace th06::solver
