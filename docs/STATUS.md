@@ -2,7 +2,7 @@
 
 Current owner scope (2026-10-27): Extra online shadow MPC with Reimu A,
 original retail power-0 entry and captured retail seeds. One incomplete
-2,400-update prefix passes; seven completed full trials hit. **Complete Extra
+2,400-update prefix passes; eight completed full trials hit. **Complete Extra
 online NMNB and stable online 60 FPS remain unestablished.** See the
 [full live ledger](SHADOW_MPC.md) and [focused search study](EXTRA_SEARCH.md).
 
@@ -14,8 +14,9 @@ The optional search refinements preserve complete native verification:
 - `--power-aware`: original native power-item outcomes guide proposals until 128.
 - `--survival-horizon 256`: longer futures only for active non-interactable spells.
 - `--damage-aware`: actual native boss HP and phase completion guide ranking.
+- `--acceleration-aware`: observed finite acceleration guides bullet proposals.
 
-Thirty-eight local CTest contracts pass. Two promoted pickup opening models
+Forty local CTest contracts pass. Two promoted pickup opening models
 reach full power and pass frozen replay. Survival-only lookahead passes one
 captured spell-62 model but fails the older seed. Damage-aware 128-tail models
 end spell 58 in two captured windows and fail a third; all successful prefixes
@@ -23,14 +24,22 @@ pass frozen replay. Global 256-tail spell-58 models all fail under the same
 110-ms cap, so that profile is not adopted. These are native timing models,
 not retail clears or paired all-seed robustness claims.
 
-The latest completed Wine trial, seed 24237, reaches full power and passes
-spell 55, then hits at update 28,121 on spell 58 / ECL subroutine 48, boss HP 386.
-It never reaches the survival-horizon cue. Retail projections and independent
-native digests match every actual update including the hit; strict NMNB replay
-rejects it. Its 6,398 searches include 132 timeouts, 26 published deadline
-certificates, 47 ranking yields and five fallback inputs (four startup).
-Search p99 is 111.34 ms including cleanup; peak is 349.80 MiB, OOM 0 under
-verified 2-GiB/no-swap limits. All 28,240 limiter scopes restore.
+The latest completed Wine trial, seed 5594, uses damage guidance and reaches
+full power, passes spell 55, then hits at update 22,062 on spell 57 / ECL
+subroutine 44, boss HP 946. Every retail projection and independent actual native
+digest agrees, including the hit; strict NMNB replay rejects it. Its 4,921
+searches include 81 timeouts, 18 published deadline certificates, 47 ranking
+yields and eight fallback inputs (four startup). Search p99/max is
+111.08/112.51 ms including cleanup. Group peak is 398.15 MiB, OOM 0 under
+verified 2-GiB/no-swap limits; all 22,181 limiter scopes restore.
+
+Source inspection of that capture finds dozens of accelerating bullets omitted
+from constant-velocity proposal forecasts. The optional acceleration snapshot
+respects original expiry, update order and competing-mode precedence. Actual
+BulletManager callback tests pass. Two captured-window models and their controls
+all end the spell without hits/fallback; one guided route is faster and one is
+slower. All four prefixes pass frozen replay. No general robustness improvement
+or complete retail clear follows from these model results.
 
 Three zero-frame startup attempts are retained separately. Early scoped
 limiter precision fixes their demonstrated long-uptime subtraction hang;

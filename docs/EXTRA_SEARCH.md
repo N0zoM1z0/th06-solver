@@ -293,3 +293,46 @@ physics, input restrictions and replay format are unchanged. Current raw model,
 failed-control and actual-retail evidence is under private
 `reports/local/extra-online-20261027/`; the next target remains viable earlier
 route choices before the edge traps, within the actual decision deadline.
+
+The `online-damage128-007` actual Wine attempt captures Reimu A seed 5594,
+normal power 0. It passes spell 55, then hits at update 22,062 on spell 57 /
+ECL subroutine 44, boss HP 946. Every actual native digest and retail projection
+independently matches including the hit. It publishes 4,854 plans from 4,921
+searches, with 81 timeouts, 18 published deadline certificates, 47 ranking yields
+and eight fallback inputs (four startup). Search p50/p99/max is
+59.45/111.08/112.51 ms including cleanup; receipt p99/max is 27.53/381.51 ms.
+Group peak is 398.15 MiB, OOM 0 under verified 2-GiB/no-swap limits. All 22,181
+limiter scopes restore. This eighth full hit does not establish damage-guidance
+robustness or a complete Extra online clear.
+
+## Finite native bullet acceleration
+
+That spell-57 capture contains 38–132 bullets with `EX_ACCELERATION` at selected
+samples. Constant-velocity ranking omits their remaining acceleration. New
+optional `--acceleration-aware` snapshots acceleration only for fired bullets,
+with the source's finite `exDuration` and current timer. Speedup, angular-turn,
+velocity-change and bounce combinations are excluded; spawn animation remains
+outside this predictor. Position forecasting applies acceleration before motion,
+then retains the accumulated velocity after expiry. Forecasts are proposals,
+not collision certificates, and do not predict new bullet spawns or ECL changes.
+All native state, callbacks and RNG remain unchanged.
+
+Forty local CTest contracts pass. An actual BulletManager fixture initializes
+original bullets and checks twelve callback updates across three acceleration
+lifetimes, expiry and source speedup precedence. Guidance-disabled observations
+retain the original linear forecast; snapshot reads preserve gameplay digests.
+
+Two 128-tail/16-lead/110-ms captured spell-57 latency comparisons retain all
+outcomes, with six-candidate fresh/anytime/power/damage policy and the same
+initial 144 queued actual inputs:
+
+| Seed 5594 origin | Acceleration off | Acceleration on |
+|---|---|---|
+| 21,200 | Spell ends 22,129; 6/182 timeouts | Spell ends 22,839; 10/323 timeouts |
+| 21,700 | Spell ends 24,048; 27/428 timeouts | Spell ends 22,890; 33/219 timeouts |
+
+All four have no hit/fallback and pass full-prefix frozen replay. The controls
+also succeed, and the earlier guided model is slower; this establishes tested
+motion semantics and mixed targeted behavior, not a general policy win or retail
+clear. Raw attempts and checks remain under private
+`reports/local/extra-online-20261027/acceleration-model001/`.

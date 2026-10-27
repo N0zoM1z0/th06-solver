@@ -88,7 +88,8 @@ double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving,
         const float y = std::clamp(o.y + dy * speed * duration, 16.f, 432.f);
         double local = 0;
         for (const auto &hazard : o.hazards) {
-            const double hx = hazard.x + hazard.vx * t - x, hy = hazard.y + hazard.vy * t - y;
+            const auto [px, py] = hazard.position(t);
+            const double hx = px - x, hy = py - y;
             const double d2 = hx * hx + hy * hy;
             if (d2 < 14400)
                 local += 900.0 / (d2 + 100);
@@ -150,7 +151,7 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
                unsigned commit, unsigned retained, bool reactive, bool profile, bool digests,
-               bool laser_aware, bool power_aware, bool damage_aware,
+               bool laser_aware, bool power_aware, bool damage_aware, bool acceleration_aware,
                const std::vector<std::uint16_t> *literal = nullptr, Orbit orbit = {}) {
     int pipefd[2];
     if (::pipe(pipefd))
@@ -191,8 +192,9 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                     // to this branch. Retention records the literal actions,
                     // including turns; it never repeats just the initial input.
                     if (frame >= commit && (frame - commit) % 16 == 0)
-                        action = reactive_input(game.observe(laser_aware, power_aware), power_aware,
-                                                damage_aware);
+                        action = reactive_input(
+                            game.observe(laser_aware, power_aware, acceleration_aware), power_aware,
+                            damage_aware);
                 } else
                     action = frame < moving ? input : std::uint16_t(input & ~std::uint16_t(0xf0));
                 if (profile) {
@@ -286,7 +288,7 @@ Decision choose(Session &game, const PlannerOptions &options,
             rollout(game, decision.input, decision.certified_frames, decision.certified_frames,
                     options.commit, decision.certified_frames, false, options.profile, true,
                     options.laser_aware, options.power_aware, options.damage_aware,
-                    &decision.expected_inputs);
+                    options.acceleration_aware, &decision.expected_inputs);
         if (verified.safe != decision.certified_frames ||
             verified.complete != (decision.future_complete &&
                                   decision.certified_frames == decision.lookahead_frames))
@@ -303,7 +305,8 @@ Decision choose(Session &game, const PlannerOptions &options,
     std::vector<Candidate> candidates;
     if (options.laser_aware)
         game.enable_laser_guidance();
-    const auto observation = game.observe(options.laser_aware, options.power_aware);
+    const auto observation =
+        game.observe(options.laser_aware, options.power_aware, options.acceleration_aware);
     const auto lasers = laser_samples(observation, options.horizon, 4);
     for (const auto direction : directions) {
         for (unsigned focus : {4u, 0u}) {
@@ -399,10 +402,11 @@ Decision choose(Session &game, const PlannerOptions &options,
         }
         const bool digests = !options.defer_later_digests || decision.branches == 0;
         start = options.profile ? Clock::now() : Clock::time_point{};
-        const auto result = rollout(game, input, moving, options.horizon, options.commit,
-                                    std::max(options.commit, options.reuse), candidate.reactive,
-                                    options.profile, digests, options.laser_aware,
-                                    options.power_aware, options.damage_aware, nullptr, orbit);
+        const auto result =
+            rollout(game, input, moving, options.horizon, options.commit,
+                    std::max(options.commit, options.reuse), candidate.reactive, options.profile,
+                    digests, options.laser_aware, options.power_aware, options.damage_aware,
+                    options.acceleration_aware, nullptr, orbit);
         if (options.profile) {
             decision.timings.rollout_wall += seconds_since(start);
             decision.timings += result.timings;

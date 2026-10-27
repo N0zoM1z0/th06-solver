@@ -1,21 +1,23 @@
 # Continuation: Lunatic online shadow MPC
 
 2026-10-27 current owner scope: Extra online shadow MPC with Reimu A, normal
-power-0 retail entry and captured seeds. One incomplete prefix passes; seven
+power-0 retail entry and captured seeds. One incomplete prefix passes; eight
 completed full attempts hit. Complete Extra online NMNB and live 60 FPS remain
-open. The latest seed 24237 hits at update 28,121 on spell 58 with 386 boss HP;
+open. The latest seed 5594 hits at update 22,062 on spell 57 with 946 boss HP;
 all retail projections and independent native digests agree including the hit.
 
 Current optional refinements include laser geometry/orbits, immutable anytime
 certificates, a ranking-time reserve, native power pickups, survival-only longer
-lookahead and boss-damage scoring. Thirty-eight local CTest contracts pass.
+lookahead, boss-damage scoring and finite-acceleration bullet forecasts. Forty
+local CTest contracts pass.
 Promoted native models improve early power and one survival window, but retain
 failed seeds. Global 256-tail spell-58 models exhaust the 110-ms budget and fail;
 keep the 128 base horizon. Damage-aware 128-tail models pass two captured windows
 and fail a third, so ranking is still experimental.
 
-Continue with earlier candidate-route choices before the spell-58 bottom-edge
-and spell-62 right-edge traps. A native full future, fewer timeouts or a completed
+Continue with earlier candidate-route choices before the spell-57/58 bottom-edge
+and spell-62 right-edge traps. Acceleration model controls and guided routes all
+pass two captured windows, with mixed completion times; keep the flag optional. A native full future, fewer timeouts or a completed
 spell prefix is not a complete retail clear. Keep actual search/queue timings,
 all retries and fresh full-input validation. See [focused evidence](EXTRA_SEARCH.md),
 [status](STATUS.md) and [the full live ledger](SHADOW_MPC.md). Private evidence

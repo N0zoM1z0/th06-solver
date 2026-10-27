@@ -16,6 +16,7 @@ struct PlannerOptions {
     bool laser_orbits = false;
     bool power_aware = false;
     bool damage_aware = false;
+    bool acceleration_aware = false;
     // Stop further ranking only after a complete native future exists. The
     // caller still owns the hard deadline, verification and descendant cleanup.
     std::chrono::steady_clock::time_point ranking_deadline =

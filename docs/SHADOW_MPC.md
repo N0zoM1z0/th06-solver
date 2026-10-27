@@ -21,7 +21,10 @@ latest window and older failed seed. Optional `--damage-aware` scores actual
 native boss HP reductions and completed spell phases, with stronger horizontal
 alignment. Phase completion latches before the next phase resets HP. This
 proposal score cannot shorten the required native rollout or certify a route.
-Thirty-eight local contracts pass; native models retain counterexamples.
+Optional `--acceleration-aware` forecasts observed fired bullets with finite
+vector acceleration, excluding competing motion modes. Original expiry/update
+order is covered by actual BulletManager callbacks. Forty local contracts pass;
+native models retain mixed timing results and counterexamples.
 
 Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
 optional observed-laser guidance and native-verified curved futures. The first
@@ -157,13 +160,14 @@ seeds; these are not paired policy comparisons):
 | 13662 | 128 / 16 / 110, anytime | Hit, spell 58 | 36,587 | 111.43 | 179 / 8,888 | 5 |
 | 59127 | 128 / 16 / 110, power-aware, six candidates | Hit, spell 62 | 40,028 | 111.41 | 319 / 8,242 | 10 |
 | 24237 | 128 / 16 / 110, survival horizon 256 | Hit, spell 58 | 28,121 | 111.34 | 132 / 6,398 | 5 |
+| 5594 | 128 / 16 / 110, damage-aware | Hit, spell 57 | 22,062 | 111.08 | 81 / 4,921 | 8 |
 
 **No complete Extra online NMNB clear is established.** Completed gameplay
-trials comprise one budget prefix and seven actual-hit attempts; three
+trials comprise one budget prefix and eight actual-hit attempts; three
 zero-frame startup attempts are accounted separately. Every actual native digest
 matches independent diagnostic replay including each hit; strict NMNB replay
 rejects every failed route. The laser-aware sample passes spell 55. Later samples
-fail at spell 58 / ECL subroutine 48 or spell 62 / subroutine 60. The latest
+fail at spells 57/58/62 / ECL subroutines 44/48/60. The latest
 survival profile never reaches its extension cue. Native timing-model successes
 remain separate from this retail ledger.
 

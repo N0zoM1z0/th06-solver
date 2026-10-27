@@ -1,5 +1,6 @@
 #pragma once
 #include "th06/boss_guidance.hpp"
+#include "th06/bullet_guidance.hpp"
 #include "th06/laser_guidance.hpp"
 #include <array>
 #include <cstdint>
@@ -22,9 +23,6 @@ struct State {
     std::uint32_t rng_calls = 0, score = 0;
     bool complete = false, hit = false;
 };
-struct MovingHazard {
-    float x, y, vx, vy, radius;
-};
 struct Observation {
     float x, y, axis, diagonal, focused_axis, focused_diagonal, target_x;
     std::vector<MovingHazard> hazards;
@@ -43,7 +41,8 @@ class Session {
     State step(std::uint16_t input);
     std::uint64_t observation_digest() const;
     double proposal_cost(bool laser_aware = false, bool power_aware = false) const;
-    Observation observe(bool laser_aware = false, bool power_aware = false) const;
+    Observation observe(bool laser_aware = false, bool power_aware = false,
+                        bool acceleration_aware = false) const;
     bool survival_spell() const;
     BossProgress boss_progress() const;
     void enable_laser_guidance() {

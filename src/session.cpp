@@ -417,7 +417,7 @@ double Session::proposal_cost(bool laser_aware, bool power_aware) const {
     }
     return cost;
 }
-Observation Session::observe(bool laser_aware, bool power_aware) const {
+Observation Session::observe(bool laser_aware, bool power_aware, bool acceleration_aware) const {
     const auto &speed = g_Player.characterData;
     Observation out{g_Player.positionCenter.x,
                     g_Player.positionCenter.y,
@@ -436,6 +436,19 @@ Observation Session::observe(bool laser_aware, bool power_aware) const {
         out.hazards.push_back(
             {bullet.pos.x, bullet.pos.y, bullet.velocity.x, bullet.velocity.y,
              std::max(bullet.sprites.grazeSize.x, bullet.sprites.grazeSize.y) * 0.5f + 1.25f});
+        // Other motion modes can overwrite acceleration or turn the velocity.
+        // Spawn animations also have their own motion and timer reset.
+        constexpr unsigned competing = EX_SPEEDUP | EX_VELOCITY | EX_ANGLE_ADD | EX_ANGLE_PLAYER |
+                                       EX_ANGLE_SET | EX_BOUNCE_TBLR | EX_BOUNCE_TLR;
+        if (acceleration_aware && bullet.state == BULLET_STATE_FIRED &&
+            (bullet.exFlags & EX_ACCELERATION) && !(bullet.exFlags & competing) &&
+            bullet.timer.current < bullet.exDuration) {
+            auto &hazard = out.hazards.back();
+            hazard.ax = bullet.ex4Acceleration.x;
+            hazard.ay = bullet.ex4Acceleration.y;
+            hazard.acceleration_updates = unsigned(std::min<std::int64_t>(
+                600, std::int64_t(bullet.exDuration) - bullet.timer.current));
+        }
     }
     for (const auto &enemy : g_EnemyManager.enemies) {
         if (!enemy.flags.isSlotOccupied)

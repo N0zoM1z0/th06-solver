@@ -26,5 +26,5 @@ Search search(solver::Session &game, const Plan &active, std::uint16_t previous,
               unsigned horizon, unsigned budget_ms, bool reuse, bool pulse = false,
               unsigned motion_cursor = 0, bool recorded = false, unsigned proposals = 1,
               bool laser_aware = false, bool anytime = false, bool power_aware = false,
-              bool damage_aware = false);
+              bool damage_aware = false, bool acceleration_aware = false);
 } // namespace th06::shadow

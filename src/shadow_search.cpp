@@ -88,7 +88,7 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
               bool recorded, unsigned proposals, bool laser_aware, bool anytime, bool power_aware,
-              bool damage_aware) {
+              bool damage_aware, bool acceleration_aware) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
@@ -218,6 +218,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     options.laser_orbits = laser_aware;
                     options.power_aware = power_aware;
                     options.damage_aware = damage_aware;
+                    options.acceleration_aware = acceleration_aware;
                     if (anytime)
                         options.ranking_deadline =
                             begin + std::chrono::milliseconds(budget * 3 / 4);
