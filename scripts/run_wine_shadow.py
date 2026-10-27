@@ -94,8 +94,9 @@ if args.record:
         parser.error('recording tools unavailable: ' + ', '.join(missing))
 if not 1 <= args.updates <= 1000000 or not 1 <= args.seconds <= 7200:
     parser.error('invalid frame/time budget')
-if not 1 <= args.stage <= 6 or not 0 <= args.shot <= 3 or (args.story and args.stage != 1):
-    parser.error('invalid Lunatic stage/shot/story start')
+if not 1 <= args.stage <= 7 or not 0 <= args.shot <= 3 or (args.story and args.stage != 1):
+    parser.error('invalid Lunatic/Extra stage/shot/story start')
+difficulty = 4 if args.stage == 7 else 3
 if not (32 <= args.horizon <= 592 and 8 <= args.lead <= 64 and args.horizon + args.lead <= 600
         and 1 <= args.budget_ms <= 2000 and 1 <= args.interval <= args.horizon and 1 <= args.proposals <= 50):
     parser.error('invalid shadow search bounds')
@@ -178,7 +179,7 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'peak_cgroup_bytes': 0, 'oom': 0, 'oom_kill': 0,
            'cgroup_limits_verified': False,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
-           'stage': args.stage, 'shot': args.shot, 'difficulty': 3, 'story': args.story,
+           'stage': args.stage, 'shot': args.shot, 'difficulty': difficulty, 'story': args.story,
            'dat_sha256': archives,
            'config_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                              for p in args.game.iterdir() if p.suffix.lower() == '.cfg'},

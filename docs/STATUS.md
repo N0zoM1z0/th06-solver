@@ -1,5 +1,13 @@
 # Native runtime status
 
+Current experiment (owner request, 2026-10-27): Extra online shadow MPC, beginning
+with Reimu A. Stage 7 uses the original normal Extra entry and captured retail
+seed/power, separately from historical power-128 native checkpoints. Its first
+2,400-update Wine prefix passes live follow and fresh native replay, with zero
+misses/bombs, 599 publications, zero timeouts and four startup fallback inputs.
+It is incomplete. All 30 CTest contracts and all four historical Extra tapes
+pass after correcting Extra's practice flag. See [live instructions](SHADOW_MPC.md).
+
 Immediate scope (owner clarification, 2026-10-26):
 [native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),
 with no MPC or native follower during playback. Online control acceptance stays

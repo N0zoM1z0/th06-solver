@@ -167,7 +167,8 @@ int __cdecl init_hook(void *manager) {
         if (!start)
             finish("start_write_failed", 9);
         std::fprintf(start, "%d %u %u %u %u %u\n",
-                     at<int>(game_base, abi::GameManager_currentStage), difficulty, shot,
+                     at<int>(game_base, abi::GameManager_currentStage),
+                     unsigned(at<int>(game_base, abi::GameManager_difficulty)), shot,
                      unsigned(at<unsigned short>(game_base, abi::GameManager_randomSeed)),
                      unsigned(at<unsigned short>(game_base, abi::GameManager_currentPower)),
                      unsigned(story));
@@ -195,7 +196,8 @@ int __cdecl menu_hook(void *menu) {
         at<int>(supervisor_base, abi::Supervisor_curState) == 1) {
         // The normal menu handoff: the original EXE initializes and records gameplay.
         at<int>(game_base, abi::GameManager_isInReplay) = 0;
-        at<unsigned char>(game_base, abi::GameManager_isInPracticeMode) = !story;
+        at<unsigned char>(game_base, abi::GameManager_isInPracticeMode) =
+            !story && initial_stage != 7;
         at<unsigned char>(game_base, abi::GameManager_demoMode) = 0;
         at<int>(game_base, abi::GameManager_currentStage) = initial_stage - 1;
         at<int>(game_base, abi::GameManager_difficulty) = difficulty;
@@ -238,12 +240,13 @@ bool setup() {
         return true;
     };
     unsigned story_setting = 0;
-    if (!setting("TH06_SHADOW_STAGE", initial_stage, 1, 6) ||
+    if (!setting("TH06_SHADOW_STAGE", initial_stage, 1, 7) ||
         !setting("TH06_SHADOW_SHOT", shot, 0, 3) ||
         !setting("TH06_SHADOW_STORY", story_setting, 0, 1))
         return false;
     story = story_setting;
-    if (story && initial_stage != 1)
+    difficulty = initial_stage == 7 ? 4 : 3;
+    if (!b::start_valid(initial_stage, difficulty, shot, story_setting))
         return false;
     const auto limit_size = GetEnvironmentVariableA("TH06_RETAIL_UPDATES", limit, sizeof(limit));
     if (limit_size >= sizeof(limit))

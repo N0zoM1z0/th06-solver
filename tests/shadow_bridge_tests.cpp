@@ -10,6 +10,16 @@ void require(bool value, const char *message) {
 }
 int main() {
     try {
+        require(b::start_valid(1, 3, 0, 1) && b::start_valid(6, 3, 3, 0), "Lunatic starts");
+        require(b::start_valid(7, 4, 0, 0) && b::start_valid(7, 4, 3, 0), "Extra starts");
+        require(!b::start_valid(7, 3, 0, 0) && !b::start_valid(6, 4, 0, 0),
+                "reject mismatched Extra stage/difficulty");
+        require(!b::start_valid(7, 4, 0, 1) && !b::start_valid(5, 3, 0, 1) &&
+                    !b::start_valid(1, 3, 0, 2),
+                "reject invalid story starts");
+        require(!b::start_valid(0, 3, 0, 0) && !b::start_valid(8, 4, 0, 0) &&
+                    !b::start_valid(7, 4, 4, 0),
+                "reject out-of-range starts");
         std::array<std::uint32_t, b::map_words> map{};
         b::Plan p;
         p.generation = 2;
@@ -55,6 +65,14 @@ int main() {
         b::publish(map.data(), p);
         require(b::read(map.data(), read) && read.count == b::capacity && read.inputs.back() == 325,
                 "maximum-length literal plan crosses both complete map slots");
+        p.stage = 7;
+        p.generation = 8;
+        b::publish(map.data(), p);
+        require(b::read(map.data(), read) && b::compatible(read, {}, 261, 100, 7) &&
+                    !b::timely(read, 100, 6),
+                "Extra plans round-trip without crossing main-game stage ownership");
+        p.stage = 8;
+        require(!b::valid(p), "reject stage beyond Extra");
         require(b::next_input(accepted, 149, 389) == 389, "explicit exhausted-queue hold");
         b::Receipt native{}, retail{};
         native[b::X] = b::bits(192.f);

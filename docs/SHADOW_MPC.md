@@ -32,10 +32,20 @@ python3 scripts/run_wine_shadow.py \
   --data /path/to/same-six-dat-archives --stage 6 --shot 3 \
   --horizon 64 --lead 8 --budget-ms 80 --interval 4 --proposals 3 --fresh \
   --updates 40000 --seconds 900 --output reports/local/live-stage6
+
+# Extra experiment: original normal Extra entry, not a practice checkpoint.
+python3 scripts/run_wine_shadow.py \
+  --game /path/to/private-game-copy --prefix /path/to/dedicated-wine-prefix \
+  --data /path/to/same-six-dat-archives --stage 7 --shot 0 \
+  --horizon 64 --lead 8 --budget-ms 80 --interval 4 --proposals 3 --fresh \
+  --updates 100000 --seconds 1800 --output reports/local/live-extra
 ```
 
-Difficulty is currently fixed to Lunatic. A standalone start uses the original
-practice initialization: power 0/64/128 for stages 1/2/3–6. `--story --stage 1`
+Stages 1–6 select Lunatic; stage 7 selects Extra. Main-game standalone starts use
+the original practice initialization: power 0/64/128 for stages 1/2/3–6. Extra
+uses the source's normal entry with practice disabled, captured initial power 0,
+rank bounds 14–18 and score extends disabled. It is separate from the historical
+power-128 Extra checkpoints. `--story --stage 1`
 requests a natural story start; a frame-limited handoff check is not a complete
 story. The EXE and dedicated 32-bit Wine prefix requirements are the same as
 [retail replay](RETAIL_REPLAY.md). The runner checks the pinned EXE and equality
@@ -44,6 +54,22 @@ owned prefix, freezes the Python runner/capture modules as well, and places
 Wine, Xvfb, controller, descendants and optional capture
 processes in one 2-GiB/no-swap user-systemd cgroup. It never attaches to an
 existing game or changes the disk EXE.
+
+The Extra startup/plan boundary accepts stage 7 only with Extra difficulty and
+rejects Extra stories, mismatched difficulty and plans beyond stage 7. Native
+Extra initialization also disables practice, matching the original result path;
+all four historical Extra tapes still pass fresh complete replay. Thirty CTest
+contracts pass, including real DAT and Extra bootstrap checks.
+
+The first Extra live prefix (2026-10-27, Reimu A, retail seed 64677) follows all
+2,400 actual updates and passes independent fresh native replay with no
+misses/bombs. All 599 searches publish, with no timeout/stale/rejected plan;
+search p50/p99/max is 17.31/23.15/24.52 ms. Only four startup inputs use fallback.
+Peak is 519,446,528 bytes, OOM 0 under verified 2-GiB/no-swap limits. This bounded
+prefix is incomplete. Evidence remains under
+`reports/local/shadow-extra-20261027/`. These initial Extra trials use the existing
+Wine 8 live profile; the Wine 11 replay presentation result does not establish
+online FPS.
 
 ## Boundary contract
 

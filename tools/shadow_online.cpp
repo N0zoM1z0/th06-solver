@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
                 throw std::runtime_error("retail start timeout");
             std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }
-        if (config.difficulty != 3 || seed > 65535 || story > 1)
+        if (!b::start_valid(config.stage, config.difficulty, config.shot, story) || seed > 65535)
             throw std::runtime_error("unsupported retail start");
         config.seed = std::uint16_t(seed);
         config.story = story;

@@ -35,6 +35,10 @@ inline void save(std::uint32_t *p, std::uint32_t value) {
 inline bool input_valid(unsigned input) {
     return !(input & ~0x1f5u);
 }
+inline bool start_valid(unsigned stage, unsigned difficulty, unsigned shot, unsigned story) {
+    return stage >= 1 && stage <= 7 && difficulty == (stage == 7 ? 4u : 3u) && shot <= 3 &&
+           story <= 1 && (!story || stage == 1);
+}
 struct Plan {
     std::uint32_t generation = 0, origin = 0, stage = 0, first_change = 0, count = 0;
     std::array<std::uint16_t, capacity> inputs{};
@@ -42,7 +46,7 @@ struct Plan {
 inline bool valid(const Plan &p) {
     return p.generation && !(p.generation & 1) && p.count && p.count <= capacity &&
            p.origin <= UINT32_MAX - p.count && p.first_change > p.origin &&
-           p.first_change <= p.origin + p.count && p.stage >= 1 && p.stage <= 6 &&
+           p.first_change <= p.origin + p.count && p.stage >= 1 && p.stage <= 7 &&
            std::all_of(p.inputs.begin(), p.inputs.begin() + p.count, input_valid);
 }
 inline unsigned slot(unsigned generation) {

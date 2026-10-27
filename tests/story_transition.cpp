@@ -41,7 +41,8 @@ int main(int argc, char **argv) {
         if (extra) {
             check(g_GameManager.livesEarned == 4 && g_GameManager.livesRemaining == 2 &&
                       g_GameManager.bombsRemaining == 3 && g_GameManager.rank == 16 &&
-                      g_GameManager.minRank == 14 && g_GameManager.maxRank == 18,
+                      g_GameManager.minRank == 14 && g_GameManager.maxRank == 18 &&
+                      !g_GameManager.isInPracticeMode,
                   "Extra bootstrap must preserve source rank/extend rules");
             std::cout << "Extra source bootstrap contracts passed\n";
             return 0;

@@ -58,7 +58,8 @@ Session::Session(const StartConfig &c) {
     g_GameManager.rank = 16;
     g_GameManager.minRank = c.difficulty == 0 ? 12 : c.difficulty == 4 ? 14 : 10;
     g_GameManager.maxRank = c.difficulty == 0 ? 20 : c.difficulty == 4 ? 18 : 32;
-    g_GameManager.isInPracticeMode = !c.story;
+    // Extra uses the normal source entry and result path, not practice records.
+    g_GameManager.isInPracticeMode = !c.story && c.stage != 7;
     g_GameManager.isInMenu = true;
     g_GameManager.gameRegionScreenPos = {32, 16};
     g_GameManager.gameRegionSize = {384, 448};

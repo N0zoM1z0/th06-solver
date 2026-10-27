@@ -8,8 +8,8 @@ replay. **Wine retail playback also passes one complete Lunatic Reimu A story**:
 127,737 updates, six natural stage clears and zero misses/bombs.
 See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
-owner's request; original game assets remain private. Current experiments focus
-only on Lunatic, with replay frame pacing as the immediate task.
+owner's request; original game assets remain private. The current experiment is
+Extra online shadow MPC, starting with Reimu A and the original retail entry.
 The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
 Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5
 recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-update
@@ -49,9 +49,10 @@ pass **16/16** (11 first-pass, five recovered), all with full fresh native repla
 
 ## Continue development
 
-The immediate work is [retail replay at 60 FPS](docs/REPLAY_PACING.md). Use its
-pure-playback commands and explicit presentation gate before returning to online
-decision scheduling or new policy searches.
+The current owner-requested experiment is [Extra live shadow MPC](docs/SHADOW_MPC.md).
+Keep its natural power-0 retail start, actual input receipts and decision deadlines
+separate from historical power-128 native checkpoints and
+[retail replay pacing](docs/REPLAY_PACING.md).
 
 Start with the [engineering handoff and open work](docs/CONTINUATION.md): it maps
 completed work, all 13 live trials, retained failures, source entry points, private
