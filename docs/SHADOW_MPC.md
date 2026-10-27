@@ -17,8 +17,11 @@ retail resources, item rules or input restrictions. Optional
 `--survival-horizon 256` selects a longer certified future from native active-spell
 and boss-interaction flags. The 110-ms cap/lead stay unchanged, and every actual
 horizon is logged. The [targeted study](EXTRA_SEARCH.md) retains both its passing
-latest window and older failed seed.
-
+latest window and older failed seed. Optional `--damage-aware` scores actual
+native boss HP reductions and completed spell phases, with stronger horizontal
+alignment. Phase completion latches before the next phase resets HP. This
+proposal score cannot shorten the required native rollout or certify a route.
+Thirty-eight local contracts pass; native models retain counterexamples.
 
 Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
 optional observed-laser guidance and native-verified curved futures. The first
@@ -150,17 +153,26 @@ seeds; these are not paired policy comparisons):
 | 29911 | 64 / 8 / 80, ordinary | Hit, Flandre spell 55 | 23,010 | 51.39 | 17 / 5,747 | 7 |
 | 7369 | 240 / 16 / 160, eager pulse | Hit, midboss spell 53 | 10,743 | 164.21 | 431 / 1,999 | 5 |
 | 32846 | 128 / 16 / 110, pulse on failure | Hit, Flandre spell 55 | 22,425 | 111.60 | 142 / 5,450 | 6 |
+| 5092 | 128 / 16 / 110, laser-aware | Hit, spell 62 | 43,521 | 111.41 | 266 / 10,446 | 7 |
+| 13662 | 128 / 16 / 110, anytime | Hit, spell 58 | 36,587 | 111.43 | 179 / 8,888 | 5 |
+| 59127 | 128 / 16 / 110, power-aware, six candidates | Hit, spell 62 | 40,028 | 111.41 | 319 / 8,242 | 10 |
+| 24237 | 128 / 16 / 110, survival horizon 256 | Hit, spell 58 | 28,121 | 111.34 | 132 / 6,398 | 5 |
 
-**No complete Extra online NMNB clear is established.** Four Wine trials comprise
-one budget prefix and three actual-hit attempts. All actual native digests match
-in independent diagnostic replays, including the three hits; the strict NMNB
-checker rejects each failed route. Source-context replay locates both Flandre
-failures at spell index 55 / ECL subroutine 37, making that phase the next focused
-search target. Group peaks are 336.18/335.63/341.56 MiB for the full trials,
-495.38 MiB including the prefix, with zero OOM/OOM-kill events and verified
-2-GiB/no-swap limits. Live FPS remains unresolved. Full acceptance, frozen tools,
-all retries, native probes and failure contexts are retained in
-`reports/local/shadow-extra-20261027/acceptance.json` and adjacent case directories.
+**No complete Extra online NMNB clear is established.** Completed gameplay
+trials comprise one budget prefix and seven actual-hit attempts; three
+zero-frame startup attempts are accounted separately. Every actual native digest
+matches independent diagnostic replay including each hit; strict NMNB replay
+rejects every failed route. The laser-aware sample passes spell 55. Later samples
+fail at spell 58 / ECL subroutine 48 or spell 62 / subroutine 60. The latest
+survival profile never reaches its extension cue. Native timing-model successes
+remain separate from this retail ledger.
+
+Every Wine tree uses the verified 2-GiB/no-swap cap with zero OOM/OOM-kill events;
+the largest peak including the prefix is 495.38 MiB. Live FPS remains unresolved.
+Frozen tools, complete actual inputs, every failed retry and source context remain
+under private `reports/local/shadow-extra-20261027/`,
+`reports/local/extra-search-20261027/` and
+`reports/local/extra-online-20261027/`, with per-root acceptance ledgers.
 
 ## Boundary contract
 

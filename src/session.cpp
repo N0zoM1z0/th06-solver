@@ -343,6 +343,21 @@ std::uint64_t Session::observation_digest() const {
     return hash;
 }
 
+BossProgress Session::boss_progress() const {
+    BossProgress progress;
+    progress.active = g_EnemyManager.spellcardInfo.isActive;
+    progress.spell = g_EnemyManager.spellcardInfo.idx;
+    for (const auto *boss : g_EnemyManager.bosses) {
+        if (!boss || !boss->flags.isSlotOccupied || !boss->flags.isBoss)
+            continue;
+        progress.life += unsigned(std::max(0, boss->life));
+        // Shot damage is gated by interaction/visibility, not body collision.
+        progress.damageable =
+            progress.damageable || (boss->flags.isDamageable && boss->flags.isInteractable &&
+                                    boss->flags.hasBeenInBounds && !boss->flags.isInvisible);
+    }
+    return progress;
+}
 bool Session::survival_spell() const {
     if (!g_EnemyManager.spellcardInfo.isActive)
         return false;

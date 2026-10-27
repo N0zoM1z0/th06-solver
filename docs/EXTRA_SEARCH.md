@@ -238,3 +238,58 @@ python3 scripts/run_wine_shadow.py \
   --anytime --power-aware --sleep-limiter --updates 120000 --seconds 2400 \
   --output reports/local/extra-survival-live
 ```
+
+The subsequent `online-survival256-006` Wine validation captures seed 24237.
+It hits at 28,121 on spell 58 / ECL subroutine 48, boss HP 386; the survival cue
+has not activated, so extended searches/publications are both zero. All retail
+projections and independent actual native digests agree including the hit.
+There are 6,398 searches, 132 timeouts, 6,289 publications, 26 published deadline
+checkpoints, 47 ranking yields and five fallback inputs (four startup).
+Search p50/p99/max is 55.39/111.34/113.32 ms including cleanup; receipt gap
+p99/max is 25.99/577.41 ms. All 28,240 limiter scopes restore. Group peak is
+366,788,608 bytes (349.80 MiB), OOM 0 under verified 2-GiB/no-swap limits.
+This is the seventh completed full Extra hit, not a survival-horizon success.
+
+## Actual boss damage as a proposal goal
+
+The latest spell-58 capture has dense nearly radial spokes about (192, 224),
+not a persistent beam with directly measured angular velocity. Instantaneous
+bullet velocity does not reliably supply an orbital direction. General field
+orbits, outer-radius alternatives and edge penalties remain private experiments:
+they add timeouts and show no reliable advantage across the captured windows.
+
+Optional `--damage-aware` instead scores actual native boss HP relative to the
+initial active damageable spell, and favors horizontal target alignment in
+cheap proposal ordering. Native `EnemyManager::OnUpdate` gates shot damage on
+interaction, visibility, prior in-bounds state and damageability; body collision
+is a separate condition. The observation follows those source gates. Completing
+the initial phase latches its goal to zero even if the next phase resets HP or
+reuses the spell identifier. Invulnerable survival phases supply no HP goal.
+Only proposal ranking changes: collisions, death, drops, phase transitions and
+full-horizon verification still execute in the original native runtime.
+
+A private prototype ends spell 58 in three captured 128-tail latency windows;
+all three full-prefix tapes pass the frozen checker. Repeating with the promoted
+implementation retains an important failure. Each query still has a 110-ms hard
+cap, 16-update lead, six-candidate target, fresh/anytime/power-aware policy and
+144 captured initial queued inputs:
+
+| Captured seed / origin | Promoted 128-tail damage goal | Promoted global 256-tail damage goal |
+|---|---|---|
+| 24237 / 27,300 | Spell ends at 28,514, no hit/fallback | Hit at 27,480; 24/27 timeouts, 36 fallback |
+| 24237 / 27,900 | Hit at 28,463; 49/94 timeouts, four fallback | Hit at 28,247; 47/51 timeouts, 33 fallback |
+| 13662 / 36,300 | Spell ends at 37,454, no hit/fallback | Hit at 36,674; 51/55 timeouts, 11 fallback |
+
+Both successful promoted prefixes pass independent frozen replay with exact
+per-update native digests. A separate 256-tail opening model reaches update
+10,256 with power 128 and no hit/fallback, also frozen-replayed; that opening
+does not excuse the three dense-window failures. Global 256 is therefore not
+adopted. Timing-dependent model retries are retained, not pooled as independent
+retail wins. The damage flag remains optional and experimental.
+
+All 38 local CTest contracts pass, including phase-reset/identifier-reuse goals,
+invulnerable phases and the actual native damage-context gates. Existing source,
+physics, input restrictions and replay format are unchanged. Current raw model,
+failed-control and actual-retail evidence is under private
+`reports/local/extra-online-20261027/`; the next target remains viable earlier
+route choices before the edge traps, within the actual decision deadline.

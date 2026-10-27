@@ -1,49 +1,44 @@
 # Native runtime status
 
-New opt-in `--anytime` retains a complete native input/digest certificate if
-later candidate ranking times out; failed/unfinished futures remain rejected,
-and retail lead checks still apply. Optional live `--sleep-limiter` scopes the
-replay-tested precision correction and coarse waits to the original limiter.
-Its early installation fixes an observed zero-frame long-uptime startup hang.
-New `--power-aware` guides native proposals toward actual power items until full
-power, and anytime ranking can yield at 75% of the budget once a full future
-exists. All 36 local contracts pass. Two promoted native opening models reach
-power 128 instead of the controls' 64/73 and pass frozen fresh replay. See
-[search/deadline details](EXTRA_SEARCH.md). Optional `--survival-horizon 256`
-now extends the certified future only for an active non-interactable boss spell.
-It passes the latest captured spell-62 latency model and frozen replay; the older
-seed remains a counterexample. Full Extra retail NMNB remains unestablished.
+Current owner scope (2026-10-27): Extra online shadow MPC with Reimu A,
+original retail power-0 entry and captured retail seeds. One incomplete
+2,400-update prefix passes; seven completed full trials hit. **Complete Extra
+online NMNB and stable online 60 FPS remain unestablished.** See the
+[full live ledger](SHADOW_MPC.md) and [focused search study](EXTRA_SEARCH.md).
 
-Latest Extra optimization: optional `--laser-aware` fills the missing laser
-proposal geometry and adds native-verified orbital futures, with shared forecast
-work across directions. Two captured native latency models pass the former
-spell-55 window; the first actual Wine trial (seed 5092, normal power 0) also
-passes it, then hits at update 43,521 on spell 62 / ECL subroutine 60. Six completed full
-Extra trials now hit, with no whole Extra online NMNB clear established. All
-31 CTest contracts and four historical Extra tapes pass. See
-[controlled evidence and limits](EXTRA_SEARCH.md).
+The optional search refinements preserve complete native verification:
 
-Current experiment (owner request, 2026-10-27): Extra online shadow MPC with
-Reimu A, normal power-0 entry and captured retail seeds. Completed Wine trials include one incomplete 2,400-update NMNB prefix and six
-full attempts that hit (seeds 29911/7369/32846/5092/13662/59127 at updates
-23,010/10,743/22,425/43,521/36,587/40,028). Three later zero-frame startup attempts
-are recorded separately. The seed-13662 hit is on spell 58; the power-aware seed-59127 run reaches full power by 5,536, passes spell 58,
-then hits on spell 62. The new survival-horizon validation remains separate. Native follow remains consistent, and independent
-diagnostic replay matches every actual digest, including every hit. These runs
-do not establish Extra NMNB or stable online 60 FPS. All cases have zero OOM
-events under the verified 2-GiB/no-swap cap; the largest peak is 495.38 MiB.
-See [live instructions and the complete ledger](SHADOW_MPC.md).
+- `--laser-aware`: shared source-based laser forecasts and literal orbital routes.
+- `--anytime`: immutable first-certificate recovery after deadline cleanup, plus
+  a 75% ranking cutoff once a full future exists, reserving verification time.
+- `--power-aware`: original native power-item outcomes guide proposals until 128.
+- `--survival-horizon 256`: longer futures only for active non-interactable spells.
+- `--damage-aware`: actual native boss HP and phase completion guide ranking.
 
-The current 128-tail/16-lead/110-ms profile combines conditional
-`--pulse-on-failure` with optional laser-aware proposals. Its latest Wine run
-publishes 10,176 plans (334 orbital), with 266/10,446 timeouts, search p99
-111.41 ms including cleanup and seven fallback inputs (four startup). The new
-target is the spell-62 right-edge trap. Short emergency horizons, larger
-horizons, general center-orbit recovery and distinct-input ordering do not solve
-the captured native latency models; no corresponding policy is shipped as a
-proven rescue. Retain all failures and timing-dependent retries in private
-`reports/local/extra-search-20261027/`, alongside the earlier
-`reports/local/shadow-extra-20261027/` evidence.
+Thirty-eight local CTest contracts pass. Two promoted pickup opening models
+reach full power and pass frozen replay. Survival-only lookahead passes one
+captured spell-62 model but fails the older seed. Damage-aware 128-tail models
+end spell 58 in two captured windows and fail a third; all successful prefixes
+pass frozen replay. Global 256-tail spell-58 models all fail under the same
+110-ms cap, so that profile is not adopted. These are native timing models,
+not retail clears or paired all-seed robustness claims.
+
+The latest completed Wine trial, seed 24237, reaches full power and passes
+spell 55, then hits at update 28,121 on spell 58 / ECL subroutine 48, boss HP 386.
+It never reaches the survival-horizon cue. Retail projections and independent
+native digests match every actual update including the hit; strict NMNB replay
+rejects it. Its 6,398 searches include 132 timeouts, 26 published deadline
+certificates, 47 ranking yields and five fallback inputs (four startup).
+Search p99 is 111.34 ms including cleanup; peak is 349.80 MiB, OOM 0 under
+verified 2-GiB/no-swap limits. All 28,240 limiter scopes restore.
+
+Three zero-frame startup attempts are retained separately. Early scoped
+limiter precision fixes their demonstrated long-uptime subtraction hang;
+optional coarse sleeps retain the original clocks and checks. This does not
+establish smooth online presentation. All failed experiments/retries remain
+under private `reports/local/shadow-extra-20261027/`,
+`reports/local/extra-search-20261027/` and
+`reports/local/extra-online-20261027/`.
 
 Previous pacing scope (owner clarification, 2026-10-26):
 [native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),

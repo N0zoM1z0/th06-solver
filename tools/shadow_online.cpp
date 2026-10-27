@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
         bool laser_aware = false;
         bool anytime = false;
         bool power_aware = false;
+        bool damage_aware = false;
         bool recorded = false;
         bool fresh = false;
         unsigned proposals = 1;
@@ -106,12 +107,16 @@ int main(int argc, char **argv) {
                 power_aware = true;
                 continue;
             }
+            if (key == "--damage-aware") {
+                damage_aware = true;
+                continue;
+            }
             if (key == "--help") {
                 std::cout
                     << "th06_shadow_online --data DIR --directory DIR [--horizon 32..592] "
                        "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
                        "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware] "
-                       "[--anytime] [--power-aware] [--survival-horizon N]\n";
+                       "[--anytime] [--power-aware] [--damage-aware] [--survival-horizon N]\n";
                 return 0;
             }
             if (++i == argc)
@@ -296,7 +301,7 @@ int main(int argc, char **argv) {
                 const auto result =
                     b::search(game, active, previous, lead, selected_horizon, budget, reuse,
                               pulse || recovery, motion_cursor, recorded, proposals, laser_aware,
-                              anytime, power_aware);
+                              anytime, power_aware, damage_aware);
                 deadline_checkpoints += result.deadline_checkpoint;
                 ranking_yields += result.prediction.ranking_yielded;
                 // Try motion once after an unsuccessful ordinary search, then
@@ -401,7 +406,7 @@ int main(int argc, char **argv) {
                << ",\"recovery_publications\":" << recovery_publications
                << ",\"laser_aware\":" << laser_aware
                << ",\"orbital_publications\":" << orbital_publications << ",\"anytime\":" << anytime
-               << ",\"power_aware\":" << power_aware
+               << ",\"power_aware\":" << power_aware << ",\"damage_aware\":" << damage_aware
                << ",\"deadline_checkpoints\":" << deadline_checkpoints
                << ",\"checkpoint_publications\":" << checkpoint_publications
                << ",\"ranking_yields\":" << ranking_yields

@@ -80,6 +80,7 @@ parser.add_argument('--pulse', action='store_true', help='try rotating native mo
 parser.add_argument('--pulse-on-failure', action='store_true', help='try motion once after an unsuccessful ordinary search')
 parser.add_argument('--laser-aware', action='store_true', help='guide native proposals with observed laser motion and orbital futures')
 parser.add_argument('--anytime', action='store_true', help='retain the first complete native certificate if later ranking times out')
+parser.add_argument('--damage-aware', action='store_true', help='score full native futures by actual boss damage and completed spell phases')
 parser.add_argument('--power-aware', action='store_true', help='guide native proposals toward power pickups until full power')
 parser.add_argument('--precise-limiter', action='store_true', help='scope the replay-tested long-uptime precision correction to the original live limiter')
 parser.add_argument('--sleep-limiter', action='store_true', help='use coarse sleeps before final limiter checks; implies precise limiter')
@@ -191,6 +192,8 @@ if args.anytime:
     worker_config['controller'].append('--anytime')
 if args.power_aware:
     worker_config['controller'].append('--power-aware')
+if args.damage_aware:
+    worker_config['controller'].append('--damage-aware')
 if args.survival_horizon:
     worker_config['controller'].extend(['--survival-horizon', str(args.survival_horizon)])
 if args.recorded:

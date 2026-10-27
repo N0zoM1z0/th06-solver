@@ -1,4 +1,5 @@
 #pragma once
+#include "th06/boss_guidance.hpp"
 #include "th06/laser_guidance.hpp"
 #include <array>
 #include <cstdint>
@@ -44,6 +45,7 @@ class Session {
     double proposal_cost(bool laser_aware = false, bool power_aware = false) const;
     Observation observe(bool laser_aware = false, bool power_aware = false) const;
     bool survival_spell() const;
+    BossProgress boss_progress() const;
     void enable_laser_guidance() {
         track_lasers_ = true;
     }

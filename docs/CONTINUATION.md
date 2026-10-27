@@ -1,20 +1,27 @@
 # Continuation: Lunatic online shadow MPC
 
-2026-10-27 owner-requested Extra experiment: stage 7 now follows the original
-normal Extra entry (power 0), separately from historical power-128 checkpoints.
-One live prefix passes; six completed full Reimu A trials hit, so no Extra online NMNB
-clear is established. Optional `--pulse-on-failure` retains ordinary proposals
-and tries one motion recovery after a failed search. New `--laser-aware` shares
-source-based laser forecasts across directions and adds six native orbital
-futures. The latest actual Wine run passes the old spell-55 failure, then hits
-at update 43,521 on spell 62 / ECL subroutine 60 (seed 5092, normal power 0).
-All actual receipt projections and independent native digests agree. All 36
-CTest contracts and four historical Extra tapes pass; live 60 FPS remains open.
-See [the focused search study](EXTRA_SEARCH.md) for negative rescue experiments
-and the next candidate/deadline work, and [the live guide](SHADOW_MPC.md) for the
-completed Extra ledger. Private evidence remains under both
-`reports/local/shadow-extra-20261027/` and
-`reports/local/extra-search-20261027/`. The Lunatic ledger below is historical.
+2026-10-27 current owner scope: Extra online shadow MPC with Reimu A, normal
+power-0 retail entry and captured seeds. One incomplete prefix passes; seven
+completed full attempts hit. Complete Extra online NMNB and live 60 FPS remain
+open. The latest seed 24237 hits at update 28,121 on spell 58 with 386 boss HP;
+all retail projections and independent native digests agree including the hit.
+
+Current optional refinements include laser geometry/orbits, immutable anytime
+certificates, a ranking-time reserve, native power pickups, survival-only longer
+lookahead and boss-damage scoring. Thirty-eight local CTest contracts pass.
+Promoted native models improve early power and one survival window, but retain
+failed seeds. Global 256-tail spell-58 models exhaust the 110-ms budget and fail;
+keep the 128 base horizon. Damage-aware 128-tail models pass two captured windows
+and fail a third, so ranking is still experimental.
+
+Continue with earlier candidate-route choices before the spell-58 bottom-edge
+and spell-62 right-edge traps. A native full future, fewer timeouts or a completed
+spell prefix is not a complete retail clear. Keep actual search/queue timings,
+all retries and fresh full-input validation. See [focused evidence](EXTRA_SEARCH.md),
+[status](STATUS.md) and [the full live ledger](SHADOW_MPC.md). Private evidence
+roots are `reports/local/shadow-extra-20261027/`,
+`reports/local/extra-search-20261027/` and
+`reports/local/extra-online-20261027/`. The Lunatic ledger below is historical.
 
 Earlier prerequisite, owner clarification 2026-10-26: stabilize
 [actual Wine `.rpy` replay pacing](REPLAY_PACING.md), using an independently

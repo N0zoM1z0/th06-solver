@@ -1,3 +1,4 @@
+#include "EnemyManager.hpp"
 #include "stdafx.h"
 #include "th06/planner.hpp"
 #include "th06/resources.hpp"
@@ -48,6 +49,43 @@ int main(int argc, char **argv) {
         config.seed = 7589;
         config.power = full ? 128 : 64;
         Session game(config);
+        if (std::string(argv[2]) == "boss-context") {
+            auto &manager = th06::g_EnemyManager;
+            auto &enemy = manager.enemies[0];
+            const auto flags = enemy.flags;
+            const auto life = enemy.life;
+            auto *const prior = manager.bosses[0];
+            const auto active = manager.spellcardInfo.isActive;
+            const auto spell = manager.spellcardInfo.idx;
+            const auto before = game.observation_digest();
+            manager.bosses[0] = &enemy;
+            manager.spellcardInfo.isActive = 1;
+            manager.spellcardInfo.idx = 58;
+            enemy.life = 6000;
+            enemy.flags.isSlotOccupied = enemy.flags.isBoss = 1;
+            enemy.flags.isDamageable = enemy.flags.isInteractable = 1;
+            enemy.flags.hasBeenInBounds = 1;
+            enemy.flags.isCollidable = enemy.flags.isInvisible = 0;
+            const auto no_body = game.boss_progress();
+            enemy.flags.isInteractable = 0;
+            const auto no_interaction = game.boss_progress();
+            enemy.flags.isInteractable = 1;
+            enemy.flags.isInvisible = 1;
+            const auto invisible = game.boss_progress();
+            // No native step runs with this scalar-only observation fixture.
+            enemy.flags = flags;
+            enemy.life = life;
+            manager.bosses[0] = prior;
+            manager.spellcardInfo.isActive = active;
+            manager.spellcardInfo.idx = spell;
+            require(no_body.active && no_body.damageable && no_body.life >= 6000,
+                    "source shot damage does not require body collision");
+            require(!no_interaction.damageable && !invisible.damageable,
+                    "source interaction and visibility gate shot damage");
+            require(game.observation_digest() == before,
+                    "read-only boss context preserves the actual world");
+            return 0;
+        }
         D3DXVECTOR3 position(240.f, 400.f, 0.f);
         th06::g_ItemManager.SpawnItem(&position, th06::ITEM_POWER_BIG, th06::ITEM_STATE_FALLING);
         const auto before = game.observation_digest();
