@@ -24,7 +24,7 @@ Failed Stage 6 seeds remain counterexamples. These component runs are separate
 from full-story retail replay and do not establish all-seed robustness.
 **Online shadow MPC does not yet sustain stable 60 FPS.** Search deadlines,
 successful clears and smooth capture timestamps do not establish game frame pacing.
-The current task isolates [Wine `.rpy` playback pacing](docs/REPLAY_PACING.md):
+The separate [Wine `.rpy` playback study](docs/REPLAY_PACING.md) isolates:
 native verifies/exports first, then the actual retail replay runs without MPC or
 a native follower. Playback FPS and online-controller FPS have separate acceptance.
 One complete **Lunatic Reimu A story now passes the replay presentation gate**:
@@ -61,7 +61,7 @@ separate from historical power-128 native checkpoints and
 [retail replay pacing](docs/REPLAY_PACING.md).
 
 Start with the [engineering handoff and open work](docs/CONTINUATION.md): it maps
-completed work, all 13 live trials, retained failures, source entry points, private
+completed work, the historical Lunatic live ledger, retained failures, source entry points, private
 evidence and acceptance criteria. Priorities are stable 60-FPS online pacing,
 repeatable failure/queue diagnostics, hard-seed robustness, then broader Lunatic
 stage/shot coverage and natural live stories. The

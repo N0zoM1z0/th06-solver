@@ -2,19 +2,24 @@
 
 2026-10-27 owner-requested Extra experiment: stage 7 now follows the original
 normal Extra entry (power 0), separately from historical power-128 checkpoints.
-One live prefix passes; three full Reimu A trials hit, so no Extra online NMNB
+One live prefix passes; four full Reimu A trials hit, so no Extra online NMNB
 clear is established. Optional `--pulse-on-failure` retains ordinary proposals
-and tries one motion recovery after a failed search. Both Flandre failures
-reproduce at spell 55 / ECL subroutine 37. See [the live guide](SHADOW_MPC.md) and
-private `reports/local/shadow-extra-20261027/acceptance.json` for all four Wine
-trials, 36 native probes, independent failed-route digests and resource receipts.
-All 30 CTest contracts and four historical Extra tapes pass; live 60 FPS remains
-unresolved. The Lunatic priorities below remain separate.
+and tries one motion recovery after a failed search. New `--laser-aware` shares
+source-based laser forecasts across directions and adds six native orbital
+futures. The latest actual Wine run passes the old spell-55 failure, then hits
+at update 43,521 on spell 62 / ECL subroutine 60 (seed 5092, normal power 0).
+All actual receipt projections and independent native digests agree. All 31
+CTest contracts and four historical Extra tapes pass; live 60 FPS remains open.
+See [the focused search study](EXTRA_SEARCH.md) for negative rescue experiments
+and the next candidate/deadline work, and [the live guide](SHADOW_MPC.md) for the
+complete five-trial Extra ledger. Private evidence remains under both
+`reports/local/shadow-extra-20261027/` and
+`reports/local/extra-search-20261027/`. The Lunatic ledger below is historical.
 
-Current owner clarification, 2026-10-26: first stabilize
+Earlier prerequisite, owner clarification 2026-10-26: stabilize
 [actual Wine `.rpy` replay pacing](REPLAY_PACING.md), using an independently
 verified native export and no MPC/native follower during playback. The online
-roadmap below remains later work; playback performance does not close online
+roadmap below remains open; playback performance does not close online
 frame-pacing or policy-robustness tasks.
 
 The pure-playback prerequisite now passes one complete Lunatic Reimu A seed-0

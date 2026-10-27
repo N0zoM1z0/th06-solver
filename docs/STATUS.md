@@ -9,29 +9,26 @@ Extra trials now hit, with no whole Extra online NMNB clear established. All
 31 CTest contracts and four historical Extra tapes pass. See
 [controlled evidence and limits](EXTRA_SEARCH.md).
 
-Current experiment (owner request, 2026-10-27): Extra online shadow MPC, beginning
-with Reimu A. Stage 7 uses the original normal Extra entry and captured retail
-seed/power, separately from historical power-128 native checkpoints. Its first
-2,400-update Wine prefix passes live follow and fresh native replay, with zero
-misses/bombs, 599 publications, zero timeouts and four startup fallback inputs.
-It is incomplete. All 30 CTest contracts and all four historical Extra tapes
-pass after correcting Extra's practice flag. See [live instructions](SHADOW_MPC.md).
-The first full Extra trial (retail seed 29911, natural power 0) fails at update
-23,010: native follow remains consistent, but its ordinary search runs out of
-certified future and incurs one miss after repeated timeouts. A fixed-prefix pulse probe finds a
-verified 256-input escape; that model result does not establish Wine completion.
-All failed and prefix evidence remains under `reports/local/shadow-extra-20261027/`.
-An eager 240-tail pulse trial at retail seed 7369 also fails, at update 10,743,
-with 431/1,999 motion-phase timeouts. Optional `--pulse-on-failure` instead tries
-one recovery after an unsuccessful ordinary search and then restores ordinary
-proposals. It is a separate experiment, not an established Extra clear.
-The conditional recovery trial (retail seed 32846, 128-tail/16-lead/110-ms) fails
-at update 22,425 despite 42 successful recovery publications. All four Wine
-trials are accounted for: one incomplete prefix, three hits, zero full Extra
-online NMNB clears. Independent diagnostic replays match all actual digests and
-reproduce every hit. Both Flandre failures occur at spell index 55 / ECL subroutine
-37, the next focused search target. All cases have zero OOM events, with peak
-495.38 MiB including the prefix; stable online 60 FPS remains unestablished.
+Current experiment (owner request, 2026-10-27): Extra online shadow MPC with
+Reimu A, normal power-0 entry and captured retail seeds. Five Wine trials are
+accounted for: one incomplete 2,400-update NMNB prefix and four full attempts
+that hit (seeds 29911/7369/32846/5092 at updates
+23,010/10,743/22,425/43,521). Native follow remains consistent, and independent
+diagnostic replay matches every actual digest, including every hit. These runs
+do not establish Extra NMNB or stable online 60 FPS. All cases have zero OOM
+events under the verified 2-GiB/no-swap cap; the largest peak is 495.38 MiB.
+See [live instructions and the complete ledger](SHADOW_MPC.md).
+
+The current 128-tail/16-lead/110-ms profile combines conditional
+`--pulse-on-failure` with optional laser-aware proposals. Its latest Wine run
+publishes 10,176 plans (334 orbital), with 266/10,446 timeouts, search p99
+111.41 ms including cleanup and seven fallback inputs (four startup). The new
+target is the spell-62 right-edge trap. Short emergency horizons, larger
+horizons, general center-orbit recovery and distinct-input ordering do not solve
+the captured native latency models; no corresponding policy is shipped as a
+proven rescue. Retain all failures and timing-dependent retries in private
+`reports/local/extra-search-20261027/`, alongside the earlier
+`reports/local/shadow-extra-20261027/` evidence.
 
 Previous pacing scope (owner clarification, 2026-10-26):
 [native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),

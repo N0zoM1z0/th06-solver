@@ -92,3 +92,25 @@ certified queue expires. Four fixed-prefix native tests of a fully certified
 32-update emergency horizon still hit. Separate 64/240/320-horizon controls also
 hit under the existing budget; the longer horizon produces more timeouts. These
 negative experiments are retained and are not shipped as a proven rescue.
+
+Six general center-orbit recovery candidates also fail from both captured
+43,000/43,300 origins. Prioritizing distinct input directions instead of repeated
+tails does not solve either 42,600/43,000 comparison. From 42,600, the ordinary
+control reaches the 1,000-search limit at 46,621 without a hit; it has not ended
+the spell. A fresh extended retry hits at 44,180. Both use measured search wall
+time, so scheduling and resulting action-dependent worlds can differ between
+runs. The no-hit prefix passes the frozen checker; the failed retry is rejected.
+All retries remain in the ledger. Neither is a complete spell/Extra clear.
+
+## Remaining search work
+
+The next target is spell 62's approach to the right wall, before repeated failed
+searches exhaust the queue. A smaller timeout count alone is not acceptance:
+candidate ordering must also leave a viable continuation. Fixed-horizon native
+verification and actual lead/deadline checks remain mandatory.
+
+One unimplemented direction is to expose an independently replayed, full-horizon
+candidate while further ranking continues, so a later timeout cannot discard an
+already certified result. Publication, digest production and process cleanup
+must all fit the measured budget. Another is continuation-aware route ranking
+before the edge trap; late emergency motion alone has not resolved this case.
