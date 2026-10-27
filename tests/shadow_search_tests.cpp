@@ -17,10 +17,22 @@ namespace {
 unsigned calls = 0;
 bool delay = false;
 bool saturate = false;
+bool checkpoint_mode = false, checkpoint_delay = false;
 std::uint16_t forbidden = 0;
 std::uint32_t *blocked = nullptr;
 th06::ChainCallbackResult inject(void *) {
     ++calls;
+    if (checkpoint_mode) {
+        if (checkpoint_delay && calls == 9) {
+            const auto branch = b::load(blocked + 1) + 1;
+            b::save(blocked + 1, branch);
+            if (branch >= 2) {
+                b::save(blocked, 2);
+                usleep(2000000);
+            }
+        }
+        return th06::CHAIN_CALLBACK_RESULT_CONTINUE;
+    }
     if (saturate) {
         if (geometry_frame)
             while (geometry_frame->box_count < geometry_boxes)
@@ -82,6 +94,40 @@ int main(int argc, char **argv) {
             callback.SetCallback(reinterpret_cast<th06::ChainCallback>(inject));
             require(th06::g_FuncChain.AddToCalcChain(&callback, 15) == ZUN_SUCCESS,
                     "inject calc observer");
+            if (mode == "checkpoint") {
+                checkpoint_mode = checkpoint_delay = true;
+                blocked = static_cast<std::uint32_t *>(
+                    mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
+                require(blocked != MAP_FAILED, "shared checkpoint injection receipt");
+                for (bool anytime : {false, true}) {
+                    b::save(blocked, 0);
+                    b::save(blocked + 1, 0);
+                    const auto result = b::search(game, {}, 261, 8, 32, 100, false, false, 0, false,
+                                                  3, false, anytime);
+                    require(result.timeout && b::load(blocked) == 2,
+                            "ranking blocks after a full first candidate");
+                    require(result.deadline_checkpoint == anytime &&
+                                result.prediction.count == (anytime ? 40u : 0u),
+                            "only opt-in timeout retains the complete certificate");
+                    require(calls == 0 && game.observation_digest() == before,
+                            "checkpoint preserves actual world and RNG");
+                    int status;
+                    errno = 0;
+                    require(waitpid(-1, &status, WNOHANG) == -1 && errno == ECHILD,
+                            "checkpoint recovery reaps every rollout descendant");
+                    if (anytime) {
+                        checkpoint_delay = false;
+                        for (unsigned i = 0; i < result.prediction.count; ++i) {
+                            require(!game.step(result.prediction.inputs[i]).hit,
+                                    "checkpoint route is safe");
+                            require(game.observation_digest() == result.prediction.digests[i],
+                                    "independent checkpoint literal digest");
+                        }
+                    }
+                }
+                munmap(blocked, 4096);
+                return 0;
+            }
             if (mode == "recorded-capacity") {
                 saturate = true;
                 bool rejected = false;
@@ -99,8 +145,10 @@ int main(int argc, char **argv) {
                         "capacity failure reaps its capture child");
                 return 0;
             }
-            delay = mode == "deadline" || mode == "pulse-deadline" || mode == "recorded-deadline";
-            require(delay || mode == "failure" || mode == "deferred" || mode == "recorded-failure",
+            delay = mode == "deadline" || mode == "pulse-deadline" || mode == "recorded-deadline" ||
+                    mode == "checkpoint-deadline";
+            require(delay || mode == "failure" || mode == "deferred" ||
+                        mode == "recorded-failure" || mode == "checkpoint-failure",
                     "test mode");
             if (delay) {
                 blocked = static_cast<std::uint32_t *>(
@@ -126,6 +174,18 @@ int main(int argc, char **argv) {
                             eager.expected_digests == deferred.expected_digests &&
                             deferred.branches == eager.branches + 1,
                         "defer only hashes, preserve literal selected route");
+                unsigned notifications = 0;
+                Decision saved;
+                const auto checkpointed = choose(game, options, [&](const Decision &candidate) {
+                    ++notifications;
+                    saved = candidate;
+                });
+                require(notifications == 1 && saved.lookahead_frames == 32 &&
+                            saved.expected_inputs == deferred.expected_inputs &&
+                            saved.expected_digests == deferred.expected_digests &&
+                            checkpointed.expected_inputs == deferred.expected_inputs &&
+                            checkpointed.expected_digests == deferred.expected_digests,
+                        "first later full candidate receives its own literal certificate once");
                 require(game.observation_digest() == before && calls == 0,
                         "deferred COW isolation");
                 for (unsigned i = 0; i < 32; ++i) {
@@ -146,9 +206,12 @@ int main(int argc, char **argv) {
                     active.inputs.fill(261);
                 }
                 const bool recorded = mode == "recorded-deadline" || mode == "recorded-failure";
-                const auto result = b::search(game, active, 261, 8, 32, delay ? 30 : 1000, false,
-                                              pulse, 65, recorded);
+                const auto result = b::search(
+                    game, active, 261, 8, 32, delay ? 30 : 1000, false, pulse, 65, recorded, 1,
+                    false, mode == "checkpoint-failure" || mode == "checkpoint-deadline");
                 require(result.prediction.count == 0, "failed future publishes no prefix");
+                require(!result.deadline_checkpoint,
+                        "failed or unfinished future has no checkpoint");
                 if (delay) {
                     require(result.timeout, "deadline interrupts native calculation");
                     require(b::load(blocked) == 2, "deadline reaches a nested rollout descendant");

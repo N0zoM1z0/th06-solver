@@ -6,6 +6,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdio>
+#include <new>
 #include <poll.h>
 #include <stdexcept>
 #include <sys/mman.h>
@@ -86,7 +87,7 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 } // namespace
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
-              bool recorded, unsigned proposals, bool laser_aware) {
+              bool recorded, unsigned proposals, bool laser_aware, bool anytime) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
@@ -95,16 +96,24 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
     if (laser_aware)
         game.enable_laser_guidance();
     const auto begin = Clock::now();
+    struct SharedProgress {
+        std::uint32_t words[6]{};
+        std::uint64_t checkpoint_ns = 0;
+        Prediction checkpoint;
+    };
     struct Progress {
-        std::uint32_t *words = static_cast<std::uint32_t *>(
-            mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
+        SharedProgress *data = static_cast<SharedProgress *>(
+            mmap(nullptr, sizeof(SharedProgress), PROT_READ | PROT_WRITE,
+                 MAP_SHARED | MAP_ANONYMOUS, -1, 0));
+        std::uint32_t *words = data == MAP_FAILED ? nullptr : data->words;
         ~Progress() {
-            if (words != MAP_FAILED)
-                munmap(words, 4096);
+            if (data != MAP_FAILED)
+                munmap(data, sizeof(SharedProgress));
         }
     } progress;
-    if (progress.words == MAP_FAILED)
+    if (!progress.words)
         throw std::runtime_error("search progress map");
+    new (progress.data) SharedProgress{};
     b::save(progress.words, cursor % 66);
     int pipefd[2];
     // A sequenced packet keeps the complete larger certificate atomic. A
@@ -206,7 +215,35 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     options.defer_later_digests = true;
                     options.laser_aware = laser_aware;
                     options.laser_orbits = laser_aware;
-                    const auto decision = choose(game, options);
+                    std::function<void(const Decision &)> checkpoint;
+                    if (anytime)
+                        checkpoint = [&](const Decision &decision) {
+                            if (decision.lookahead_frames != horizon && !decision.future_complete)
+                                throw std::runtime_error("incomplete checkpoint future");
+                            if (!decision.certified_frames ||
+                                decision.expected_inputs.size() != decision.certified_frames ||
+                                decision.expected_digests.size() != decision.certified_frames)
+                                throw std::runtime_error("missing checkpoint certificate");
+                            auto &saved = progress.data->checkpoint;
+                            saved = result;
+                            saved.branches += unsigned(decision.branches);
+                            saved.updates += unsigned(decision.simulated_frames);
+                            saved.count = lead + decision.certified_frames;
+                            saved.orbital = decision.orbital_selected;
+                            std::copy(decision.expected_inputs.begin(),
+                                      decision.expected_inputs.end(), saved.inputs.begin() + lead);
+                            std::copy(decision.expected_digests.begin(),
+                                      decision.expected_digests.end(),
+                                      saved.digests.begin() + lead);
+                            progress.data->checkpoint_ns =
+                                std::uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                                  Clock::now() - begin)
+                                                  .count());
+                            // Publish once, after the entire immutable snapshot.
+                            // The parent reads it only after all writers are reaped.
+                            b::save(progress.words + 5, 1);
+                        };
+                    const auto decision = choose(game, options, checkpoint);
                     result.branches += unsigned(decision.branches);
                     result.updates += unsigned(decision.simulated_frames);
                     // A safe short prefix of a failed future never publishes.
@@ -262,6 +299,11 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
         // group is killed; repeated deadlines must not accumulate zombies.
         while (waitpid(-pid, &status, 0) > 0 || errno == EINTR) {
         }
+    }
+    if (result.timeout && anytime && b::load(progress.words + 5) &&
+        progress.data->checkpoint_ns <= std::uint64_t(budget) * 1000000) {
+        result.prediction = progress.data->checkpoint;
+        result.deadline_checkpoint = true;
     }
     result.wall_ms = milliseconds(begin);
     result.motion_attempts = b::load(progress.words + 1);

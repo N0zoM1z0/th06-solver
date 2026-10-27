@@ -109,8 +109,46 @@ searches exhaust the queue. A smaller timeout count alone is not acceptance:
 candidate ordering must also leave a viable continuation. Fixed-horizon native
 verification and actual lead/deadline checks remain mandatory.
 
-One unimplemented direction is to expose an independently replayed, full-horizon
-candidate while further ranking continues, so a later timeout cannot discard an
-already certified result. Publication, digest production and process cleanup
-must all fit the measured budget. Another is continuation-aware route ranking
-before the edge trap; late emergency motion alone has not resolved this case.
+Optional `--anytime` now preserves the first full native future while further
+ranking continues. Its immutable snapshot contains the fixed lead, literal
+inputs and every native digest. A deferred-hash candidate receives independent
+literal replay before notification. The shared publication word is released only
+after the entire snapshot and completion timestamp; no subsequent write touches
+it. On timeout the parent first kills/reaps the whole search group, then reads
+the snapshot only if it completed within the requested budget. Normal completed
+searches still return their final winner. Retail lead/freshness rejection remains
+unchanged; a deadline checkpoint is not automatically a published plan.
+
+The timeout remains counted and measured, including cleanup. Interrupted work
+after the checkpoint is excluded from completed branch/update counters. The
+option defaults off. Thirty-four CTest contracts pass, including a full first
+candidate followed by a deliberately blocked nested rollout, default-off
+rejection, failed/unfinished-future rejection and independent literal digest
+replay after all descendants are reaped.
+
+The later private `extra-online-20261027` probes retain further failures:
+conditional geometry recovery and two bounded native feedback-tree variants do
+not solve late spell-62 windows. From the earlier 42,600 origin, ordinary and
+conditional-geometry latency models both end spell 62 at 47,416 without hits;
+both tapes pass the frozen pre-change checker. That success is timing-dependent,
+not a paired robustness claim or a retail clear. Generic continuation-aware
+ranking before the edge trap remains open.
+
+## Long-uptime live limiter
+
+Three attempted validations produce zero gameplay receipts: two hit the existing
+30-second startup timeout; the third is stopped after read-only diagnosis. The
+original limiter is stuck subtracting 16.6667 from 538,207,616 in 24-bit x87
+precision, which rounds back to the same value. Its absolute timestamp is already
+536,870,912 ms. This is a startup failure, not an MPC route failure; all three
+attempts and the exact FPU/memory evidence remain private.
+
+The live launcher now accepts `--precise-limiter` and `--sleep-limiter`, reusing
+the replay-tested arithmetic scope. Installation occurs on the first limiter
+call, before the first menu callback, so it also handles startup catch-up. Only
+the pinned limiter call widens to 53 bits. BeginScene/Present restore the exact
+prior control word; menu, init, sampling and observation callbacks reject a
+leaked scope. The optional sleep retains the original final checks and clock
+values. Lightweight forwarding wrappers do not collect render timings. The
+startup wait remains 30 seconds and the MPC budget is unchanged. The actual
+stuck subtraction is covered by the asset-free x87 regression.

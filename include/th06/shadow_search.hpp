@@ -15,6 +15,7 @@ struct Search {
     Prediction prediction;
     double wall_ms = 0;
     bool timeout = false;
+    bool deadline_checkpoint = false;
     unsigned motion_attempts = 0, motion_cursor = 0;
     unsigned recorded_forecasts = 0, recorded_checks = 0, last_phase = 0;
 };
@@ -23,5 +24,5 @@ struct Search {
 Search search(solver::Session &game, const Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget_ms, bool reuse, bool pulse = false,
               unsigned motion_cursor = 0, bool recorded = false, unsigned proposals = 1,
-              bool laser_aware = false);
+              bool laser_aware = false, bool anytime = false);
 } // namespace th06::shadow

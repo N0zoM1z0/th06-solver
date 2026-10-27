@@ -1,6 +1,7 @@
 #pragma once
 #include "th06/session.hpp"
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace th06::solver {
@@ -49,5 +50,8 @@ struct Decision {
 };
 // Candidate generation is heuristic. A successful child executes the original
 // game and proves only its consecutive prefix from this exact process state.
-Decision choose(Session &game, const PlannerOptions &options);
+// Optional notification occurs once, after the first full native future has
+// its literal digest certificate. Further ranking can still select a better one.
+Decision choose(Session &game, const PlannerOptions &options,
+                const std::function<void(const Decision &)> &first_certified = {});
 } // namespace th06::solver

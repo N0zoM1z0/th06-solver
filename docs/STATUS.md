@@ -1,5 +1,12 @@
 # Native runtime status
 
+New opt-in `--anytime` retains a complete native input/digest certificate if
+later candidate ranking times out; failed/unfinished futures remain rejected,
+and retail lead checks still apply. Optional live `--sleep-limiter` scopes the
+replay-tested precision correction and coarse waits to the original limiter.
+Its early installation fixes an observed zero-frame long-uptime startup hang.
+All 34 local contracts pass. See [search/deadline details](EXTRA_SEARCH.md).
+
 Latest Extra optimization: optional `--laser-aware` fills the missing laser
 proposal geometry and adds native-verified orbital futures, with shared forecast
 work across directions. Two captured native latency models pass the former

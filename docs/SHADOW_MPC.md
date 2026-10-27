@@ -1,5 +1,13 @@
 # Live Wine shadow MPC
 
+Optional `--anytime` retains the first full native certificate if later ranking
+times out, while preserving timeout accounting, whole-group cleanup and retail
+lead checks. `--sleep-limiter` implies the replay-tested `--precise-limiter`
+correction and avoids coarse busy waits; neither option changes game clocks or
+the decision budget. The live limiter hooks install before the first menu
+callback to fix a demonstrated long-uptime startup hang. These are separate from
+stable online FPS and Extra completion acceptance. See [focused evidence](EXTRA_SEARCH.md).
+
 Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
 optional observed-laser guidance and native-verified curved futures. The first
 Wine sample passes the previous spell-55 failure, then hits on spell 62 at update

@@ -1,4 +1,5 @@
 #include "../wine-replay/identity.hpp"
+#include "limiter_scope.hpp"
 #include "retail_abi.hpp"
 #include "th06/shadow_bridge.hpp"
 #include <cstdint>
@@ -38,6 +39,12 @@ unsigned frame = 0, local_frame = 0, cleared = 0, menu_frames = 0, maximum = 180
 unsigned shot = 0, difficulty = 3;
 bool requested = false, initialized = false, attached = false;
 ChainElem observation;
+wine_shadow::LimiterScope limiter_scope;
+bool precise_limiter = false, sleep_limiter = false;
+using BeginPeriod = unsigned(WINAPI *)(unsigned);
+using Milliseconds = DWORD(WINAPI *)();
+BeginPeriod original_begin_period = nullptr;
+Milliseconds limiter_milliseconds = nullptr;
 
 [[noreturn]] void finish(const char *reason, unsigned code) {
     if (shared) {
@@ -58,16 +65,43 @@ ChainElem observation;
         std::fprintf(
             out,
             "{\"reason\":\"%s\",\"frames\":%u,\"stage\":%d,\"cleared_stages\":%u,"
-            "\"deaths\":%d,\"bombs\":%d,\"supervisor_state\":%d,\"retail_nmnb_complete\":%s}\n",
+            "\"deaths\":%d,\"bombs\":%d,\"supervisor_state\":%d,\"retail_nmnb_complete\":%s,"
+            "\"precise_limiter\":%s,\"sleep_limiter\":%s,\"limiter_entries\":%u,"
+            "\"limiter_restores\":%u,\"limiter_sleeps\":%u}\n",
             reason, frame, at<int>(game_base, abi::GameManager_currentStage), cleared,
             at<int>(game_base, abi::GameManager_deaths),
             at<int>(game_base, abi::GameManager_bombsUsed),
-            at<int>(supervisor_base, abi::Supervisor_curState), code == 0 ? "true" : "false");
+            at<int>(supervisor_base, abi::Supervisor_curState), code == 0 ? "true" : "false",
+            precise_limiter ? "true" : "false", sleep_limiter ? "true" : "false",
+            limiter_scope.precision.entries, limiter_scope.precision.restores,
+            limiter_scope.sleeps);
         std::fclose(out);
     }
     ExitProcess(code);
 }
+unsigned WINAPI begin_period(unsigned period) {
+    const auto result = original_begin_period(period);
+    if (__builtin_return_address(0) == reinterpret_cast<void *>(0x4208f5)) {
+        if (at<unsigned char>(supervisor_base,
+                              abi::Supervisor_cfg + abi::GameConfiguration_frameskipConfig))
+            finish("precise_limiter_requires_no_frameskip", 9);
+        if (!limiter_scope.install(at<void *>(supervisor_base, abi::Supervisor_d3dDevice)))
+            finish("limiter_device_install_failed", 9);
+        limiter_scope.precision.enter();
+        if (sleep_limiter &&
+            th06::retail::coarse_wait_has_slack(limiter_milliseconds(), at<double>(0x6c6bf8))) {
+            Sleep(1);
+            ++limiter_scope.sleeps;
+        }
+    }
+    return result;
+}
+void check_gameplay_precision() {
+    if (limiter_scope.precision.active)
+        finish("limiter_scope_leaked", 9);
+}
 int __cdecl sample(void *) {
+    check_gameplay_precision();
     if (!initialized || !at<unsigned char>(game_base, abi::GameManager_isInMenu))
         return 1;
     if (b::load(shared + b::StopRequested))
@@ -96,6 +130,7 @@ int __cdecl sample(void *) {
     return 1;
 }
 int __cdecl observe(void *) {
+    check_gameplay_precision();
     if (!initialized || !at<unsigned char>(game_base, abi::GameManager_isInMenu))
         return 1;
     const auto stage = at<int>(game_base, abi::GameManager_currentStage);
@@ -150,6 +185,7 @@ int __cdecl observe(void *) {
     return 1;
 }
 int __cdecl init_hook(void *manager) {
+    check_gameplay_precision();
     const auto result = original_init(manager);
     if (result != 0)
         finish("retail_initialization_failed", 5);
@@ -191,6 +227,7 @@ int __cdecl init_hook(void *manager) {
     return result;
 }
 int __cdecl menu_hook(void *menu) {
+    check_gameplay_precision();
     const auto result = original_menu(menu);
     if (!requested && ++menu_frames >= 120 &&
         at<int>(supervisor_base, abi::Supervisor_curState) == 1) {
@@ -227,6 +264,30 @@ bool setup() {
         return false;
     if (!QueryPerformanceFrequency(&frequency))
         return false;
+    char option[8];
+    precise_limiter =
+        GetEnvironmentVariableA("TH06_SHADOW_PRECISE_LIMITER", option, sizeof(option)) &&
+        !std::strcmp(option, "1");
+    sleep_limiter = GetEnvironmentVariableA("TH06_SHADOW_SLEEP_LIMITER", option, sizeof(option)) &&
+                    !std::strcmp(option, "1");
+    precise_limiter = precise_limiter || sleep_limiter;
+    if (precise_limiter) {
+        const auto module = GetModuleHandleA("winmm.dll");
+        const auto expected = GetProcAddress(module, "timeBeginPeriod");
+        limiter_milliseconds =
+            reinterpret_cast<Milliseconds>(GetProcAddress(module, "timeGetTime"));
+        auto **entry = reinterpret_cast<void **>(0x46a250);
+        if (!expected || !limiter_milliseconds || *entry != reinterpret_cast<void *>(expected))
+            return false;
+        DWORD protection;
+        if (!VirtualProtect(entry, sizeof(void *), PAGE_READWRITE, &protection))
+            return false;
+        original_begin_period = reinterpret_cast<BeginPeriod>(*entry);
+        InterlockedExchangePointer(entry, reinterpret_cast<void *>(begin_period));
+        DWORD ignored;
+        if (!VirtualProtect(entry, sizeof(void *), protection, &ignored))
+            return false;
+    }
     const auto setting = [&](const char *name, unsigned &value, unsigned low, unsigned high) {
         char text[32];
         const auto n = GetEnvironmentVariableA(name, text, sizeof(text));

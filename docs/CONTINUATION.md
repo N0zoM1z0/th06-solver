@@ -8,7 +8,7 @@ and tries one motion recovery after a failed search. New `--laser-aware` shares
 source-based laser forecasts across directions and adds six native orbital
 futures. The latest actual Wine run passes the old spell-55 failure, then hits
 at update 43,521 on spell 62 / ECL subroutine 60 (seed 5092, normal power 0).
-All actual receipt projections and independent native digests agree. All 31
+All actual receipt projections and independent native digests agree. All 34
 CTest contracts and four historical Extra tapes pass; live 60 FPS remains open.
 See [the focused search study](EXTRA_SEARCH.md) for negative rescue experiments
 and the next candidate/deadline work, and [the live guide](SHADOW_MPC.md) for the

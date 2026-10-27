@@ -251,7 +251,8 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
     return result;
 }
 } // namespace
-Decision choose(Session &game, const PlannerOptions &options) {
+Decision choose(Session &game, const PlannerOptions &options,
+                const std::function<void(const Decision &)> &first_certified) {
     if (!options.commit || options.commit > options.horizon || options.horizon > 600 ||
         !options.proposals)
         throw std::invalid_argument("require 1 <= commit <= horizon <= 600 and proposals > 0");
@@ -264,6 +265,29 @@ Decision choose(Session &game, const PlannerOptions &options) {
     unsigned best_safe = 0;
     double best_cost = std::numeric_limits<double>::infinity();
     bool best_complete = false;
+    bool notified = false;
+    unsigned considered = 0;
+    const auto certify = [&] {
+        if (!decision.certified_frames || !decision.expected_digests.empty())
+            return;
+        const auto start = options.profile ? Clock::now() : Clock::time_point{};
+        const auto verified =
+            rollout(game, decision.input, decision.certified_frames, decision.certified_frames,
+                    options.commit, decision.certified_frames, false, options.profile, true,
+                    options.laser_aware, &decision.expected_inputs);
+        if (verified.safe != decision.certified_frames ||
+            verified.complete != (decision.future_complete &&
+                                  decision.certified_frames == decision.lookahead_frames))
+            throw std::runtime_error("winner certificate replay diverged");
+        decision.expected_digests.assign(verified.digests.begin(),
+                                         verified.digests.begin() + decision.certified_frames);
+        ++decision.branches;
+        decision.simulated_frames += verified.attempted;
+        if (options.profile) {
+            decision.timings.rollout_wall += seconds_since(start);
+            decision.timings += verified.timings;
+        }
+    };
     std::vector<Candidate> candidates;
     if (options.laser_aware)
         game.enable_laser_guidance();
@@ -364,6 +388,7 @@ Decision choose(Session &game, const PlannerOptions &options) {
             decision.timings += result.timings;
         }
         ++decision.branches;
+        ++considered;
         decision.unique_inputs += !evaluated[input];
         evaluated[input] = true;
         decision.reactive_branches += candidate.reactive;
@@ -392,29 +417,15 @@ Decision choose(Session &game, const PlannerOptions &options) {
             decision.expected_inputs.assign(result.inputs.begin(),
                                             result.inputs.begin() + decision.certified_frames);
         }
-        if (decision.branches >= options.proposals &&
-            (best_complete || best_safe == options.horizon))
+        if (!notified && first_certified && (best_complete || best_safe == options.horizon)) {
+            certify();
+            first_certified(decision);
+            notified = true;
+        }
+        if (considered >= options.proposals && (best_complete || best_safe == options.horizon))
             break;
     }
-    if (decision.certified_frames && decision.expected_digests.empty()) {
-        const auto start = options.profile ? Clock::now() : Clock::time_point{};
-        const auto verified =
-            rollout(game, decision.input, decision.certified_frames, decision.certified_frames,
-                    options.commit, decision.certified_frames, false, options.profile, true,
-                    options.laser_aware, &decision.expected_inputs);
-        if (verified.safe != decision.certified_frames ||
-            verified.complete != (decision.future_complete &&
-                                  decision.certified_frames == decision.lookahead_frames))
-            throw std::runtime_error("winner certificate replay diverged");
-        decision.expected_digests.assign(verified.digests.begin(),
-                                         verified.digests.begin() + decision.certified_frames);
-        ++decision.branches;
-        decision.simulated_frames += verified.attempted;
-        if (options.profile) {
-            decision.timings.rollout_wall += seconds_since(start);
-            decision.timings += verified.timings;
-        }
-    }
+    certify();
     return decision;
 }
 } // namespace th06::solver

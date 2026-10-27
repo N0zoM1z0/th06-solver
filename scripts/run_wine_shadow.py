@@ -79,6 +79,9 @@ parser.add_argument('--story', action='store_true')
 parser.add_argument('--pulse', action='store_true', help='try rotating native motion recovery before heuristic proposals')
 parser.add_argument('--pulse-on-failure', action='store_true', help='try motion once after an unsuccessful ordinary search')
 parser.add_argument('--laser-aware', action='store_true', help='guide native proposals with observed laser motion and orbital futures')
+parser.add_argument('--anytime', action='store_true', help='retain the first complete native certificate if later ranking times out')
+parser.add_argument('--precise-limiter', action='store_true', help='scope the replay-tested long-uptime precision correction to the original live limiter')
+parser.add_argument('--sleep-limiter', action='store_true', help='use coarse sleeps before final limiter checks; implies precise limiter')
 parser.add_argument('--recorded', action='store_true', help='propose multi-turn paths from conditional native collision geometry')
 parser.add_argument('--record', action='store_true', help='capture owned Xvfb video and private audio separately')
 parser.add_argument('--horizon', type=int, default=128)
@@ -163,6 +166,8 @@ command = ['systemd-run', '--user', '--unit=' + unit, '--wait', '--pipe',
            'TH06_RETAIL_UPDATES=' + str(args.updates),
            'TH06_SHADOW_STAGE=' + str(args.stage), 'TH06_SHADOW_SHOT=' + str(args.shot),
            'TH06_SHADOW_STORY=' + str(int(args.story)),
+           'TH06_SHADOW_PRECISE_LIMITER=' + str(int(args.precise_limiter or args.sleep_limiter)),
+           'TH06_SHADOW_SLEEP_LIMITER=' + str(int(args.sleep_limiter)),
            '/usr/bin/xvfb-run', '-a', sys.executable,
            str(frozen / 'run_wine_shadow.py'), '--worker', str(args.output)]
 worker_config = {
@@ -178,6 +183,8 @@ if args.pulse_on_failure:
     worker_config['controller'].append('--pulse-on-failure')
 if args.laser_aware:
     worker_config['controller'].append('--laser-aware')
+if args.anytime:
+    worker_config['controller'].append('--anytime')
 if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:
@@ -188,6 +195,8 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'cgroup_limits_verified': False,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
            'stage': args.stage, 'shot': args.shot, 'difficulty': difficulty, 'story': args.story,
+           'precise_limiter': args.precise_limiter or args.sleep_limiter,
+           'sleep_limiter': args.sleep_limiter,
            'dat_sha256': archives,
            'config_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                              for p in args.game.iterdir() if p.suffix.lower() == '.cfg'},
