@@ -5,7 +5,8 @@ new offline matrix. Historical seed-0 power-128 checkpoints and normal power-0
 Wine starts remain separate. One complete Extra online NMNB clear now passes
 for Reimu B / seed 35964 under the combined profile below. Eight earlier full
 hits remain counterexamples; all-seed robustness and stable online 60 FPS
-remain unestablished.
+remain unestablished. Test counts below identify their milestone builds;
+[Validation](VALIDATION.md) owns the current configured test gate.
 
 ## Laser guidance and curved proposals
 
@@ -59,10 +60,10 @@ is rejected. The first row is not a universal policy win: both variants succeed,
 and the guided route takes longer. Models retain their changed action-dependent
 RNG and do not certify hidden retail state.
 
-Thirty-one CTest contracts pass, including actual original BulletManager
-collision-call/lifecycle comparisons and literal replay with guidance history
-enabled. All four historical Extra tapes still pass complete fresh native replay.
-The source and its licenses/provenance are unchanged.
+The laser-guidance build passed 31 CTest contracts, including actual original
+BulletManager collision-call/lifecycle comparisons and literal replay with guidance
+history enabled. All four historical Extra tapes still pass complete fresh native
+replay. The source and its licenses/provenance are unchanged.
 
 ## First Wine validation
 
@@ -121,12 +122,12 @@ the snapshot only if it completed within the requested budget. Normal completed
 searches still return their final winner. Retail lead/freshness rejection remains
 unchanged; a deadline checkpoint is not automatically a published plan.
 
-The timeout remains counted and measured, including cleanup. Interrupted work
-after the checkpoint is excluded from completed branch/update counters. The
-option defaults off. Thirty-four CTest contracts pass, including a full first
-candidate followed by a deliberately blocked nested rollout, default-off
-rejection, failed/unfinished-future rejection and independent literal digest
-replay after all descendants are reaped.
+The timeout remains counted and measured, including cleanup. Interrupted work after the
+checkpoint is excluded from completed branch/update counters. The option defaults off.
+The anytime build passed 34 CTest contracts, including a full first candidate followed
+by a deliberately blocked nested rollout, default-off rejection,
+failed/unfinished-future rejection and independent literal digest replay after all
+descendants are reaped.
 
 The later private `extra-online-20261027` probes retain further failures:
 conditional geometry recovery and two bounded native feedback-tree variants do
@@ -171,7 +172,7 @@ horizontal proposals; bomb/life/point items and the source's failed-spawn dummy
 are excluded. Item motion, collision and rewards still run in original
 ItemManager. No remaining item means no attraction penalty, including just after
 collecting the last one. Full power restores the original ranking/scoring policy.
-Thirty-six CTest contracts pass, including original large-item pickup (64 to at
+The power-guidance build passed 36 CTest contracts, including original large-item pickup (64 to at
 least 72), independent input/digest replay and identical full-power routes.
 
 Two captured-seed opening latency controls start at update 256 with the same
@@ -289,12 +290,12 @@ does not excuse the three dense-window failures. Global 256 is therefore not
 adopted. Timing-dependent model retries are retained, not pooled as independent
 retail wins. The damage flag remains optional and experimental.
 
-All 38 local CTest contracts pass, including phase-reset/identifier-reuse goals,
-invulnerable phases and the actual native damage-context gates. Existing source,
-physics, input restrictions and replay format are unchanged. Current raw model,
-failed-control and actual-retail evidence is under private
-`reports/local/extra-online-20261027/`; the next target remains viable earlier
-route choices before the edge traps, within the actual decision deadline.
+The damage-guidance build passed 38 local CTest contracts, including
+phase-reset/identifier-reuse goals, invulnerable phases and the actual native
+damage-context gates. Existing source, physics, input restrictions and replay format are
+unchanged. Current raw model, failed-control and actual-retail evidence is under private
+`reports/local/extra-online-20261027/`; the next target remains viable earlier route
+choices before the edge traps, within the actual decision deadline.
 
 The `online-damage128-007` actual Wine attempt captures Reimu A seed 5594,
 normal power 0. It passes spell 55, then hits at update 22,062 on spell 57 /
@@ -319,10 +320,11 @@ then retains the accumulated velocity after expiry. Forecasts are proposals,
 not collision certificates, and do not predict new bullet spawns or ECL changes.
 All native state, callbacks and RNG remain unchanged.
 
-Forty local CTest contracts pass. An actual BulletManager fixture initializes
-original bullets and checks twelve callback updates across three acceleration
-lifetimes, expiry and source speedup precedence. Guidance-disabled observations
-retain the original linear forecast; snapshot reads preserve gameplay digests.
+The acceleration-guidance build passed 40 local CTest contracts. An actual BulletManager
+fixture initializes original bullets and checks twelve callback updates across three
+acceleration lifetimes, expiry and source speedup precedence. Guidance-disabled
+observations retain the original linear forecast; snapshot reads preserve gameplay
+digests.
 
 Two 128-tail/16-lead/110-ms captured spell-57 latency comparisons retain all
 outcomes, with six-candidate fresh/anytime/power/damage policy and the same

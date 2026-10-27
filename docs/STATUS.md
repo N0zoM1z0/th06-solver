@@ -1,243 +1,114 @@
-# Native runtime status
+# Current status
 
-Current owner scope (2026-10-27): Extra online shadow MPC. **One complete
-actual Wine run now passes NMNB**: Reimu B, captured seed 35964, original
-power-0 entry, 43,126 updates, one natural clear and zero misses/bombs.
-Every retail projection matches native. The frozen pre-change checker replays
-all actual inputs in a fresh process with matching per-frame digests and
-`--require-complete`; it confirms the same complete NMNB clear.
+Updated 2026-10-27. Gameplay work focuses on Extra online shadow MPC in the
+owned Wine game, following th08-solver. Keep original-runtime, offline/native,
+retail replay, recording and online evidence separate. This page owns the current
+summary; [Continuation](CONTINUATION.md) owns the operational restart checklist.
 
-The combined profile uses base horizon 128, survival horizon 256, lead 16,
-110-ms cap, minimum four-update interval and six-candidate target, with fresh,
-conditional-pulse, laser/anytime/power/damage/acceleration guidance and scoped
-limiter sleeps. All 40 local CTest contracts and implementation CI pass.
-The 9,590 searches include 360 timeouts, 81 published deadline certificates,
-207 ranking yields and 9,307 publications. Survival-only lookahead is actually
-exercised: 1,063 searches / 966 publications. There are only four startup
-fallback inputs, zero later fallback, zero stale/rejected plans and no follower
-error. Search p50/p99/max is 59.54/111.27/119.00 ms including cleanup.
+## Verified coverage
 
-Group peak is 359,501,824 bytes (342.85 MiB), OOM 0 under verified
-2-GiB/no-swap limits. All 43,245 limiter scopes restore. **Stable online 60 FPS
-remains unresolved**: actual receipt mean is 57.08 Hz, p99/max gap
-27.49/628.02 ms. This one combined-profile/shot/seed result is not a paired
-single-optimization win or all-seed certification.
+All clears below are No Miss / No Bomb (NMNB). Native acceptance requires the
+source terminal and a complete fresh-process input/digest replay. A prefix or
+budget exhaustion stays incomplete.
 
-The [complete live ledger](SHADOW_MPC.md) retains eight earlier full hits,
-one incomplete 2,400-update prefix and three zero-frame startup attempts.
-The [focused source/search study](EXTRA_SEARCH.md) retains failed alternatives:
-global 256-tail dense models exhaust the original budget; survival extension
-and damage guidance retain failed seeds; acceleration models have mixed timing
-outcomes. Preserve those counterexamples. Continue with selected hard-seed
-robustness, viable earlier routes and online pacing, not another full matrix.
+| Evidence | Verified result | Limit |
+| --- | --- | --- |
+| Extra online | Reimu B, captured retail seed 35964, normal power 0, 43,126 actual updates and one natural clear | One successful sample; eight earlier full hits retained |
+| Lunatic online components | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear | Five failed Stage 6 controls; no full live story or all-shot coverage |
+| Live story handoff | Natural Stage 1 → 2, 20,000-update NMNB prefix | Incomplete story |
+| Original-loader replay | Lunatic Reimu A seed 0: 127,737 updates/six clears; Extra Reimu B seed 35964: 43,126 updates/one clear | Both whole traces agree with their fresh native export |
+| Replay presentation | One complete audio-off Lunatic story passes both v4 gates | Replay-only result; audio-on recordings and online control do not pass that gate |
+| Historical native seed 0 | 96/96 stage/difficulty/shot checkpoints, 16/16 continuous stories | Native proof, including power-128 Extra checkpoints |
+| Separate sampled Lunatic campaign | Four seeds: 96/96 standalone cases and 16/16 stories after recovery | First passes 92/96 and 11/16; all failed attempts retained |
 
-Private evidence roots are `reports/local/shadow-extra-20261027/`,
-`reports/local/extra-search-20261027/` and
-`reports/local/extra-online-20261027/`. The successful case is
-`online-acceleration-reimuB-008`; its `proof.json`, actual tape, all receipts,
-complete resource/binary receipts and independent checker results are retained.
-The owner-requested Extra [input-only replay](../replays/th6_02.rpy) is now
-committed as the second explicit replay exception. Original-loader Wine playback
-also completes all 43,126 updates NMNB with full native projection agreement.
-Its [compact replay recording](REPLAY_PACING.md#extra-online-route-recording)
-is verified: 12:04.267 / 172,025,731 bytes / 640×480 H.264/AAC; all 43,454
-frames decode with unchanged capture timestamps. Peak is 1,119.20 MiB under the
-owner-authorized 4-GiB/no-swap cap, OOM 0. Recording pacing remains below its
-gate. Other generated tapes remain ignored; the Lunatic replay is unchanged.
+[Extra search](EXTRA_SEARCH.md), [live evidence](SHADOW_MPC.md),
+[retail replay](RETAIL_REPLAY.md), [native history](NATIVE_HISTORY.md) and
+[Lunatic seeds](LUNATIC_RANDOM_SEEDS.md) own the detailed ledgers. Do not treat
+different seeds/policies as paired optimization comparisons.
 
-Previous pacing scope (owner clarification, 2026-10-26):
-[native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),
-with no MPC or native follower during playback. Online control acceptance stays
-separate. Native re-export revalidates the historical 127,737-update Lunatic
-Reimu A story and reproduces the published replay hash.
-The current profile passes one complete Lunatic Reimu A seed-0 story: 127,737
-native-matching updates, six natural clears and zero misses/bombs. API output is
-59.990 Hz / slowest 5 s 58.6 Hz / p99 17.130 ms; independent actual window output
-is 59.990 Hz / slowest 5 s 58.4 Hz / p99 18 ms. Both unchanged version-4 gates pass.
-The profile combines Wine 11 new WoW64, 64-bit Mesa 25 lavapipe, source CPU/diffuse
-bullet drawing, bounded batches, coarse sleeps, mapped journals, eight workers
-and an opt-in DXVK 2.4 D3D8 EndScene submission patch. Peak is 490,835,968 bytes
-(468.1 MiB), OOM/OOM-kill 0 under verified 2-GiB/no-swap limits. Whole-group CPU is
-3,993.08 seconds, 26.7% below the retained earlier complete-story profile.
-The earlier 56.4-Hz Stage 4 window now reaches 59.4 Hz, p99 18 ms. All handoff
-gaps remain; the largest window interval is 145 ms. That loading spike remains
-an optimization target. This one-case replay proof does not establish online
-MPC FPS or all-seed performance. Package/DLL hashes and settings are pinned in
-[REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
+## Current Extra online profile
 
-Separate 2026-10-27 recording: the published replay's exact SHA-256 again reaches
-all six natural NMNB clears in Wine, with all 127,737 updates matching native.
-The new `run_wine_replay.py --compact` captures the full 640×480 rectangle and
-private original game audio, then compresses after Wine exits. With WAV music
-and effects enabled, its handoff gaps are longer. This recording does not pass the
-unchanged presentation gate or replace the earlier audio-off pacing acceptance.
-The complete compact MP4 is 35:35.744 / 503,859,305 bytes. All 128,141 frames decode
-with unchanged capture PTS and audible AAC audio; group peak is 1.501 GiB, OOM 0.
-See [recording instructions](REPLAY_PACING.md#record-the-replay).
+The successful case is `online-acceleration-reimuB-008` under private
+`reports/local/extra-online-20261027/`. The original retail terminal and a frozen
+independent checker both confirm the entire actual-input route. Every declared
+retail projection matches native; native replay matches each observable digest.
 
-For the 2026-10-26 restart point, prioritized unfinished tasks, implementation
-map and local evidence index, see [CONTINUATION.md](CONTINUATION.md).
-The active checklist is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
-**Online shadow MPC does not yet sustain stable 60 FPS.** Its live stage clears
-establish gameplay progress; frame pacing remains a separate high-priority task.
+| Setting or measurement | Result |
+| --- | --- |
+| Profile | Base horizon 128, survival horizon 256, lead 16, cap 110 ms, interval 4, candidate target 6 |
+| Options | Fresh, pulse-on-failure, laser-aware, anytime, power-aware, damage-aware, acceleration-aware, sleep-limiter |
+| Searches / timeouts / publications | 9,590 / 360 / 9,307 |
+| Published deadline certificates / ranking yields | 81 / 207 |
+| Survival searches / publications | 1,063 / 966 |
+| Planned / fallback inputs | 43,122 / 4, all fallback at startup |
+| Stale / rejected plans / follower errors | 0 / 0 / 0 |
+| Search p50 / p99 / max, including cleanup | 59.54 / 111.27 / 119.00 ms |
+| Actual receipt mean / p99 gap / max gap | 57.08 Hz / 27.49 ms / 628.02 ms |
+| Whole Wine-tree memory | 342.85 MiB peak, verified 2-GiB/no-swap cap, OOM 0 |
 
-Separate live milestone: [Lunatic shadow MPC in Wine](SHADOW_MPC.md), with bounded
-decision time and actual input/queue accounting. Two complete Stage 5 / Reimu B
-runs and one Stage 6 / Marisa B run pass NMNB, including a Stage 5 live recording
-and independent complete native replay of all three actual routes. Stage 6 seed
-10347 clears in 28,254 updates with a 64-tail/8-lead/80-ms profile, fresh proposals
-at a minimum four-update interval and a three-candidate minimum. Search median/p99/max is
-29.07/77.70/82.87 ms including cleanup; only four startup inputs use fallback.
-The whole Wine/controller cgroup peaks at 354,058,240 bytes with zero OOM events.
+The requested cap includes the whole search group. Cleanup can finish later;
+actual overrun/timeout costs remain reported. `--anytime` can retain an already
+complete immutable certificate after group cleanup, never unfinished work.
+Its 75% ranking reserve makes the candidate target best effort. Full native
+verification, lead checks and retail adoption still apply.
 
-Five other actual Stage 6 runs fail, including recorded-geometry and long-buffer
-controls. A separate same-seed native timing model also fails under three
-policies; the new clear does not establish a general policy improvement.
-Optional collision-phase geometry proposals require independent native
-verification; their storage and spatial index have explicit bounds. Version-2
-transport carries up to 600 literal inputs with an atomic child certificate.
-Twenty-three focused contracts pass. Natural handoff and all live experiments
-remain separate from the older complete offline and retail-replay results below.
-Current experiments focus on [Lunatic hard-stage performance](PERFORMANCE.md),
-not another full matrix or story campaign. The latest 20 new paired stage-5/6
-cases compare `f942133` with opt-in native-future retention (`--reuse 32`). Both
-versions clear 20/20 after the same recovery policy, including all failures and
-retries. Speculative native updates fall from 39,991,255 to 11,297,133 (−71.75%)
-and planner CPU from 2,659.12 to 935.33 seconds (−64.83%). Initial clears fall
-from 18/20 to 16/20, so the longer publication window remains optional.
-Eleven focused contracts pass, and all 40 final tapes pass fresh replay under
-both the frozen baseline checker and current build. Earlier kernel optimizations
-retain their separate 1.5–2× unchanged-input timing result; diverse-first ordering
-is off in this new comparison.
+**Extra random-seed robustness and stable online 60 FPS remain open.** The
+combined shot/seed/profile success is not a single-change attribution. Keep the
+failed survival/damage/long-horizon models in [Extra search](EXTRA_SEARCH.md).
+The earlier Lunatic component clear uses a separate 64/8/80-ms profile; do not
+silently replace its evidence with the Extra settings.
 
-The earlier [Lunatic random-seed campaign](LUNATIC_RANDOM_SEEDS.md) remains a
-separate historical control.
-The four fixed random seeds pass 96/96 standalone cases and 16/16 continuous
-stories after checked-prefix recovery (92/96 and 11/16 initially). Every route
-passes full fresh native replay with zero misses/bombs. These 112 sampled cases
-contain 4,057,594 accepted updates; peak campaign memory is 140,361,728 bytes
-(133.86 MiB), with zero OOM events under the 2-GiB/no-swap cap. Random-seed results
-are native evidence for this fixed sample; see the separate experiment ledger.
-The all-difficulty seed-0 results below remain historical controls.
-The complete standalone matrix passes 96/96 and continuous stories pass 16/16,
-including fresh native replay of every entire route. The owner has now authorized
-Wine retail replay interoperability. The complete Lunatic Reimu A seed-0 story
-now also passes retail playback: six natural clears, zero misses/bombs and all
-127,737 rows matching the declared 15-field native projection. Its full-playback
-cgroup peak is 348,819,456 bytes with zero OOM events under a 2-GiB hard limit.
-That one retail case is separate from the 112-case native matrix; details are
-recorded in [Retail replay](RETAIL_REPLAY.md).
+## Published replays and recordings
 
-## Acceptance matrix
+| Input-only replay | Origin | Verified Wine recording |
+| --- | --- | --- |
+| [`th6_01.rpy`](../replays/th6_01.rpy) | Offline Lunatic Reimu A story, seed 0 | 35:35.744, 503,859,305 bytes, 640×480 H.264/AAC |
+| [`th6_02.rpy`](../replays/th6_02.rpy) | Actual online Extra Reimu B route, seed 35964 | 12:04.267, 172,025,731 bytes, 640×480 H.264/AAC |
 
-| Suite | Domain | Complete fresh-replayed NMNB cases |
-|---|---|---:|
-| Easy | Stages 1–5, four shots | 20/20 |
-| Normal | Stages 1–6, four shots | 24/24 |
-| Hard | Stages 1–6, four shots | 24/24 |
-| Lunatic | Stages 1–6, four shots | 24/24 |
-| Extra | Stage 7, four shots | 4/4 |
-| Continuous story | Four standard difficulties × four shots | 16/16 |
+Both recordings contain original game audio, decode completely and retain all
+relative capture timestamps. They are Wine `.rpy` playback recordings; the
+separate Sakuya recording is actual live control footage. Media decode and
+capture cadence are not game/presentation FPS acceptance.
 
-Easy story ends after stage 5 as in the source; the other stories end after stage 6.
-An earlier terminal event is rejected, even if the current route has no misses.
+The audio-off Lunatic pacing sample measures 59.990 Hz / slowest 5 s 58.4 Hz /
+p99 18 ms at the actual window, with 468.1-MiB peak and OOM 0. Both audio-on
+recordings fail the unchanged pacing gate: Extra reaches 59.972 Hz but its
+slowest five seconds are 57.4 Hz. The Extra recording/encoder peaks at
+1,119.20 MiB under the owner-authorized 4-GiB/no-swap cap, OOM 0. The
+[pacing study](REPLAY_PACING.md) and [pinned replay runtime](REPLAY_RUNTIME.json)
+own these separate profiles; [replay provenance](../replays/README.md) owns
+file hashes and publication identities.
 
-The initial seed is 0. Standalone checkpoints use power 0 at stage 1, 64 at
-stage 2, and 128 at stages 3–7. Story starts at power 0 and carries actual pickups.
-Additional seed coverage is separate from the matrix above.
+## Validation and resource rules
 
-A case passes only on the native terminal transition with zero misses/bombs and
-a matching complete replay in a fresh process. A planned prefix, timeout, runtime
-error or failed replay does not pass. All logs/tapes/reports stay in reports/local/.
+The 2026-10-27 validated build has 40 local CTest contracts with private DATs;
+CI checks the asset-free subset. [Validation](VALIDATION.md) lists dependencies,
+entry profiles, focused tests, full replay checks and export commands.
+Use the configured test list rather than old milestone counts in archived notes.
 
-## Verified evidence
+Run one Wine instance at a time, normally with a 2-GiB hard / 1.5-GiB high cap
+and swap disabled. The explicit 4-GiB hard / 3-GiB high replay-recording allowance
+is recorded separately. Verify actual limits, peaks and OOM counters. Use at
+most four solver jobs. Private prototype harnesses are not maintained CLI tools.
 
-Development environment: Linux x86-64, Clang 14.0.6, native 32-bit build, no
-fast-math. The original EXE SHA-256 is
-`9f76483c46256804792399296619c1274363c31cd8f1775fafb55106fb852245`.
+Keep the historical seed-0 matrix and every failed retry. Do not rerun full
+matrices/stories or schedule other difficulties for routine optimization.
+[Performance](PERFORMANCE.md) records native timing improvements and optional
+retention tradeoffs; those are not online speedup or robustness guarantees.
 
-- All six DAT archives parse; all members decompress and pass stored checksums.
-  There are 337 distinct resource names; identical shared version members are
-  accepted and conflicting duplicate content is rejected.
-- First baseline: stage 1, Lunatic, Reimu A, seed 0, power 0. Fixed shoot/focus/skip
-  input dies at update 319. Two fresh processes produce identical complete traces.
-- First full solve: the same configuration completes at update 13,701 with zero
-  misses/bombs. The exhaustive 33-proposal planner used horizon 90, commit 8,
-  56,529 native branches and 4,355,906 simulated updates in 218.40 seconds.
-  A new checker process replays every accepted update and confirms completion.
-  The local tape SHA-256 is
-  `4e575d68add3a8d412275791456877218fa0cc5df99da49c9f870cbe8b374138`.
-- Initialization and live collisions have been exercised in stages 1–7 using
-  Marisa B, seed 65535 and power 128. These short negative controls are not clears.
-- Tests cover PBG3 truncation/checksums/overlapping dictionary references, tape
-  sequencing and corruption, source RNG ordering, collision edges, unsupported
-  opcodes and a planned prefix with fresh-process replay and rejection controls.
+## Next work and evidence
 
-The complete 96-case standalone matrix uses the canonical checkpoints above.
-Earlier standalone stage-2 power-128 experiments are separate evidence; the
-matrix stage-2 checkpoint uses power 64. A ranked four-proposal run reproduces
-the stage-1 completion in 26.80 seconds with 6,967 native branches and 603,011
-simulated updates. All retry effort remains in the local attempt ledger.
+1. Improve Extra route choices on selected captured hard windows, then bounded
+   actual Wine samples. Retain fixed-prefix and latency-model counterexamples.
+2. Measure online queue risk and presentation together; a replay-only FPS pass
+   cannot close online pacing. Preserve all loading/transition gaps.
+3. Promote a minimal checked-prefix diagnostic from the private prototypes before
+   broadening Lunatic live coverage or attempting a complete online story.
 
-Nine focused tests pass, including a source-binary replacement regression for
-campaign snapshots, RNG/resource carry across a stage handoff, atomic rejection
-of invalid handoff input, Extra's source bootstrap/score-extend rule, reactive
-future continuation replay, and rejection of a premature story terminal. A clean Release
-build passes the asset-free contracts and replays the initial complete tape.
-The final standalone gate independently replays all 96 complete tapes under the
-current runtime and reports 96 cleared, 0 failed. Earlier incomplete searches and
-their costs remain in the attempt ledger.
-
-Extra Reimu B now completes at update 59,837 with zero misses/bombs and passes
-fresh replay under the corrected runtime. Verified-prefix rewind first crossed
-the update-13,078 dead end with horizon 180/proposals 8, then the update-47,943
-dead end with horizon 240. Source review found the omitted Extra score-extend
-disable; the corrected bootstrap selects source score-table index 4. Its first
-observable difference occurred at update 58,556, so the route was resumed from
-the checked prefix ending at 58,555 and fully replayed again. All earlier attempts
-and their simulation/replay costs remain recorded; the last continuation's timing
-is not the cost of the entire solve. Reactive native futures then complete the
-remaining Extra shots. Their current complete-route evidence is:
-
-| Shot | Complete native updates | Last continuation horizon / proposals | Reactive futures |
-|---|---:|---|---|
-| Reimu A | 47,240 | 240 / 8 | Enabled |
-| Reimu B | 59,837 | 240 / 8 | Disabled |
-| Marisa A | 55,702 | 240 / 8 | Enabled |
-| Marisa B | 61,696 | 320 / 12 | Enabled |
-
-Every entry has a complete new-process replay with zero misses/bombs. The last
-continuation budgets above do not replace earlier checked prefixes or erase retry
-costs.
-
-Continuous stories start at stage 1, power 0, and carry native state through every
-natural stage transition. Complete update counts below have matching new-process
-replays, zero misses/bombs and all required stage clears:
-
-| Difficulty | Reimu A | Reimu B | Marisa A | Marisa B |
-|---|---:|---:|---:|---:|
-| Easy | 86,336 | 89,323 | 87,424 | 91,853 |
-| Normal | 117,897 | 119,018 | 117,072 | 124,054 |
-| Hard | 119,829 | 124,260 | 123,471 | 129,796 |
-| Lunatic | 127,737 | 133,648 | 130,563 | 141,393 |
-
-These story searches use reactive futures, horizon 120, commit 8 and six ranked
-proposals, with a 180,000-update frame budget per complete story. The budget is
-not a completion criterion. All 16 complete stories were planned from their
-natural starts without prefix recovery in this campaign. Together they contain
-1,863,674 accepted and independently replayed updates.
-
-The final local evidence receipt cross-checks all 112 case identities, start
-profiles, completion flags, zero-miss/bomb counts, required stage counts and
-planner/checker/tape frame counts. It records tape/report SHA-256 identities and
-confirms the frozen story binaries match the current build. The complete
-standalone and story routes contain 3,854,742 accepted updates in total; this is
-route length, not total search effort. The receipt is stored at
-`reports/local/native-acceptance-final.json`; tapes and failed-attempt evidence
-remain private and ignored.
-
-Each campaign snapshots its planner/checker binaries and records their identities.
-Recompiling the workspace cannot change a running campaign. Resume rechecks each
-existing completed tape in a new process before counting it. Startup failures from
-the initial unsnapshotted run remain recorded as infrastructure failures, not
-gameplay counterexamples or silently discarded attempts.
+[Continuation](CONTINUATION.md) gives acceptance checks and source entry points.
+The open tracker is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
+Private evidence roots include `reports/local/extra-online-20261027/`,
+`extra-search-20261027/`, `shadow-extra-20261027/`, `shadow-20261025/`,
+`pacing-20261026/`, `extra-video-20261027/` and `replay-video-20261027/`.
+[Native history](NATIVE_HISTORY.md) and [online history](ONLINE_HISTORY.md)
+preserve earlier tables, costs, bootstrap corrections and handoff notes.

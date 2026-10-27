@@ -1,64 +1,50 @@
-# Verified input-only replays
+# Selected verified input-only replays
 
-[`th6_01.rpy`](th6_01.rpy) is the generated input-only replay for Lunatic Reimu A,
-seed 0, starting at stage 1 / power 0. The owner explicitly requested that this
-verified artifact be committed. It contains replay metadata and input changes,
-not game assets. Copy it to the Japanese 1.02h game's `replay/` directory and
-select it from the replay menu.
+These owner-selected artifacts contain original-format replay metadata and input
+changes, not EXE/DAT assets or native world snapshots. Copy them into the Japanese
+1.02h game's `replay/` directory and select them from the replay menu.
 
-Wine retail playback reached the natural six-stage replay return at update
-127,737 with zero misses/bombs. All 127,737 rows match the native trace's declared
-15-field projection. The full-playback cgroup peak was 348,819,456 bytes under a
-2-GiB memory limit with swap disabled and zero OOM events. This verifies this
-specific story, not other seeds, shots or complete hidden-state equality.
+| Replay | Route and origin | Seed | Complete updates | Bytes |
+| --- | --- | ---: | ---: | ---: |
+| [`th6_01.rpy`](th6_01.rpy) | Lunatic Reimu A, offline story, stage 1 / power 0 | 0 | 127,737 / six clears | 76,528 |
+| [`th6_02.rpy`](th6_02.rpy) | Extra Reimu B, actual online shadow-MPC inputs, normal power 0 | 35964 | 43,126 / one clear | 41,784 |
 
-- File size: 76,528 bytes.
-- Replay SHA-256: `c29f3975d9b2744d3460c7946c7130bdc026dc3c47566c1e0d45bf7c14fb192d`.
-- Original EXE SHA-256: `9f76483c46256804792399296619c1274363c31cd8f1775fafb55106fb852245`.
-- Native tape: `story-d3-shot0-seed0.actions`, profile `native-i386-v1`.
+Both pass whole-route original-loader Wine playback with zero misses/bombs and
+agreement with the declared native projection. Export replays every source input
+and checks every native digest before writing the `.rpy`; it does not replace
+the Extra online route with a new offline search. The single Extra record uses
+original replay stage slot seven, leaving the six main-game slots empty.
 
-The 2026-10-27 full Wine recording uses this exact replay SHA-256, already
-published in commit `387a7c58ea7e2347791fd1eeb1549e02785c73b3`. Its independent
-post-game comparison again matches all 127,737 updates and six natural NMNB
-clears. The private recording is retained under
-`reports/local/replay-video-20261027/story-compact001/`; the
-[recording command](../docs/REPLAY_PACING.md#record-the-replay) produces a
-640×480 original-speed compact MP4 with the game's WAV music and sound effects.
-The verified compact delivery is 35:35.744 / 503,859,305 bytes; all 128,141 video
-frames decode with the original capture timestamps. It is also hard-linked as
-`reports/local/replay-video-20261027/th06-lunatic-reimuA-story-compact.mp4`.
-Audio-on recording has separate pacing evidence from the earlier audio-off run.
+<a id="extra-online-nmnb-route"></a>
 
-[Retail verification](../docs/RETAIL_REPLAY.md) describes export, observation,
-acceptance and the separately fixed Wine service cleanup issue. All original
-EXE/DAT files, other generated replays, tapes and raw attempt logs stay ignored.
+## File identities and provenance
 
+| File | SHA-256 | Publication commit |
+| --- | --- | --- |
+| `th6_01.rpy` | `c29f3975d9b2744d3460c7946c7130bdc026dc3c47566c1e0d45bf7c14fb192d` | `387a7c58ea7e2347791fd1eeb1549e02785c73b3` |
+| `th6_02.rpy` | `a64ec1d2ee7d74e2c22a818a6b6b2d793570eae4e39cd1e6063ca0e0f1184a3a` | `61c0eaefc46fd3df597e3748635967cf9117a7b1` |
 
-## Extra online NMNB route
+The source profile is `native-i386-v1`, targeting Japanese 1.02h EXE SHA-256
+`9f76483c46256804792399296619c1274363c31cd8f1775fafb55106fb852245`.
+The story's native tape is `story-d3-shot0-seed0.actions`. The Extra source is
+actual case `online-acceleration-reimuB-008`, with tape SHA-256
+`98025c911e03c56225a83819ac3461eeb76d4b39fbeff3b77bab1f8acd9aee61`.
+[Extra online evidence](../docs/EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear)
+and [retail interoperability](../docs/RETAIL_REPLAY.md) explain their distinct proofs.
 
-[`th6_02.rpy`](th6_02.rpy) stores the actual online shadow-MPC clear's inputs:
-Extra / Reimu B, retail seed 35964, natural power-0 start, 43,126 updates and
-zero misses/bombs. The original live Wine clear and full independent native
-replay are documented in [the Extra study](../docs/EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear).
-Export replays the entire actual tape and checks every native digest; it does
-not search for a replacement route. The original Extra record occupies replay
-stage slot seven, with the six main-game slots empty. Copy the file into the
-Japanese 1.02h game's `replay/` directory and select it in the replay menu.
+## Recordings and acceptance
 
-- File size: 41,784 bytes.
-- Replay SHA-256: `a64ec1d2ee7d74e2c22a818a6b6b2d793570eae4e39cd1e6063ca0e0f1184a3a`.
-- Source actual tape SHA-256: `98025c911e03c56225a83819ac3461eeb76d4b39fbeff3b77bab1f8acd9aee61`.
+Both selected files have full 640×480 compact Wine replay recordings with
+original game audio. [Recording details](../docs/REPLAY_PACING.md#record-the-replay)
+contain media checks, sizes, durations and private delivery paths; the
+[Extra recording](../docs/REPLAY_PACING.md#extra-online-route-recording) also
+retains its loader smoke and failed-monitor attempt.
 
-The owner's requested compact recording uses actual Wine replay playback of
-this file, separately from the original online decision-time evidence. The original replay loader completes all 43,126 updates NMNB under Wine 11;
-every declared native projection field matches the fresh export. The replay
-returns through the original replay-menu path, separately from the live game's
-result-screen path. Its 1,200-update smoke and earlier monitor-stage rejection
-remain in the attempt ledger. The compact recording is fully verified: 12:04.267, 172,025,731 bytes,
-640×480 H.264/AAC stereo with original game audio; all 43,454 frames decode with
-identical relative capture timestamps. Peak is 1,119.20 MiB under the explicitly
-authorized 4-GiB/no-swap cap, OOM 0. See
-[full recording details](../docs/REPLAY_PACING.md#extra-online-route-recording).
-Audio-on recording does not pass the unchanged frame-pacing gate.
-The owner authorizes this second tracked replay exception; assets, tapes,
-recordings and raw evidence remain private.
+Original gameplay, original replay-menu return, complete media decode, capture
+timestamps and presentation pacing are separate checks. Both audio-on recordings
+pass route/media validation and fail the unchanged pacing gate. The earlier
+Lunatic audio-off pacing pass does not establish online FPS. Replays of online
+inputs are not additional live controller trials or live-control footage.
+
+These are the only tracked generated replay exceptions. Assets, other generated
+replays, tapes, preparation files, recordings and raw attempt logs stay ignored.

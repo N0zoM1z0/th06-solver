@@ -1,22 +1,24 @@
 # TH06 solver engineering rules
 
-Read README.md and docs/STATUS.md before changing behavior. The owner's immediate
-scope is stable 60-FPS Wine retail playback of native-generated Lunatic .rpy
-files, using th08-solver as a reference. Do not use online MPC or a native
-follower during this pacing acceptance. Verify the original replay loader,
-actual presentation clocks and native-export trace agreement. Online shadow MPC
-and its decision/queue optimization remain separate later work; replay FPS
-does not certify online FPS. Keep offline, playback and live evidence separate.
-Do not rerun the full matrix or story campaign for routine optimization.
-Retain the historical seed-0 matrix; do not schedule other difficulties now.
-The owner has now authorized retail replay interoperability under Wine, starting
-with a complete Lunatic story. Keep native and retail proof separate. Run one
-Wine instance at a time under a 2 GiB cgroup memory cap with swap disabled.
-The owner also authorizes an explicit 4 GiB cap for the Extra replay recording; retain its
-actual limit/peak receipt and keep swap disabled.
-Cross-runtime comparison should judge gameplay progress/correctness; exact
-floating-point identity with Wine is not required. Native fork/replay consistency
-remains a useful internal guard.
+Read README.md and docs/STATUS.md before changing behavior. Current gameplay
+work focuses on live Extra shadow MPC in the owned Wine retail game, using
+th08-solver as a reference. Measure actual decision deadlines, queue behavior
+and presentation. The selected Extra clear/replay/recording is complete; random-
+seed robustness and stable online 60 FPS remain open. Lunatic coverage is limited
+to the documented live components and historical native/replay campaigns.
+
+Keep native search, actual online control, original-loader replay and recording
+evidence separate. During pure replay measurements/recording, run no MPC or
+native follower. Playback FPS does not certify online FPS. Cross-runtime
+comparison judges gameplay progress/correctness, not bit-identical floating
+point; native fork/replay consistency remains an exact internal guard.
+
+Do not rerun the full matrix or story campaign for routine optimization. Retain
+the historical seed-0 matrix and all failed retries; do not schedule other
+difficulties without a new scope. Use one Wine instance at a time under a 2-GiB
+hard / 1.5-GiB high / no-swap cgroup. The owner explicitly permits a 4-GiB hard /
+3-GiB high cap for the Extra replay recording. Record actual limits, peaks and
+OOM counters. Keep the original EXE/DATs and all preparation artifacts private.
 
 - Use C++17. Preserve the imported source, licenses and pinned provenance in-tree.
   Keep parsing, native state, proposals, process isolation, tapes and CLI separate.

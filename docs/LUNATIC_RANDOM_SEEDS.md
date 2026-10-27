@@ -1,9 +1,10 @@
 # Lunatic random-seed checks
 
-The current scope is Lunatic only. The fixed, public experiment definition is
-[`reports/lunatic-random-20261025.json`](../reports/lunatic-random-20261025.json).
-Four distinct nonzero 16-bit seeds were sampled from OS randomness before trials:
-**5341, 7589, 30826, 9674**. Failed samples will not be replaced.
+This historical sampled-seed experiment covers Lunatic only. The fixed, public
+experiment definition is
+[`reports/lunatic-random-20261025.json`](../reports/lunatic-random-20261025.json). Four
+distinct nonzero 16-bit seeds were sampled from OS randomness before trials: **5341,
+7589, 30826, 9674**. Failed samples will not be replaced.
 
 Each seed covers all six stages and four shots (96 standalone cases total), then
 all four continuous six-stage stories (16 stories). Standalone powers are 0/64/128

@@ -5,9 +5,11 @@ limiter precision fix and the 60-FPS gate, see [REPLAY_PACING.md](REPLAY_PACING.
 Those tests run only the original `.rpy` playback; they launch no MPC or native
 follower. The full-story interoperability result below predates that optimization.
 
-The complete seed-0 Lunatic Reimu A story now passes retail playback:
-127,737 updates, stage 1 / power 0 through six natural clears, zero misses/bombs,
-and every row matching the declared 15-field native projection.
+Two published routes pass original-loader Wine replay: the seed-0 Lunatic
+Reimu A story (127,737 updates, six clears) and the Extra online Reimu B route
+(seed 35964, 43,126 updates, one clear). Both start at power 0, remain NMNB and
+match the declared native projection. The story experiment below is historical;
+[the Extra section](#extra-online-clear-replay) covers the later route.
 The native `TH06ACTIONS` tape is an input to export; it cannot be renamed into a
 retail replay. Native coverage remains 96 standalone cases and 16 stories.
 
@@ -15,17 +17,20 @@ retail replay. Native coverage remains 96 standalone cases and 16 stories.
 
 The preserved Japanese 1.02h EXE is 512,000 bytes with SHA-256
 `9f76483c46256804792399296619c1274363c31cd8f1775fafb55106fb852245`.
-Tests use a separate copy of the supplied EXE/DAT files, Wine 8.0, an isolated
-32-bit prefix with Japanese ANSI code page 932, and Xvfb/software rendering.
+The initial story interoperability tests used a separate EXE/DAT copy, Wine 8.0,
+an isolated 32-bit prefix with Japanese ANSI code page 932 and Xvfb/software
+rendering. Later pacing and recordings use the separately pinned Wine 11 profile.
 The original disk EXE remains unchanged.
 
-`th06_replay_export` initializes the native story again, checks the DAT identity
-and every tape digest, and captures each stage's carried resources and pre-init
-seed. It writes the source's version-0x102 `T6RP` header, file-relative stage
-offsets, sparse eight-byte input changes, terminal sentinels, additive checksum
-and rolling byte obfuscation. Per-stage records obey the original 0x69780-byte
-recording bound. The decoder rejects malformed offsets, checksums and sequences.
-Only complete five/six-stage standard stories are currently exported.
+`th06_replay_export` initializes the complete native run again, checks the DAT identity
+and every tape digest, and captures each stage's carried resources and pre-init seed. It
+writes the source's version-0x102 `T6RP` header, file-relative stage offsets, sparse
+eight-byte input changes, terminal sentinels, additive checksum and rolling byte
+obfuscation. Per-stage records obey the original 0x69780-byte recording bound. The
+decoder rejects malformed offsets, checksums and sequences. Export accepts complete
+five/six-stage standard stories and normal-start Extra (stage 7 / difficulty 4 / power
+0). Other standalone checkpoints and incomplete tapes remain rejected. Extra occupies
+its original seventh replay slot.
 
 This distinguishes two important alternatives: merely renaming native records
 fails the retail format contract; resetting each stage to practice power/RNG
@@ -54,20 +59,25 @@ python3 scripts/compare_retail_trace.py --native reports/local/retail/native-lun
 ```
 
 The game directory and dedicated prefix must already be prepared. Development
-uses windowed, fixed-60-fps rendering with music/sound disabled. The runner requires
-an existing 32-bit prefix; it never uses or edits the user's default Wine prefix.
+used windowed rendering at the original frame limit with music/sound disabled.
+The default runner profile requires an existing 32-bit prefix; explicit Wine 11
+WoW64 replay/recording settings use their own compatible prefix. It never uses
+or edits the user's default Wine prefix.
 Use a new output directory for each attempt. Assets, attempt replays, logs and
 runtime snapshots remain under ignored `reports/local/`. The owner-requested
-verified [`replays/th6_01.rpy`](../replays/th6_01.rpy) is the single published
-input-only replay exception.
+verified [`th6_01.rpy`](../replays/th6_01.rpy) and
+[`th6_02.rpy`](../replays/th6_02.rpy) are the only published input-only replay
+exceptions.
 
-The runner takes an exclusive ownership lock and copies the launcher/observer into
-the attempt directory before starting. Atomic build outputs and immutable attempt
-copies keep later compilation from modifying a running test. A user-systemd unit
-contains Wine, all descendants and Xvfb, with **MemoryMax=2 GiB, MemorySwapMax=0,
-TasksMax=256**, a 1.5-GiB memory high watermark and a finite runtime. Software
-rendering uses two worker threads. The receipt records cgroup memory peaks and
-OOM counters. Stop/timeout cleanup targets only the owned unit and prefix.
+The runner takes an exclusive ownership lock and copies the launcher/observer into the
+attempt directory before starting. Atomic build outputs and immutable attempt copies
+keep later compilation from modifying a running test. A user-systemd unit contains Wine,
+all descendants and Xvfb. Defaults are **MemoryMax=2 GiB, MemorySwapMax=0,
+TasksMax=256**, a 1.5-GiB high watermark, finite runtime and two renderer workers. The
+explicit owner-authorized `--memory-gib 4` recording profile uses a 4-GiB hard / 3-GiB
+high cap; swap remains zero. Worker count and runtime selection are explicit, recorded
+options. The receipt records cgroup memory peaks and OOM counters. Stop/timeout cleanup
+targets only the owned unit and prefix.
 
 ## Observation and acceptance
 

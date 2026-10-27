@@ -1,109 +1,38 @@
 # th06-solver
 
-C++17 native, headless Touhou 06 runtime, offline planning and live shadow MPC, following
-[th08-solver](https://github.com/N0zoM1z0/th08-solver)'s native rollout approach.
-**Native coverage: 96/96 legitimate stage/difficulty/shot combinations and 16/16
-continuous stories** at seed 0. Every case is NMNB with a complete fresh-process
-replay. **Wine retail playback also passes one complete Lunatic Reimu A story**:
-127,737 updates, six natural stage clears and zero misses/bombs.
-See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
-The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
-owner's request; original game assets remain private.
+C++17 native Touhou 06 runtime, offline planning and live Wine shadow MPC,
+following [th08-solver](https://github.com/N0zoM1z0/th08-solver)'s common-start,
+true-RNG rollout approach. The original game decides collisions and outcomes;
+isolated native futures propose verified inputs to the owned retail process.
 
-**One complete Extra online shadow MPC run now passes NMNB in actual Wine**:
-Reimu B, captured seed 35964, original power-0 entry, 43,126 updates and one
-natural clear. Every actual retail projection matches native, and the complete
-actual-input tape passes independent frozen fresh replay. The
-[combined profile and full failed-attempt ledger](docs/EXTRA_SEARCH.md) retain
-eight earlier full hits and targeted native counterexamples. The owner-requested
-[Extra Reimu B input-only replay](replays/th6_02.rpy) is committed and also
-completes all 43,126 updates through the original Wine replay loader. Its
-[compact Wine recording](docs/REPLAY_PACING.md#extra-online-route-recording)
-is verified: 12:04.267, 640×480 with original audio, 172 MB.
-This one clear
-establishes neither all-seed robustness nor stable online 60 FPS.
-The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
-Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5
-recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-update
-tail, eight-update lead and 80-ms search cap; search median/p99 is 29.07/77.70 ms.
-Failed Stage 6 seeds remain counterexamples. These component runs are separate
-from full-story retail replay and do not establish all-seed robustness.
-**Online shadow MPC does not yet sustain stable 60 FPS.** Search deadlines,
-successful clears and smooth capture timestamps do not establish game frame pacing.
-The separate [Wine `.rpy` playback study](docs/REPLAY_PACING.md) isolates:
-native verifies/exports first, then the actual retail replay runs without MPC or
-a native follower. Playback FPS and online-controller FPS have separate acceptance.
-One complete **Lunatic Reimu A story now passes the replay presentation gate**:
-127,737 native-matching updates, six natural clears and zero misses/bombs.
-Actual window output is 59.990 Hz, slowest five seconds 58.4 Hz and p99 18 ms.
-The retained Stage 4 failure improves from 56.4 to 59.4 Hz over five seconds.
-The measured profile uses private Wine 11 new WoW64, 64-bit lavapipe, original
-CPU bullet drawing, bounded batches, scoped coarse sleeps, mapped journals and an
-opt-in [DXVK EndScene submission patch](docs/DXVK_REPLAY_BUILD.md).
-Peak Wine-tree memory is 468.1 MiB with zero OOM events; group CPU time falls
-26.7% in the retained complete-story comparison. All handoff gaps remain in the
-statistics, including a 145-ms maximum window interval. This is one measured
-replay under the declared local tolerance; online MPC remains unverified.
-See the [pinned runtime](docs/REPLAY_RUNTIME.json).
-A [complete Wine recording](docs/REPLAY_PACING.md#record-the-replay) is now
-verified with original game audio: 35:35.744, 640×480, 504-MB compact MP4.
-Its audio-on handoff pacing remains below the gate; the replay file is unchanged.
-The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
-future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
-recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass
-clears fall from 18/20 to 16/20, so retention remains optional. The earlier native
-kernel optimizations make unchanged-input stage replays about 1.5–2× faster;
-diverse-first ordering remains a separate optional experiment.
-The preselected [random-seed experiment](docs/LUNATIC_RANDOM_SEEDS.md) covers
-four seeds across all Lunatic stages/shots and continuous stories. Its standalone
-matrix passes **96/96** (92 first-pass, four recovered), and its continuous stories
-pass **16/16** (11 first-pass, five recovered), all with full fresh native replay.
+**Extra now has one complete online NMNB clear:** Reimu B, retail seed 35964,
+natural power-0 entry, 43,126 updates. Its actual input route also passes complete
+fresh native replay and original-loader Wine `.rpy` playback.
 
-## Continue development
+| Verified result | Scope |
+| --- | --- |
+| Extra online NMNB | One Reimu B clear; eight failed full attempts retained |
+| Lunatic online NMNB | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear; no complete live story |
+| Retail replay | Complete Lunatic Reimu A story and Extra Reimu B route |
+| Replay presentation gate | One audio-off Lunatic story passes; online 60 FPS and audio-on recording pacing remain unresolved |
+| Historical native coverage | Seed-0 checkpoints 96/96 and continuous stories 16/16; separate four-seed Lunatic campaign also passes after recovery |
 
-The current owner-requested experiment is [Extra live shadow MPC](docs/SHADOW_MPC.md).
-Keep its natural power-0 retail start, actual input receipts and decision deadlines
-separate from historical power-128 native checkpoints and
-[retail replay pacing](docs/REPLAY_PACING.md).
+Selected input-only replays: [Lunatic Reimu A](replays/th6_01.rpy) ·
+[Extra Reimu B](replays/th6_02.rpy).
+[Replay provenance](replays/README.md) and
+[compact recording details](docs/REPLAY_PACING.md#record-the-replay) include the
+35:35.744 / 504-MB story and 12:04.267 / 172-MB Extra videos, both with game audio.
+Original assets, recordings and raw experiment data stay private.
 
-Start with the [engineering handoff and open work](docs/CONTINUATION.md): it maps
-completed work, the historical Lunatic live ledger, retained failures, source entry points, private
-evidence and acceptance criteria. Priorities are stable 60-FPS online pacing,
-repeatable failure/queue diagnostics, hard-seed robustness, then broader Lunatic
-stage/shot coverage and natural live stories. The
-[controller guide](docs/SHADOW_MPC.md) contains current run profiles.
-Track follow-up work in
-[issue #1: 60-FPS pacing, hard seeds and full-story control](https://github.com/N0zoM1z0/th06-solver/issues/1).
+A sampled clear does not establish random-seed robustness or all-stage/shot
+retail coverage. [Status](docs/STATUS.md) owns current results, limitations and
+next priorities; offline, replay and online evidence remain distinct.
 
-## Historical offline campaign
+## Start here
 
-The commands below reproduce the earlier offline campaign; routine online work
-should use selected hard cases rather than rerun the full matrix or other
-difficulties. The resumable campaign runs 96 standalone cases first, then 16
-main-game stories. Existing tapes are rechecked by the current native binary
-when resuming.
-
-```sh
-build/th06_campaign --data /path/to/th06-data --suite stages --difficulty 3 --jobs 2 \
-  --output reports/local/stages --resume
-# Retry incomplete routes from a checked earlier prefix with a larger lookahead.
-build/th06_campaign --data /path/to/th06-data --suite stages --difficulty 3 --jobs 2 \
-  --output reports/local/stages --resume --rewind 768 --horizon 180 --proposals 8 --frames 120000
-build/th06_campaign --data /path/to/th06-data --suite story --difficulty 3 --jobs 2 --frames 180000 \
-  --reactive --horizon 120 --proposals 6 \
-  --output reports/local/story --resume
-```
-
-The runtime imports [N0zoM1z0/th06](https://github.com/N0zoM1z0/th06) at
-`9e79eb8d784b6346233f2e98e1bcda1d2f04da15`, targeting Japanese 1.02h. It executes
-the reconstructed ECL, ANM, player, enemy, bullet, laser, item and GUI update code.
-Linux i386 preserves the original layouts and inline x87 helpers. The headless
-runtime needs no window, graphics/audio device, Wine or Python runtime. The live
-controller and capture use the separate Wine/Python tooling described above.
-
-## Build
-
-On x86-64 Debian/Ubuntu, install `clang`, `g++-multilib`, `cmake` and `ninja-build`.
+Requires Linux x86-64, CMake 3.20+, Clang, an i386 C++ standard library
+(`g++-multilib` on Debian/Ubuntu), and Ninja. Native execution also needs your own
+six original DAT archives. Wine and MinGW are optional for the retail bridges.
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release
@@ -111,45 +40,28 @@ cmake --build build -j 2
 ctest --test-dir build --output-on-failure
 ```
 
-Provide your own six original DAT archives in a separate directory. They and the
-EXE are never distributed here. The local archive supplied for development is
-kept under ignored `game_exe_data/`.
+[Validation](docs/VALIDATION.md) covers real-DAT tests, focused native planning,
+complete replay checks, `.rpy` export and historical campaign reproduction.
+[Live shadow MPC](docs/SHADOW_MPC.md#run) covers the actual Wine controller;
+[Extra search](docs/EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear)
+contains the successful combined profile and its failed controls.
 
-```sh
-build/th06_headless --data /path/to/th06-data --audit
-mkdir -p reports/local
-build/th06_plan --data /path/to/th06-data --stage 1 --difficulty 3 --shot 0 \
-  --seed 0 --power 0 --frames 30000 --output reports/local/stage1.actions
-build/th06_replay_check --data /path/to/th06-data \
-  --tape reports/local/stage1.actions --require-complete
-```
+## Documentation
 
-Difficulty IDs are Easy 0, Normal 1, Hard 2,
-Lunatic 3 and Extra 4. Shot IDs are Reimu A/B 0/1 and Marisa A/B 2/3. Stage 7 uses
-Extra difficulty. Standalone starts are explicit checkpoints; `--story` starts a
-continuous main-game run at stage 1 with carried resources and RNG.
+| Document | Responsibility |
+| --- | --- |
+| [Status](docs/STATUS.md) · [Continuation](docs/CONTINUATION.md) | Current evidence, open work and operational restart checklist |
+| [Validation](docs/VALIDATION.md) | Build, entry profiles, native proof and export commands |
+| [Architecture](docs/ARCHITECTURE.md) | Source/runtime ownership, proposals, lifecycle and proof boundaries |
+| [Shadow MPC](docs/SHADOW_MPC.md) · [Extra search](docs/EXTRA_SEARCH.md) | Online protocol, settings, measured outcomes and retained failures |
+| [Retail replay](docs/RETAIL_REPLAY.md) · [Replay pacing](docs/REPLAY_PACING.md) | Original-loader interoperability, presentation and compact recording |
+| [Performance](docs/PERFORMANCE.md) · [Lunatic seeds](docs/LUNATIC_RANDOM_SEEDS.md) | Focused native timing studies and sampled seed campaign |
+| [Native history](docs/NATIVE_HISTORY.md) · [Online history](docs/ONLINE_HISTORY.md) | Earlier acceptance tables, experiment costs and handoff notes |
+| [Engineering rules](AGENTS.md) · [Third-party notices](docs/THIRD_PARTY_NOTICES.md) | Contribution rules, licenses and pinned provenance |
 
-## Verification and current scope
+The runtime imports [N0zoM1z0/th06](https://github.com/N0zoM1z0/th06) at
+`9e79eb8d784b6346233f2e98e1bcda1d2f04da15`, targeting Japanese 1.02h. The
+32-bit native build preserves original layouts, callbacks and gameplay RNG.
+Only the two owner-selected generated `.rpy` files are tracked.
 
-To enable the optional real-DAT tests:
-
-```sh
-cmake -S . -B build -DTH06_DATA_DIR=/path/to/th06-data
-cmake --build build -j 2
-ctest --test-dir build --output-on-failure -j 1
-```
-
-The complete standalone matrix includes all four Extra shots, with complete
-fresh-checked routes of 47,240–61,696 updates. Story acceptance additionally
-requires the natural five-stage Easy or six-stage Normal/Hard/Lunatic terminal.
-All 16 difficulty/shot stories pass, starting at power 0 and carrying actual
-resources, rank and gameplay RNG through every stage.
-Coverage, exact checkpoint profiles and reproduction
-belong in [Status](docs/STATUS.md). [Architecture](docs/ARCHITECTURE.md) describes
-the native profile, checkpoints, proposals and lifecycle boundaries;
-[third-party notices](docs/THIRD_PARTY_NOTICES.md) record source provenance.
-
-Tapes are versioned native action files, not retail `.rpy` files. Matching native
-execution validates reproducibility under this source profile, not retail accuracy.
-`th06_replay_export` verifies a complete native story and writes a source-format
-retail `.rpy`. Export alone does not certify retail playback.
+[Open tracking issue](https://github.com/N0zoM1z0/th06-solver/issues/1)

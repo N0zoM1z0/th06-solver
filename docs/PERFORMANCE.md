@@ -137,15 +137,15 @@ choices; a safe finite future does not prove long-term escape. Retention remains
 opt-in. The results establish a lower-cost bounded offline solve for this sample,
 not a universal robustness improvement or an online/Wine controller result.
 
-Eleven focused tests pass. A controlled native callback fails every future at
-update 20: the selected safe length is 19 but only eight updates are certified.
-Another native fixture checks a mixed-input 32-update prefix and parent/RNG
-isolation. Invalid bounds, commit-sized legacy equivalence and campaign option
-forwarding are guarded. The whole original 10,567-update default failure tape
+That retention-study build passed eleven focused tests. A controlled native callback
+fails every future at update 20: the selected safe length is 19 but only eight updates
+are certified. Another native fixture checks a mixed-input 32-update prefix and
+parent/RNG isolation. Invalid bounds, commit-sized legacy equivalence and campaign
+option forwarding are guarded. The whole original 10,567-update default failure tape
 also remains byte-identical. Raw evidence is under
-`reports/local/lunatic-search-20261025/`.
-The solver/probe group peaks at 110,108,672 bytes (105.01 MiB), with zero OOM
-events under the same 2-GiB/no-swap cap and at most four solver/probe jobs.
+`reports/local/lunatic-search-20261025/`. The solver/probe group peaks at 110,108,672
+bytes (105.01 MiB), with zero OOM events under the same 2-GiB/no-swap cap and at most
+four solver/probe jobs.
 
 ## Why a safe search can stop
 
@@ -268,12 +268,12 @@ native kernel, not a demonstrated general reduction in search complexity.
 | Stage 5 Marisa B | 1,039.36 | 827.19 |
 | Stage 6 Marisa B | 1,116.36 | 753.07 |
 
-The scoped process group peaks at 190,259,200 bytes (181.45 MiB), including
-bounded diagnostic/build work, with zero OOM events under its 2-GiB/no-swap limit.
-Nine focused tests pass: the eight asset-free contracts plus a real-DAT stage-5
-profiling/replay guard. Tests cover nested cache ownership/invalidation, bomb
-collision priority, independent alpha/RGB expected values and profiling that
-retains the native profile identifier and exact input/digest tape.
+The scoped process group peaks at 190,259,200 bytes (181.45 MiB), including bounded
+diagnostic/build work, with zero OOM events under its 2-GiB/no-swap limit. The earlier
+kernel-study build passed nine tests: eight asset-free contracts plus a real-DAT stage-5
+profiling/replay guard. Tests cover nested cache ownership/invalidation, bomb collision
+priority, independent alpha/RGB expected values and profiling that retains the native
+profile identifier and exact input/digest tape.
 
 ## Reproduction and limits
 

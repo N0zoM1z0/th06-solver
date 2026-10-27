@@ -34,11 +34,10 @@ vector acceleration, excluding competing motion modes. Original expiry/update
 order is covered by actual BulletManager callbacks. Forty local contracts pass;
 native models retain mixed timing results and counterexamples.
 
-Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
-optional observed-laser guidance and native-verified curved futures. The first
-Wine sample passes the previous spell-55 failure, then hits on spell 62 at update
-43,521. That first failed sample remains separate from the later combined-profile
-Extra clear; stable online 60 FPS remains unestablished.
+[Extra search](EXTRA_SEARCH.md) records the combined successful profile and
+its earlier laser-aware, deadline, power, damage and acceleration experiments.
+Native model successes and actual Wine trials remain separately labeled;
+retained failures are not erased by the later clear.
 
 The controller now drives the owned Japanese 1.02h retail process under Wine.
 Two complete Lunatic Stage 5 / Reimu B runs and one Stage 6 / Marisa B run pass
@@ -73,12 +72,14 @@ python3 scripts/run_wine_shadow.py \
   --horizon 64 --lead 8 --budget-ms 80 --interval 4 --proposals 3 --fresh \
   --updates 40000 --seconds 900 --output reports/local/live-stage6
 
-# Extra experiment: original normal Extra entry, not a practice checkpoint.
+# Successful Extra combined profile: original normal power-0 entry.
 python3 scripts/run_wine_shadow.py \
   --game /path/to/private-game-copy --prefix /path/to/dedicated-wine-prefix \
-  --data /path/to/same-six-dat-archives --stage 7 --shot 0 \
-  --horizon 64 --lead 8 --budget-ms 80 --interval 4 --proposals 3 --fresh \
-  --updates 100000 --seconds 1800 --output reports/local/live-extra
+  --data /path/to/same-six-dat-archives --stage 7 --shot 1 \
+  --horizon 128 --survival-horizon 256 --lead 16 --budget-ms 110 \
+  --interval 4 --proposals 6 --fresh --pulse-on-failure --laser-aware \
+  --anytime --power-aware --damage-aware --acceleration-aware --sleep-limiter \
+  --updates 120000 --seconds 2400 --output reports/local/live-extra
 ```
 
 Stages 1–6 select Lunatic; stage 7 selects Extra. Main-game standalone starts use
@@ -98,8 +99,9 @@ existing game or changes the disk EXE.
 The Extra startup/plan boundary accepts stage 7 only with Extra difficulty and
 rejects Extra stories, mismatched difficulty and plans beyond stage 7. Native
 Extra initialization also disables practice, matching the original result path;
-all four historical Extra tapes still pass fresh complete replay. Thirty CTest
-contracts pass, including real DAT and Extra bootstrap checks.
+the four historical Extra tapes retain their complete fresh-replay evidence.
+[Validation](VALIDATION.md) owns the current focused test gate, including Extra
+bootstrap, deadline, checkpoint and native guidance contracts.
 
 The first Extra live prefix (2026-10-27, Reimu A, retail seed 64677) follows all
 2,400 actual updates and passes independent fresh native replay with no
@@ -201,7 +203,7 @@ Retail owns collision, RNG, rendering, clocks, recording and natural lifecycle.
 | Retail initialization → native start | Original game initializes first and publishes stage, difficulty, shot, pre-stage-init RNG, power and story mode. Native independently initializes the same case. |
 | Retail calculation → native follower | A versioned 20-word journal record identifies every actual input and post-update projection. Partial writes wait; missing/repeated frames fail. Native executes actual receipts in order. |
 | Actual world → speculative child | Immutable queued/fallback inputs form the lead. Only a complete native future or real terminal supplies a new queue; failed futures supply no prefix. |
-| Child → controller | Whole-process-group wall budget includes lead, proposals, native verification, hashing and IPC. Timeout kills and reaps descendants. Interrupted work cannot publish. |
+| Child → controller | Whole-group budget includes lead, proposals, verification, hashing and IPC. Timeout kills/reaps descendants; optional anytime retains only a full immutable certificate completed within budget. Interrupted work cannot publish. |
 | Controller → retail input sampler | Double-buffered aligned atomic words carry a monotonic generation, origin, stage, first change and literal inputs. Retail copies an accepted plan privately and rejects stale results, wrong-stage plans and changed queued lead. |
 | Natural stage handoff | Retail resets its old queue. Native mirrors that change after actual receipts and follows source RNG/resources without reseeding. |
 
@@ -231,7 +233,9 @@ Every 16 actual updates, a search first tries to extend the existing literal
 queue on three out of four attempts; the fourth requests a fresh proposal.
 Fresh candidates use the existing native planner with one required successful
 future and reactive tails. `--proposals N` raises the minimum evaluated candidate
-count before the planner can stop with a safe winner; `--fresh` skips nominal
+count before the planner can stop with a safe winner. With `--anytime`, the
+75% soft ranking reserve makes that target best effort after a full future
+exists; unfinished futures still cannot publish. `--fresh` skips nominal
 extension and requests fresh candidates at every interval. Defaults remain
 128/16/110/16 with one candidate and nominal reuse. The minimum interval does not
 imply a 16.67-ms search deadline. A 110-ms total search cap fits inside the 16-update lead;
@@ -262,6 +266,10 @@ are not total search-volume claims. Controller/child CPU and the whole cgroup's
 resource receipt account for time spent on interrupted work separately.
 
 ## Actual retail evidence
+
+The Lunatic ledger below predates the Extra study. The complete initial
+thirteen-trial table and older diagnosis notes are retained in
+[Online history](ONLINE_HISTORY.md#actual-online-trial-ledger).
 
 Cases in this table use Lunatic and the initial 128-tail/16-lead/110-ms profile. Seeds below
 are captured from the real retail initialization, not chosen after a solve.
@@ -399,5 +407,6 @@ float tolerance, literal native prediction/COW isolation, failed futures,
 maximum-size 600-input plans, independent deferred-hash and recorded winner
 verification, raw collision geometry, explicit index-capacity rejection, and
 repeated forced deadlines in nested source rollout descendants with no surviving
-children or zombies. Twenty-three focused contracts pass; full matrices and
-other-difficulty story tests were not rerun for this optimization.
+children or zombies. The initial live milestone passed 23 focused contracts;
+[Validation](VALIDATION.md) owns the current gate. Full matrices and other-
+difficulty story tests were not rerun for that optimization.

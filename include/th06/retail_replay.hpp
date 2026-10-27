@@ -19,6 +19,7 @@ struct RetailStage {
 struct RetailReplay {
     std::uint8_t shot = 0, difficulty = 3;
     std::int32_t score = 0;
+    // Five/six main-game records, or one Extra record mapped to file slot seven.
     std::vector<RetailStage> stages;
 };
 // Japanese 1.02h T6RP format. Offsets are file-relative, never native pointers.

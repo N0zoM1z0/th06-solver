@@ -1,5 +1,24 @@
 # Native profile and contracts
 
+## Code ownership
+
+Paths below own behavior; [Validation](VALIDATION.md) owns reproducible commands,
+[Status](STATUS.md) current acceptance, and [Shadow MPC](SHADOW_MPC.md) the live
+protocol. Keep CLI/report code separate from imported mutable gameplay state.
+
+| Layer | Primary files | Responsibility |
+| --- | --- | --- |
+| Resources | `src/resources.cpp`, `include/th06/resources.hpp` | Checked PBG3/LZSS extraction and owned source buffers |
+| Native world | `src/session.cpp`, `src/native_support.cpp`, `src/platform.cpp` | Bootstrap, original calc callbacks, RNG, lifecycle and scalar observations |
+| Imported game | `third_party/th06/`, `third_party/th08-compat/` | Pinned gameplay, layouts, CPU compatibility and licenses |
+| Proposals and native proof | `src/planner.cpp`, `include/th06/{laser,bullet,boss}_guidance.hpp` | Cheap candidate scoring, fork-owned rollouts and literal winner replay |
+| Native tapes/CLI | `src/tape.cpp`, `tools/{headless,plan,replay_check,campaign,runtime_bench}.cpp` | Accepted inputs/digests, complete checks, isolated campaign identities and timing |
+| Live protocol/follower | `include/th06/shadow_bridge.hpp`, `src/shadow_native.cpp`, `tools/shadow_online.cpp` | Fixed-width receipts/plans, actual-input follow, lead/adoption validation and accounting |
+| Bounded live search | `src/shadow_search.cpp`, `src/shadow_recorded.cpp` | Group deadlines, certificate checkpoints and optional conditional geometry |
+| Retail input owner | `tools/wine-shadow/observer.cpp`, `limiter_scope.hpp` | Original common start, input sampling, receipts, terminal and scoped limiter |
+| Retail replay | `src/retail_replay.cpp`, `tools/replay_export.cpp`, `tools/wine-replay/` | Original-format export/loader bridge, render scopes and journals |
+| Launch/capture | `scripts/run_wine_shadow.py`, `run_wine_replay.py`, `shadow_capture.py`, `replay_pacing.py` | Owned Wine/cgroups, frozen identities, original clocks and post-game compact delivery |
+
 ## Data flow and ownership
 
 Private DAT bytes → checked PBG3/LZSS extraction → original loaded ECL/ANM/STD/MSG
@@ -42,8 +61,9 @@ RNG or the current stage.
 Rendering and text rasterization are omitted. CPU Direct3D resources retain
 dimensions, formats and lifetimes; PNG/BMP dimensions are read, while pixel colors
 are not decoded. ANM/GUI update scripts and RNG consumption still execute. This
-profile is an operational native simulator; retail-equivalent floating point,
-menu entry and draw-chain behavior are not established.
+profile omits the original menu and draw chain. Selected actual Wine runs and
+original-loader replays have separate gameplay proofs; the native runtime alone
+does not establish retail equivalence or original rendering behavior.
 Cross-runtime acceptance concerns gameplay progress and correctness. Harmless
 numeric drift from Wine is diagnostic; bit-identical floating point is not a
 requirement. Native parent/child and fresh-replay consistency remain internal
@@ -72,11 +92,15 @@ source analysis, unchanged-input timing workloads and focused seed comparison.
 ## Planning and proof boundaries
 
 `Observation` contains owned scalar hazard/movement data and no native pointers.
-Cheap linear forecasts rank 33 deterministic candidates (focus/unfocused movement,
-short movement followed by holding, or continued movement). This ranking omits
-future spawns, non-linear transforms and laser geometry. It proposes actions only.
-The default search evaluates four ranked proposals, expanding through the rest
-when needed. The report records budgets and every actual branch/update cost.
+The base cheap linear forecast ranks 33 deterministic candidates (focus/unfocused
+movement, short movement followed by holding, or continued movement). It omits
+future spawns and arbitrary transforms. Optional live guidance adds observed
+laser lifecycle/motion and native-verified orbital futures, finite vector
+acceleration, power-item attraction and actual boss HP/phase scoring. These
+remain proposal heuristics, not collision or terminal authorities. The offline
+default target is four ranked candidates, expanding through the rest if none
+has a complete safe future. Live targets and deadline reserves are separate
+settings; the report counts actual completed branch/update work.
 
 Opt-in `--reactive` adds a continuation for each initial input. After the initial
 commit-sized action, this branch steers every 16 native updates using owned future
@@ -138,8 +162,11 @@ fingerprint over archive bytes; stored PBG3 checksums validate extraction.
 
 ## Story lifecycle
 
-Standalone checkpoints run the source's practice terminal path. Story mode runs
-the normal MSG stage-end path. A pending NEXT_STAGE transition is processed at
+Standalone main-game checkpoints (stages 1–6) run the source's practice terminal
+path. Extra (stage 7 / difficulty 4) disables practice and runs the normal Extra
+MSG/result lifecycle. Historical power-128 Extra checkpoints still differ from
+the normal retail power-0 entry. Main-game story mode runs the normal MSG
+stage-end path. A pending NEXT_STAGE transition is processed at
 the next input boundary, corresponding to the supervisor's next priority-0 call.
 Stage/player/enemy/bullet/effect/GUI cut/register callbacks retain their source
 order and observe NEXT_STAGE throughout the handoff.
@@ -165,8 +192,7 @@ Fixed versus moved stage-1 inputs produce different hit frames and RNG histories
 shared frozen futures would therefore be an invalid oracle. Independent seeded
 stage starts and fresh-process replay are the additional predictions tested beyond
 the first fitted stationary trace. Full stage coverage and story lifecycle fidelity
-remain governed by the explicit acceptance matrix in Status.
-
+are scoped by [Status](STATUS.md) and the [historical matrix](NATIVE_HISTORY.md#acceptance-matrix).
 
 ## Live shadow execution
 
@@ -181,7 +207,12 @@ whole child certificate atomically, preserving the deadline when it exceeds a
 pipe's atomic-write size. Both native and Wine binaries are snapshotted together.
 
 The search process group has a wall deadline, including its native descendants.
-Only full safe futures or real terminals publish. Native collision/RNG authority,
+Only full safe futures or real terminals publish. With `--anytime`, the first
+complete immutable input/digest certificate can survive a later ranking timeout;
+its completion timestamp must meet the budget and the parent reads it only
+after killing/reaping the entire search group. A 75% soft ranking deadline
+applies only after a full future exists, reserving winner-verification time.
+Incomplete futures and interrupted work never become certificates. Native collision/RNG authority,
 retail progress and independent whole-tape native replay remain separate proof
 layers. Failed futures, timeout work and exhausted-queue fallback remain visible.
 A source stage handoff clears the old queue in both owner and follower, carrying
@@ -196,3 +227,17 @@ not change original x87 gameplay compilation. Per-frame shape limits and a
 32-MiB combined spatial-index entry cap fail explicitly on overflow. Fresh
 proposal frequency and candidate count are configurable independently of the
 verified horizon and immutable lead; none of these settings changes game clocks.
+
+## Retail replay export boundary
+
+`RetailReplay::stages` represents a complete five/six-stage main-game story or
+one complete normal-start Extra. The codec writes main-game entries to slots
+0–4/5, or the single Extra entry to original `stageReplayData[6]`, leaving slots
+0–5 empty. Version, checksum, sparse inputs, resources and pre-init seeds follow
+the original loader; native tapes are not serialized gameplay worlds.
+
+Export replays every source input/digest before writing `.rpy`. Original-loader
+Wine playback then supplies independent retail evidence. For the same final
+MSG event, live Extra goes to the result screen while replay returns to the
+replay menu; terminal validation follows each source lifecycle. Whole-route
+agreement, media decode, pure-playback pacing and online FPS are distinct checks.

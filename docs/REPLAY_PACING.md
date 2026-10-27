@@ -252,13 +252,13 @@ window event. Its CSV flushes once per 60 events and on exit. State CSV conversi
 and native comparison run after Wine exits; every recorded field remains available.
 Clocks, timestamps and version-4 acceptance thresholds are unchanged.
 
-The mapped collector passes 26 focused contracts, including publication-before-
-consumption, invalid counts, unused-tail rejection and typed CSV conversion.
-A real Wine diagnostic prefix retains all 78,000 native-matching NMNB updates,
-peaks at 279,580,672 bytes and reports zero OOM events. Fast diagnostic prefixes
-skip early raster work and waits to reach the retained failure quickly; they
-are explicitly excluded from FPS acceptance. The normal complete story above
-provides the separate final output proof.
+The mapped-collector milestone passed 26 focused contracts, including
+publication-before- consumption, invalid counts, unused-tail rejection and typed CSV
+conversion. A real Wine diagnostic prefix retains all 78,000 native-matching NMNB
+updates, peaks at 279,580,672 bytes and reports zero OOM events. Fast diagnostic
+prefixes skip early raster work and waits to reach the retained failure quickly; they
+are explicitly excluded from FPS acceptance. The normal complete story above provides
+the separate final output proof.
 
 ## Acceptance and resource scope
 
@@ -431,11 +431,11 @@ ctest --test-dir build --output-on-failure \
   -E 'real_data_contracts|story_transition_contracts|story_terminal_contracts|extra_bootstrap_contracts'
 ```
 
-Twenty-six focused contracts pass, including raw-vertex byte order/winding and
-buffer bounds, the real x87 regression/restoration,
-integer timing, synthetic 60/30-Hz discrimination, rejection of asynchronous API
-receipts without output proof, malformed streams, selected native-route comparison
-and missing service environment rejection. Actual retail cases remain necessary.
+That replay-rendering milestone passed 26 focused contracts, including raw-vertex byte
+order/winding and buffer bounds, the real x87 regression/restoration, integer timing,
+synthetic 60/30-Hz discrimination, rejection of asynchronous API receipts without output
+proof, malformed streams, selected native-route comparison and missing service
+environment rejection. Actual retail cases remain necessary.
 
 The full-story render/FPU entry and restoration counters balance, and unpaused
 read-only process diagnostics confirm the batch adapter survives handoffs. The
