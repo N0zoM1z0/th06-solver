@@ -7,8 +7,17 @@ seed/power, separately from historical power-128 native checkpoints. Its first
 misses/bombs, 599 publications, zero timeouts and four startup fallback inputs.
 It is incomplete. All 30 CTest contracts and all four historical Extra tapes
 pass after correcting Extra's practice flag. See [live instructions](SHADOW_MPC.md).
+The first full Extra trial (retail seed 29911, natural power 0) fails at update
+23,010: native follow remains consistent, but its ordinary search runs out of
+certified future and incurs one miss after repeated timeouts. A fixed-prefix pulse probe finds a
+verified 256-input escape; that model result does not establish Wine completion.
+All failed and prefix evidence remains under `reports/local/shadow-extra-20261027/`.
+An eager 240-tail pulse trial at retail seed 7369 also fails, at update 10,743,
+with 431/1,999 motion-phase timeouts. Optional `--pulse-on-failure` instead tries
+one recovery after an unsuccessful ordinary search and then restores ordinary
+proposals. It is a separate experiment, not an established Extra clear.
 
-Immediate scope (owner clarification, 2026-10-26):
+Previous pacing scope (owner clarification, 2026-10-26):
 [native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),
 with no MPC or native follower during playback. Online control acceptance stays
 separate. Native re-export revalidates the historical 127,737-update Lunatic

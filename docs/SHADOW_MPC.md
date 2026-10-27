@@ -71,6 +71,42 @@ prefix is incomplete. Evidence remains under
 Wine 8 live profile; the Wine 11 replay presentation result does not establish
 online FPS.
 
+The first full Extra attempt (`extra-full001`, retail seed 29911, initial power
+0) fails at update 23,010 with one miss and no bomb. All actual receipts match
+the native follower, with no stale/rejected plans; 5,728 publications, 17 search
+timeouts and seven fallback inputs are retained. Search p50/p99/max is
+24.38/51.39/82.25 ms; group peak is 352,509,952 bytes with zero OOM events.
+The last successful 64-tail plan ends at update 23,007, followed by 13 consecutive
+heuristic timeouts and two failed searches. The fresh NMNB checker rejects the
+actual hit at 23,010; this is not a passing route.
+
+Two bounded native probe batches replay this exact failed prefix, retaining the
+next 8/16 actual inputs as committed lead. At origin 22,935 (active spell index
+55), ordinary 128/240-tail proposals time out at 110/160 ms. Optional pulse motion
+finds a complete 256-input lead/tail in 72.88 ms with a 240-tail/16-lead/160-ms
+profile; a separate literal replay verifies all its digests and no hit. Conditional
+recorded-geometry proposals still time out there. All 36 probe outcomes remain
+private. This proves one bounded native escape, not a retail clear or a general
+parameter improvement; the next Wine trial receives a new retail seed.
+
+The eager-motion full trial (`extra-pulse240-full002`, retail seed 7369) fails
+earlier, at update 10,743 in the midboss section. It uses a 240-tail/16-lead/160-ms
+budget with fresh proposals. Motion supplies 1,564 of 1,565 publications, and 431
+of 1,999 searches time out in the motion phase. Search p50/p99/max is
+54.02/164.21/168.42 ms; five inputs use fallback and no plan is stale/rejected.
+These are different retail seeds, so the two full trials do not isolate a policy
+effect. Independent diagnostic replays reproduce both actual hits and every
+native digest, including the failed final update; neither is an NMNB acceptance.
+
+`--pulse-on-failure` is a separate opt-in scheduling experiment: after an ordinary
+search returns no certified future (including timeout), try motion on the next
+search only, then restore ordinary proposals even if that recovery also fails.
+It is mutually exclusive with eager `--pulse`. Each attempt keeps the declared
+whole-search budget and the same native certification/freshness/lead guards.
+Decision logs identify recovery attempts, and the final report counts recovery
+searches/publications separately. This avoids enabling motion on every fresh
+search; defaults and archived frozen trials retain their earlier behavior.
+
 ## Boundary contract
 
 This follows th08-solver's common-start, true-RNG shadow architecture, rather

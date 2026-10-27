@@ -77,6 +77,7 @@ parser.add_argument('--stage', type=int, default=5)
 parser.add_argument('--shot', type=int, default=1)
 parser.add_argument('--story', action='store_true')
 parser.add_argument('--pulse', action='store_true', help='try rotating native motion recovery before heuristic proposals')
+parser.add_argument('--pulse-on-failure', action='store_true', help='try motion once after an unsuccessful ordinary search')
 parser.add_argument('--recorded', action='store_true', help='propose multi-turn paths from conditional native collision geometry')
 parser.add_argument('--record', action='store_true', help='capture owned Xvfb video and private audio separately')
 parser.add_argument('--horizon', type=int, default=128)
@@ -102,6 +103,8 @@ if not (32 <= args.horizon <= 592 and 8 <= args.lead <= 64 and args.horizon + ar
     parser.error('invalid shadow search bounds')
 if args.recorded and args.horizon > 240:
     parser.error('recorded proposals require horizon <= 240')
+if args.pulse and args.pulse_on_failure:
+    parser.error('choose one pulse policy')
 args.data = args.data.resolve()
 args.game = args.game.resolve()
 args.build = args.build.resolve()
@@ -170,6 +173,8 @@ worker_config = {
              windows(args.output)], 'record': args.record}
 if args.pulse:
     worker_config['controller'].append('--pulse')
+if args.pulse_on_failure:
+    worker_config['controller'].append('--pulse-on-failure')
 if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:
