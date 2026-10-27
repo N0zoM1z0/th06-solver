@@ -102,13 +102,23 @@ def worker(directory):
     if config.get('wine_cpus'):
         wine_command = ['/usr/bin/taskset', '--cpu-list',
                         ','.join(map(str, config['wine_cpus'])), *wine_command]
-    game = subprocess.Popen(wine_command, env=wine_env)
+    game = None
+    capture = None
     snapshot = False
     display_monitor = None
     libraries_recorded = False
     updates = LiveUpdates(output / 'update-times.bin')
     try:
+        if config.get('record'):
+            from shadow_capture import Capture
+            capture = Capture(output)
+            wine_env.update(capture.metadata['audio_environment'])
+        game = subprocess.Popen(wine_command, env=wine_env)
+        if capture:
+            capture.attach(game)
         while game.poll() is None:
+            if capture and (capture.pulse.poll() is not None or any(p.poll() is not None for p in capture.processes)):
+                raise RuntimeError('owned recording process exited before the game; inspect capture logs')
             update_count = updates.latest()[0]
             if not libraries_recorded and update_count:
                 libraries = graphics_libraries()
@@ -144,7 +154,9 @@ def worker(directory):
         return game.returncode
     finally:
         updates.close()
-        if game.poll() is None:
+        if capture:
+            capture.close()
+        if game is not None and game.poll() is None:
             game.terminate()
             try:
                 game.wait(timeout=3)
@@ -156,6 +168,8 @@ def worker(directory):
             display_monitor.wait(timeout=3)
         subprocess.run([config.get('wineserver', 'wineserver'), '-k'], check=False)
         subprocess.run([config.get('wineserver', 'wineserver'), '-w'], check=False, timeout=10)
+        if capture and capture.video is not None:
+            capture.mux(compact=config.get('compact', False))
 
 
 if len(sys.argv) == 3 and sys.argv[1] == '--worker':
@@ -187,10 +201,18 @@ parser.add_argument('--display-cpus', type=parse_cpus, help='owned display/obser
 parser.add_argument('--vblank', choices=['inherit', 'off'], default='inherit')
 parser.add_argument('--shader-cache', type=Path)
 parser.add_argument('--native-trace', type=Path, help='compare with a fresh native export CSV')
+parser.add_argument('--record', action='store_true', help='record the owned game rectangle and private game audio')
+parser.add_argument('--compact', action='store_true', help='deliver full-size, original-speed CRF26/AAC128k video; implies --record')
 parser.add_argument('--snapshot', action='store_true', help='one screenshot during initial warmup, inside the capped group')
 parser.add_argument('--display-timing', action='store_true', help='independent XDamage window update clock inside the same cap')
 parser.add_argument('--require-pacing', action='store_true', help='also fail acceptance if the declared presentation gate fails')
 args = parser.parse_args()
+if args.compact:
+    args.record = True
+if args.record:
+    missing = [name for name in ['ffmpeg', 'xdotool', 'pulseaudio'] if shutil.which(name) is None]
+    if missing:
+        parser.error('recording tools unavailable: ' + ', '.join(missing))
 if args.sleep_limiter:
     args.precise_limiter = True
 if args.batch_bullets:
@@ -255,6 +277,8 @@ sources = {name: args.build / 'wine-replay' / name for name in ['launch.exe', 'o
 sources.update({'run_wine_replay.py': Path(__file__).resolve(),
                 'replay_pacing.py': Path(__file__).with_name('replay_pacing.py'),
                 'replay_display.py': Path(__file__).with_name('replay_display.py')})
+if args.record:
+    sources['shadow_capture.py'] = Path(__file__).with_name('shadow_capture.py')
 for name, source in sources.items():
     expected = hashlib.sha256(source.read_bytes()).hexdigest()
     shutil.copy2(source, frozen / name)
@@ -321,7 +345,7 @@ config = {'expected_environment': worker_environment, 'expected_wine_environment
           'wine_nice': args.wine_nice,
           'wine_cpus': args.wine_cpus, 'display_cpus': args.display_cpus,
           'wine_environment': {name: expected_environment[name] for name in wine_only},
-          'snapshot': args.snapshot,
+          'snapshot': args.snapshot, 'record': args.record, 'compact': args.compact,
           'display_timing': args.display_timing,
           'wineserver': str(wine_server),
           'wine': [str(wine_loader), str(frozen / 'launch.exe'), 'th06.exe',
@@ -336,6 +360,7 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'wine_arch': args.wine_arch, 'wine_loader': str(wine_loader), 'wineserver': str(wine_server),
            'wine_nice': args.wine_nice,
            'wine_cpus': args.wine_cpus, 'display_cpus': args.display_cpus,
+           'record': args.record, 'compact': args.compact,
            'single_stage': args.single_stage, 'precise_limiter': args.precise_limiter,
            'sleep_limiter': args.sleep_limiter,
            'software_bullets': args.software_bullets, 'batch_bullets': args.batch_bullets,
@@ -407,6 +432,8 @@ state = subprocess.run(['systemctl', '--user', 'show', unit, '-p', 'Result', '-p
 receipt['systemd'] = dict(line.split('=', 1) for line in state.stdout.splitlines())
 receipt['synchronous_command_stream_confirmed'] = ('Setting multithreaded command stream to 0.'
                                                   in (args.output / 'process.log').read_text(errors='replace'))
+if args.record and (args.output / 'capture.json').exists():
+    receipt['capture'] = json.loads((args.output / 'capture.json').read_text())
 if (args.output / 'outcome.json').exists():
     receipt['outcome'] = json.loads((args.output / 'outcome.json').read_text())
 (args.output / 'resource-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')

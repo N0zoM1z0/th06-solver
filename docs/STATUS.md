@@ -20,6 +20,14 @@ an optimization target. This one-case replay proof does not establish online
 MPC FPS or all-seed performance. Package/DLL hashes and settings are pinned in
 [REPLAY_RUNTIME.json](REPLAY_RUNTIME.json).
 
+Separate 2026-10-27 recording: the published replay's exact SHA-256 again reaches
+all six natural NMNB clears in Wine, with all 127,737 updates matching native.
+The new `run_wine_replay.py --compact` captures the full 640×480 rectangle and
+private original game audio, then compresses after Wine exits. With WAV music
+and effects enabled, its handoff gaps are longer. This recording does not pass the
+unchanged presentation gate or replace the earlier audio-off pacing acceptance.
+See [recording instructions](REPLAY_PACING.md#record-the-replay).
+
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation
 map and local evidence index, see [CONTINUATION.md](CONTINUATION.md).
 The active checklist is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).

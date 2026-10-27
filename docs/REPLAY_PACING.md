@@ -98,6 +98,30 @@ The legacy Wine 8 / 32-bit mode remains available without `--wine` or
 builtin renderer. Actual loaded paths/hashes, not the requested environment alone,
 establish which renderer ran.
 
+## Record the replay
+
+Add `--record` to capture the owned 640×480 game rectangle and private stereo game
+audio in separate processes. Add `--compact` instead for a full-size, original-
+speed H.264 fast-CRF26/AAC128k delivery, following TH08's compact profile. It
+implies `--record`; capture remains ultrafast/single-thread, then compact encoding
+runs after Wine exits. Actual capture timestamps are retained without interpolation.
+Use `--seconds 5400` for a full story so the same bounded group can finish capture
+and subsequent encoding. The previous no-record pacing acceptance remains separate.
+
+Prepare a separate owned game copy with original WAV music and effects enabled;
+the pacing baseline has audio disabled. The recorder routes only that Wine child
+to a dedicated PulseAudio null sink. No host microphone or other application audio
+is recorded. A 2-GiB/no-swap cgroup covers Wine, Xvfb, PulseAudio, both capture
+processes and the final encoder. The recorder uses the root rectangle so startup
+window recreation cannot invalidate its capture target.
+
+The output retains `video.mkv`, lossless `audio.wav`, clock-origin/alignment data
+in `capture.json`, and `gameplay-compact.mp4` (or stream-copy `gameplay.mp4` without
+`--compact`). Each run freezes the capture helper with its SHA-256. Recording
+process failure fails the run; stopped/failed footage remains distinct from a
+complete clear. Verify complete native agreement and terminal state separately
+from full media decode, both streams, audible audio and capture PTS/cadence.
+
 ## Clocks and the limiter correction
 
 The original loop draws, runs its calculation chain, waits for its 60-Hz deadline

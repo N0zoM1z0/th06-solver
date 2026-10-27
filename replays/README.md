@@ -17,6 +17,15 @@ specific story, not other seeds, shots or complete hidden-state equality.
 - Original EXE SHA-256: `9f76483c46256804792399296619c1274363c31cd8f1775fafb55106fb852245`.
 - Native tape: `story-d3-shot0-seed0.actions`, profile `native-i386-v1`.
 
+The 2026-10-27 full Wine recording uses this exact replay SHA-256, already
+published in commit `387a7c58ea7e2347791fd1eeb1549e02785c73b3`. Its independent
+post-game comparison again matches all 127,737 updates and six natural NMNB
+clears. The private recording is retained under
+`reports/local/replay-video-20261027/story-compact001/`; the
+[recording command](../docs/REPLAY_PACING.md#record-the-replay) produces a
+640×480 original-speed compact MP4 with the game's WAV music and sound effects.
+Audio-on recording has separate pacing evidence from the earlier audio-off run.
+
 [Retail verification](../docs/RETAIL_REPLAY.md) describes export, observation,
 acceptance and the separately fixed Wine service cleanup issue. All original
 EXE/DAT files, other generated replays, tapes and raw attempt logs stay ignored.

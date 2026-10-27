@@ -24,7 +24,8 @@ class Capture:
         self.private = Path(tempfile.mkdtemp(prefix='th06-pulse-'))
         self.server = 'unix:' + str(self.private / 'native')
         self.metadata = {'display': os.environ['DISPLAY'], 'fps_requested': 60,
-                         'separate_audio_video': True, 'private_audio': True}
+                         'separate_audio_video': True, 'private_audio': True,
+                         'audio_environment': {'PULSE_SERVER': self.server, 'PULSE_SINK': 'th06_game'}}
         config = self.private / 'pulse.pa'
         config.write_text('load-module module-native-protocol-unix socket=' +
                           str(self.private / 'native') + ' auth-anonymous=1\n'
@@ -100,7 +101,7 @@ class Capture:
                 self.pulse.wait()
         shutil.rmtree(self.private, ignore_errors=True)
 
-    def mux(self):
+    def mux(self, compact=False):
         origins = {}
         for name in ['audio', 'video']:
             log = (self.output / (name + '-capture.log')).read_text(errors='replace')
@@ -113,11 +114,20 @@ class Capture:
         alignment = ('atrim=start_sample=' + str(samples) + ',asetpts=PTS-STARTPTS' if offset >= 0
                      else 'adelay=' + str(samples) + 'S:all=1')
         self.metadata.update({'clock_origins_seconds': origins, 'audio_trim_seconds': offset,
+                              'compact': compact, 'compact_profile': '640x480 fast CRF26 / AAC128k' if compact else None,
                               'capture_process_exits': [p.returncode for p in self.processes]})
         (self.output / 'capture.json').write_text(json.dumps(self.metadata, indent=2) + '\n')
+        # Keep real capture timestamps; compact changes coding quality, not time.
+        video_args = (['-c:v', 'libx264', '-preset', 'fast', '-crf', '26',
+                       '-threads:v', '1', '-pix_fmt', 'yuv420p', '-fps_mode', 'passthrough',
+                       '-enc_time_base', '1:1000000'] if compact else ['-c:v', 'copy'])
+        destination = self.output / ('gameplay-compact.mp4' if compact else 'gameplay.mp4')
         with (self.output / 'mux.log').open('wb') as log:
             subprocess.run(['ffmpeg', '-nostdin', '-hide_banner', '-y', '-i', str(self.output / 'video.mkv'),
                             '-i', str(self.output / 'audio.wav'), '-map', '0:v', '-map', '1:a',
-                            '-af', alignment + ',apad', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k',
-                            '-shortest', '-movflags', '+faststart', str(self.output / 'gameplay.mp4')],
+                            '-af', alignment + ',apad', *video_args, '-c:a', 'aac', '-b:a', '128k',
+                            '-shortest', '-movflags', '+faststart', str(destination)],
                            stdout=log, stderr=subprocess.STDOUT, check=True)
+        self.metadata['delivery'] = destination.name
+        self.metadata['delivery_bytes'] = destination.stat().st_size
+        (self.output / 'capture.json').write_text(json.dumps(self.metadata, indent=2) + '\n')
