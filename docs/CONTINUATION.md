@@ -1,5 +1,16 @@
 # Continuation: Lunatic online shadow MPC
 
+2026-10-27 owner-requested Extra experiment: stage 7 now follows the original
+normal Extra entry (power 0), separately from historical power-128 checkpoints.
+One live prefix passes; three full Reimu A trials hit, so no Extra online NMNB
+clear is established. Optional `--pulse-on-failure` retains ordinary proposals
+and tries one motion recovery after a failed search. Both Flandre failures
+reproduce at spell 55 / ECL subroutine 37. See [the live guide](SHADOW_MPC.md) and
+private `reports/local/shadow-extra-20261027/acceptance.json` for all four Wine
+trials, 36 native probes, independent failed-route digests and resource receipts.
+All 30 CTest contracts and four historical Extra tapes pass; live 60 FPS remains
+unresolved. The Lunatic priorities below remain separate.
+
 Current owner clarification, 2026-10-26: first stabilize
 [actual Wine `.rpy` replay pacing](REPLAY_PACING.md), using an independently
 verified native export and no MPC/native follower during playback. The online

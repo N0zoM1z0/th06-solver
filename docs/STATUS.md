@@ -16,6 +16,13 @@ An eager 240-tail pulse trial at retail seed 7369 also fails, at update 10,743,
 with 431/1,999 motion-phase timeouts. Optional `--pulse-on-failure` instead tries
 one recovery after an unsuccessful ordinary search and then restores ordinary
 proposals. It is a separate experiment, not an established Extra clear.
+The conditional recovery trial (retail seed 32846, 128-tail/16-lead/110-ms) fails
+at update 22,425 despite 42 successful recovery publications. All four Wine
+trials are accounted for: one incomplete prefix, three hits, zero full Extra
+online NMNB clears. Independent diagnostic replays match all actual digests and
+reproduce every hit. Both Flandre failures occur at spell index 55 / ECL subroutine
+37, the next focused search target. All cases have zero OOM events, with peak
+495.38 MiB including the prefix; stable online 60 FPS remains unestablished.
 
 Previous pacing scope (owner clarification, 2026-10-26):
 [native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),

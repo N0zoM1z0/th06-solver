@@ -10,6 +10,10 @@ See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
 owner's request; original game assets remain private. The current experiment is
 Extra online shadow MPC, starting with Reimu A and the original retail entry.
+Its first three full attempts all hit; **Extra online NMNB is not yet established**.
+The separate 2,400-update prefix passes follow and fresh native replay. Failed
+cases, decision budgets and conditional recovery results are retained in the
+[live controller guide](docs/SHADOW_MPC.md).
 The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
 Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5
 recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-update

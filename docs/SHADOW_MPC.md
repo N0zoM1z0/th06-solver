@@ -107,6 +107,36 @@ Decision logs identify recovery attempts, and the final report counts recovery
 searches/publications separately. This avoids enabling motion on every fresh
 search; defaults and archived frozen trials retain their earlier behavior.
 
+The conditional recovery full trial (`extra-recovery128-full003`, seed 32846,
+128-tail/16-lead/110-ms, fresh, three candidates) also fails, at update 22,425.
+It publishes 5,305 plans, including 42 of 93 recovery attempts; 142 of 5,450
+searches time out. Search p50/p99/max is 35.79/111.60/112.81 ms including cleanup.
+Six inputs use fallback; no stale/rejected plan or follower divergence occurs.
+The last successful plan ends at 22,423. Ordinary and recovery searches then
+alternate but fail to replace that future before the hit two updates later.
+Every recovery follows an unsuccessful ordinary search and restores ordinary
+proposals afterwards, verified against all 5,450 actual decision records.
+
+Full-trial accounting (Reimu A, original power-0 Extra entry, independent retail
+seeds; these are not paired policy comparisons):
+
+| Retail seed | Profile: tail / lead / budget | Actual result | Updates | Search p99 ms | Timeouts / searches | Fallback |
+|---|---|---|---:|---:|---:|---:|
+| 29911 | 64 / 8 / 80, ordinary | Hit, Flandre spell 55 | 23,010 | 51.39 | 17 / 5,747 | 7 |
+| 7369 | 240 / 16 / 160, eager pulse | Hit, midboss spell 53 | 10,743 | 164.21 | 431 / 1,999 | 5 |
+| 32846 | 128 / 16 / 110, pulse on failure | Hit, Flandre spell 55 | 22,425 | 111.60 | 142 / 5,450 | 6 |
+
+**No complete Extra online NMNB clear is established.** Four Wine trials comprise
+one budget prefix and three actual-hit attempts. All actual native digests match
+in independent diagnostic replays, including the three hits; the strict NMNB
+checker rejects each failed route. Source-context replay locates both Flandre
+failures at spell index 55 / ECL subroutine 37, making that phase the next focused
+search target. Group peaks are 336.18/335.63/341.56 MiB for the full trials,
+495.38 MiB including the prefix, with zero OOM/OOM-kill events and verified
+2-GiB/no-swap limits. Live FPS remains unresolved. Full acceptance, frozen tools,
+all retries, native probes and failure contexts are retained in
+`reports/local/shadow-extra-20261027/acceptance.json` and adjacent case directories.
+
 ## Boundary contract
 
 This follows th08-solver's common-start, true-RNG shadow architecture, rather
