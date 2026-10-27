@@ -1,5 +1,13 @@
 # Live Wine shadow MPC
 
+**First complete Extra online NMNB clear (2026-10-27)**: Reimu B, captured seed
+35964, normal power-0 retail entry, 43,126 actual updates and one natural clear.
+All retail projections follow native; independent complete frozen replay of the
+actual tape matches every digest. The [full combined profile](EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear)
+has only four startup fallback inputs, peak 342.85 MiB and OOM 0. Eight prior
+full hits remain in the ledger. Random-seed robustness and stable online 60 FPS
+remain open.
+
 Optional `--anytime` retains the first full native certificate if later ranking
 times out, while preserving timeout accounting, whole-group cleanup and retail
 lead checks. `--sleep-limiter` implies the replay-tested `--precise-limiter`
@@ -29,7 +37,8 @@ native models retain mixed timing results and counterexamples.
 Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
 optional observed-laser guidance and native-verified curved futures. The first
 Wine sample passes the previous spell-55 failure, then hits on spell 62 at update
-43,521. No complete Extra online NMNB or stable online 60-FPS claim follows.
+43,521. That first failed sample remains separate from the later combined-profile
+Extra clear; stable online 60 FPS remains unestablished.
 
 The controller now drives the owned Japanese 1.02h retail process under Wine.
 Two complete Lunatic Stage 5 / Reimu B runs and one Stage 6 / Marisa B run pass
@@ -148,8 +157,8 @@ alternate but fail to replace that future before the hit two updates later.
 Every recovery follows an unsuccessful ordinary search and restores ordinary
 proposals afterwards, verified against all 5,450 actual decision records.
 
-Full-trial accounting (Reimu A, original power-0 Extra entry, independent retail
-seeds; these are not paired policy comparisons):
+Full-trial accounting (Reimu A unless marked, original power-0 Extra entry,
+independent retail seeds; these are not paired policy comparisons):
 
 | Retail seed | Profile: tail / lead / budget | Actual result | Updates | Search p99 ms | Timeouts / searches | Fallback |
 |---|---|---|---:|---:|---:|---:|
@@ -161,20 +170,22 @@ seeds; these are not paired policy comparisons):
 | 59127 | 128 / 16 / 110, power-aware, six candidates | Hit, spell 62 | 40,028 | 111.41 | 319 / 8,242 | 10 |
 | 24237 | 128 / 16 / 110, survival horizon 256 | Hit, spell 58 | 28,121 | 111.34 | 132 / 6,398 | 5 |
 | 5594 | 128 / 16 / 110, damage-aware | Hit, spell 57 | 22,062 | 111.08 | 81 / 4,921 | 8 |
+| 35964 (Reimu B) | 128 / 16 / 110, combined acceleration profile, survival 256 | Complete NMNB | 43,126 | 111.27 | 360 / 9,590 | 4 |
 
-**No complete Extra online NMNB clear is established.** Completed gameplay
-trials comprise one budget prefix and eight actual-hit attempts; three
-zero-frame startup attempts are accounted separately. Every actual native digest
-matches independent diagnostic replay including each hit; strict NMNB replay
-rejects every failed route. The laser-aware sample passes spell 55. Later samples
-fail at spells 57/58/62 / ECL subroutines 44/48/60. The latest
-survival profile never reaches its extension cue. Native timing-model successes
-remain separate from this retail ledger.
+**One complete Extra online NMNB clear is established for the declared case.**
+Completed gameplay trials comprise one budget prefix, eight actual-hit attempts
+and one complete clear; three zero-frame startup attempts are accounted
+separately. Every actual native digest matches independent replay. The strict
+NMNB checker rejects every failed route and accepts the clear's entire actual
+tape with `--require-complete`. The clear exercises survival-only extension in
+actual Wine, with 1,063 searches and 966 publications. It has no stale/rejected
+plans, follower error or fallback after its four startup inputs.
 
 Every Wine tree uses the verified 2-GiB/no-swap cap with zero OOM/OOM-kill events;
-the largest peak including the prefix is 495.38 MiB. Live FPS remains unresolved.
-Frozen tools, complete actual inputs, every failed retry and source context remain
-under private `reports/local/shadow-extra-20261027/`,
+the largest peak including the prefix is 495.38 MiB. The clear peaks at
+342.85 MiB. Live FPS and random-seed robustness remain unresolved. Frozen tools,
+complete actual inputs, every failed retry and source context remain under
+private `reports/local/shadow-extra-20261027/`,
 `reports/local/extra-search-20261027/` and
 `reports/local/extra-online-20261027/`, with per-root acceptance ledgers.
 

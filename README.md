@@ -8,18 +8,15 @@ replay. **Wine retail playback also passes one complete Lunatic Reimu A story**:
 127,737 updates, six natural stage clears and zero misses/bombs.
 See [Retail replay](docs/RETAIL_REPLAY.md) for the separate evidence boundary.
 The verified [Lunatic Reimu A `.rpy`](replays/th6_01.rpy) is included by the
-owner's request; original game assets remain private. The current experiment is
-Extra online shadow MPC, starting with Reimu A and the original retail entry.
-Its first eight completed full attempts all hit; **Extra online NMNB is not yet established**.
-Optional [laser-aware search](docs/EXTRA_SEARCH.md) passes the former Flandre
-spell-55 failure in Wine samples, which later hit on spells 58/62.
-Optional power-aware proposals, cooperative ranking, survival-only lookahead
-boss-damage scoring and finite-acceleration guidance retain full native certificates. Their
-[focused evidence and counterexamples](docs/EXTRA_SEARCH.md) remain separate
-from a complete online clear.
-The separate 2,400-update prefix passes follow and fresh native replay. Failed
-cases, decision budgets and conditional recovery results are retained in the
-[live controller guide](docs/SHADOW_MPC.md).
+owner's request; original game assets remain private.
+
+**One complete Extra online shadow MPC run now passes NMNB in actual Wine**:
+Reimu B, captured seed 35964, original power-0 entry, 43,126 updates and one
+natural clear. Every actual retail projection matches native, and the complete
+actual-input tape passes independent frozen fresh replay. The
+[combined profile and full failed-attempt ledger](docs/EXTRA_SEARCH.md) retain
+eight earlier full hits and targeted native counterexamples. This one clear
+establishes neither all-seed robustness nor stable online 60 FPS.
 The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
 Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5
 recording. The Stage 6 clear uses a minimum four-update decision interval, a 64-update

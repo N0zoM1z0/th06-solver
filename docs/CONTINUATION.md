@@ -1,25 +1,26 @@
-# Continuation: Lunatic online shadow MPC
+# Continuation: online shadow MPC
 
-2026-10-27 current owner scope: Extra online shadow MPC with Reimu A, normal
-power-0 retail entry and captured seeds. One incomplete prefix passes; eight
-completed full attempts hit. Complete Extra online NMNB and live 60 FPS remain
-open. The latest seed 5594 hits at update 22,062 on spell 57 with 946 boss HP;
-all retail projections and independent native digests agree including the hit.
+2026-10-27 current owner scope: Extra online shadow MPC. **First complete
+retail NMNB clear passes**: Reimu B, seed 35964, normal power-0 entry,
+43,126 actual updates, one natural clear and zero misses/bombs. Every retail
+projection matches native; independent frozen fresh replay of the whole actual
+tape with `--require-complete` matches every digest and confirms completion.
 
-Current optional refinements include laser geometry/orbits, immutable anytime
-certificates, a ranking-time reserve, native power pickups, survival-only longer
-lookahead, boss-damage scoring and finite-acceleration bullet forecasts. Forty
-local CTest contracts pass.
-Promoted native models improve early power and one survival window, but retain
-failed seeds. Global 256-tail spell-58 models exhaust the 110-ms budget and fail;
-keep the 128 base horizon. Damage-aware 128-tail models pass two captured windows
-and fail a third, so ranking is still experimental.
+Profile: base 128 / survival 256, lead 16 / cap 110 ms / interval 4 / six-candidate
+target; fresh, pulse-on-failure, laser-aware, anytime, power-aware, damage-aware,
+acceleration-aware and sleep-limiter. All 40 local contracts and implementation
+CI pass. Only four startup inputs use fallback; no later fallback, stale/rejected
+plans or follower error occurs. Peak is 342.85 MiB, OOM 0 under verified
+2-GiB/no-swap limits. The successful private case is
+`reports/local/extra-online-20261027/online-acceleration-reimuB-008/`.
 
-Continue with earlier candidate-route choices before the spell-57/58 bottom-edge
-and spell-62 right-edge traps. Acceleration model controls and guided routes all
-pass two captured windows, with mixed completion times; keep the flag optional. A native full future, fewer timeouts or a completed
-spell prefix is not a complete retail clear. Keep actual search/queue timings,
-all retries and fresh full-input validation. See [focused evidence](EXTRA_SEARCH.md),
+**Random-seed robustness and stable online 60 FPS remain open.** This is one
+combined-profile clear, not a paired optimization attribution. Keep all eight
+prior full hits, the incomplete prefix, three zero-frame startup attempts and
+failed native alternatives. Global long horizons under the original budget
+remain counterexamples; damage and survival models retain failed seeds.
+Continue with selected hard seeds/earlier route choices and online pacing;
+do not rerun the full matrix. See [focused evidence](EXTRA_SEARCH.md),
 [status](STATUS.md) and [the full live ledger](SHADOW_MPC.md). Private evidence
 roots are `reports/local/shadow-extra-20261027/`,
 `reports/local/extra-search-20261027/` and
@@ -92,7 +93,8 @@ The online implementation now includes:
 - Fork-owned speculative worlds, immutable queued input leads, exact internal
   native input/digest checks, and retail rejection of stale or changed-lead plans.
 - Whole-search deadlines covering proposals, native verification, digest replay,
-  IPC and descendant cleanup. Timeout retains the prior verified queue.
+  IPC and descendant cleanup. Timeout retains the prior verified queue or a
+  fully completed immutable checkpoint after cleanup.
 - Version-2 mapped plans of up to 600 inputs and atomic `SOCK_SEQPACKET` child
   certificates. Larger verified futures can actually be queued in full.
 - Optional `--fresh` / `--proposals`, rotating `--pulse` recovery, and conditional

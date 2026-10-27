@@ -2,8 +2,10 @@
 
 The 2026-10-27 experiment targets the actual failed Extra Reimu A routes, not a
 new offline matrix. Historical seed-0 power-128 checkpoints and normal power-0
-Wine starts remain separate. Full Extra online NMNB and stable online 60 FPS
-are not established.
+Wine starts remain separate. One complete Extra online NMNB clear now passes
+for Reimu B / seed 35964 under the combined profile below. Eight earlier full
+hits remain counterexamples; all-seed robustness and stable online 60 FPS
+remain unestablished.
 
 ## Laser guidance and curved proposals
 
@@ -336,3 +338,62 @@ also succeed, and the earlier guided model is slower; this establishes tested
 motion semantics and mixed targeted behavior, not a general policy win or retail
 clear. Raw attempts and checks remain under private
 `reports/local/extra-online-20261027/acceleration-model001/`.
+
+## First complete Extra online NMNB clear
+
+`online-acceleration-reimuB-008` captures retail seed **35964**, original Extra
+power 0, Reimu B. Actual Wine reports one natural clear at **43,126 updates**,
+zero misses and zero bombs. A fresh independent process using the frozen
+pre-change checker with `--require-complete` replays the entire actual tape,
+matches every per-frame native digest and confirms complete NMNB. Independent
+source-context replay matches every actual retail projection, ending at spell
+63 / ECL subroutine 69, boss HP 0. No hidden-state import or offline replacement
+route is used.
+
+The combined profile is implemented at
+[`4750259`](https://github.com/N0zoM1z0/th06-solver/commit/475025965d12a6ccb4123c762251ed61340d31b8),
+with [green implementation CI](https://github.com/N0zoM1z0/th06-solver/actions/runs/40494057560)
+and all 40 local CTest contracts passing:
+
+```sh
+python3 scripts/run_wine_shadow.py \
+  --game /path/to/private-game-copy --prefix /path/to/dedicated-win32-prefix \
+  --data /path/to/same-six-dat-archives --stage 7 --shot 1 \
+  --horizon 128 --survival-horizon 256 --lead 16 --budget-ms 110 \
+  --interval 4 --proposals 6 --fresh --pulse-on-failure --laser-aware \
+  --anytime --power-aware --damage-aware --acceleration-aware --sleep-limiter \
+  --updates 120000 --seconds 2400 --output reports/local/extra-combined-live
+```
+
+This run uses the existing Wine 8 live profile, no recording, and scoped limiter
+precision/coarse sleeps. Search and source receipts retain their actual timings:
+
+| Measure | Actual result |
+|---|---:|
+| Searches / timeouts / publications | 9,590 / 360 / 9,307 |
+| Published deadline certificates / ranking yields | 81 / 207 |
+| Survival-horizon searches / publications | 1,063 / 966 |
+| Orbital / conditional recovery publications | 265 / 67 |
+| Planned / fallback inputs | 43,122 / 4, all fallback at startup |
+| Stale / rejected plans / follower errors | 0 / 0 / 0 |
+| Search p50 / p99 / max, including cleanup | 59.54 / 111.27 / 119.00 ms |
+| Actual receipt mean / p99 gap / max gap | 57.08 Hz / 27.49 ms / 628.02 ms |
+| Controller wall / whole service wall | 755.46 / 765.09 s |
+| Whole Wine-tree peak memory | 359,501,824 bytes, 342.85 MiB |
+| Verified memory / swap / OOM / OOM-kill | 2 GiB / 0 / 0 / 0 |
+| Limiter entries / restores / coarse sleeps | 43,245 / 43,245 / 287,506 |
+
+All frozen binary hashes match the resource receipt. The actual-input tape's
+SHA-256 is `98025c911e03c56225a83819ac3461eeb76d4b39fbeff3b77bab1f8acd9aee61`.
+The case's `proof.json`, full actual inputs, every retail receipt, all decisions,
+resource/binary identities and independent checker outputs remain private under
+`reports/local/extra-online-20261027/`. Generated Extra tapes remain ignored;
+the tracked Lunatic replay is unchanged.
+
+This is **one complete combined-profile/shot/seed clear**. The ledger still
+includes eight failed full attempts, one incomplete prefix and three zero-frame
+startup attempts. Different shots/seeds and timing-dependent model outcomes do
+not establish a single-change speedup or general robustness. Stable online
+60-FPS presentation also remains unestablished. Next work should test selected
+hard seeds and earlier route choices, while measuring online pacing separately;
+do not rerun the full matrix or discard the retained counterexamples.
