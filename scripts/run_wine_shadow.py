@@ -86,6 +86,7 @@ parser.add_argument('--sleep-limiter', action='store_true', help='use coarse sle
 parser.add_argument('--recorded', action='store_true', help='propose multi-turn paths from conditional native collision geometry')
 parser.add_argument('--record', action='store_true', help='capture owned Xvfb video and private audio separately')
 parser.add_argument('--horizon', type=int, default=128)
+parser.add_argument('--survival-horizon', type=int, default=0, help='use a longer certified horizon while all active spell bosses are non-interactable; zero disables')
 parser.add_argument('--lead', type=int, default=16)
 parser.add_argument('--budget-ms', type=int, default=110)
 parser.add_argument('--interval', type=int, default=16)
@@ -106,7 +107,9 @@ difficulty = 4 if args.stage == 7 else 3
 if not (32 <= args.horizon <= 592 and 8 <= args.lead <= 64 and args.horizon + args.lead <= 600
         and 1 <= args.budget_ms <= 2000 and 1 <= args.interval <= args.horizon and 1 <= args.proposals <= 50):
     parser.error('invalid shadow search bounds')
-if args.recorded and args.horizon > 240:
+if args.survival_horizon and not (args.horizon <= args.survival_horizon <= 600 - args.lead):
+    parser.error('invalid survival horizon')
+if args.recorded and max(args.horizon, args.survival_horizon) > 240:
     parser.error('recorded proposals require horizon <= 240')
 if args.pulse and args.pulse_on_failure:
     parser.error('choose one pulse policy')
@@ -188,6 +191,8 @@ if args.anytime:
     worker_config['controller'].append('--anytime')
 if args.power_aware:
     worker_config['controller'].append('--power-aware')
+if args.survival_horizon:
+    worker_config['controller'].extend(['--survival-horizon', str(args.survival_horizon)])
 if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:
@@ -198,6 +203,7 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
            'cgroup_limits_verified': False,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
            'stage': args.stage, 'shot': args.shot, 'difficulty': difficulty, 'story': args.story,
+           'survival_horizon': args.survival_horizon,
            'precise_limiter': args.precise_limiter or args.sleep_limiter,
            'sleep_limiter': args.sleep_limiter,
            'dat_sha256': archives,

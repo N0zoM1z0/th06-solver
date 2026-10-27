@@ -196,3 +196,45 @@ certificate and five fallback inputs (four startup). Search p50/p99/max is
 41.21/111.43/117.28 ms including cleanup. All 36,706 limiter scopes restore;
 296,895 coarse sleeps occur. Peak is 475,500,544 bytes (453.47 MiB), OOM 0 under
 the verified 2-GiB/no-swap cap. This is another failed full attempt, not a clear.
+
+## Survival-phase lookahead
+
+Optional `--survival-horizon 256` uses a longer certified future when an active
+spell's present bosses are all non-damageable, non-collidable and
+non-interactable. This is a native state cue, not a hardcoded stage/spell/seed
+check. Otherwise the base horizon applies. The hard search budget, immutable
+lead and verification rules do not change. Bounds require base <= survival
+horizon and survival horizon + lead <= 600; recorded geometry also retains its
+240-update limit. Every decision logs its actual horizon, and the controller
+counts extended searches/publications. Zero disables the option.
+
+From just before that cue in two actual failed spell-62 prefixes, the ordinary
+128-tail controls hit at 40,110/43,500 for seeds 59127/5092. The 256-tail variant
+ends the latest seed's spell at 43,999 without hit/fallback, but the older seed
+still hits at 43,539. Both 320-tail variants hit. The promoted 256 implementation
+repeats the latest phase completion with 19 deadline checkpoints and no fallback;
+its entire 43,999-update native prefix passes the frozen checker. Thirty-six
+CTest contracts still pass. This is a targeted native improvement, not a robust
+all-seed solution or a full retail clear.
+
+The preceding complete `online-power6-005` Wine attempt (seed 59127, normal
+power 0) reaches full power by update 5,536, passes spell 58, then hits at 40,028
+on spell 62 / ECL subroutine 60. All actual digests independently replay. It
+publishes 8,020 plans from 8,242 searches, with 319 timeouts, 100 published
+deadline checkpoints, 224 ranking yields and ten fallback inputs (four startup).
+Search p50/p99/max is 69.18/111.41/114.10 ms. All 40,147 limiter scopes restore;
+313,616 coarse sleeps occur. Peak is 373,649,408 bytes (356.34 MiB), OOM 0 under
+the verified 2-GiB/no-swap cap. These are combined-profile, different-seed results;
+they do not establish universal performance improvement or stable online FPS.
+
+A normal-start validation profile is:
+
+```sh
+python3 scripts/run_wine_shadow.py \
+  --game /path/to/private-game-copy --prefix /path/to/dedicated-win32-prefix \
+  --data /path/to/same-six-dat-archives --stage 7 --shot 0 \
+  --horizon 128 --survival-horizon 256 --lead 16 --budget-ms 110 \
+  --interval 4 --proposals 6 --fresh --pulse-on-failure --laser-aware \
+  --anytime --power-aware --sleep-limiter --updates 120000 --seconds 2400 \
+  --output reports/local/extra-survival-live
+```

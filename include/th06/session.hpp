@@ -43,6 +43,7 @@ class Session {
     std::uint64_t observation_digest() const;
     double proposal_cost(bool laser_aware = false, bool power_aware = false) const;
     Observation observe(bool laser_aware = false, bool power_aware = false) const;
+    bool survival_spell() const;
     void enable_laser_guidance() {
         track_lasers_ = true;
     }

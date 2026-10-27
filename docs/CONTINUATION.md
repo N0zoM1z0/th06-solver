@@ -2,7 +2,7 @@
 
 2026-10-27 owner-requested Extra experiment: stage 7 now follows the original
 normal Extra entry (power 0), separately from historical power-128 checkpoints.
-One live prefix passes; five completed full Reimu A trials hit, so no Extra online NMNB
+One live prefix passes; six completed full Reimu A trials hit, so no Extra online NMNB
 clear is established. Optional `--pulse-on-failure` retains ordinary proposals
 and tries one motion recovery after a failed search. New `--laser-aware` shares
 source-based laser forecasts across directions and adds six native orbital

@@ -9,23 +9,26 @@ New `--power-aware` guides native proposals toward actual power items until full
 power, and anytime ranking can yield at 75% of the budget once a full future
 exists. All 36 local contracts pass. Two promoted native opening models reach
 power 128 instead of the controls' 64/73 and pass frozen fresh replay. See
-[search/deadline details](EXTRA_SEARCH.md).
+[search/deadline details](EXTRA_SEARCH.md). Optional `--survival-horizon 256`
+now extends the certified future only for an active non-interactable boss spell.
+It passes the latest captured spell-62 latency model and frozen replay; the older
+seed remains a counterexample. Full Extra retail NMNB remains unestablished.
 
 Latest Extra optimization: optional `--laser-aware` fills the missing laser
 proposal geometry and adds native-verified orbital futures, with shared forecast
 work across directions. Two captured native latency models pass the former
 spell-55 window; the first actual Wine trial (seed 5092, normal power 0) also
-passes it, then hits at update 43,521 on spell 62 / ECL subroutine 60. Five completed full
+passes it, then hits at update 43,521 on spell 62 / ECL subroutine 60. Six completed full
 Extra trials now hit, with no whole Extra online NMNB clear established. All
 31 CTest contracts and four historical Extra tapes pass. See
 [controlled evidence and limits](EXTRA_SEARCH.md).
 
 Current experiment (owner request, 2026-10-27): Extra online shadow MPC with
-Reimu A, normal power-0 entry and captured retail seeds. Completed Wine trials include one incomplete 2,400-update NMNB prefix and five
-full attempts that hit (seeds 29911/7369/32846/5092/13662 at updates
-23,010/10,743/22,425/43,521/36,587). Three later zero-frame startup attempts
-are recorded separately. The seed-13662 hit is on spell 58; the new power-aware
-validation remains separate from these completed trials. Native follow remains consistent, and independent
+Reimu A, normal power-0 entry and captured retail seeds. Completed Wine trials include one incomplete 2,400-update NMNB prefix and six
+full attempts that hit (seeds 29911/7369/32846/5092/13662/59127 at updates
+23,010/10,743/22,425/43,521/36,587/40,028). Three later zero-frame startup attempts
+are recorded separately. The seed-13662 hit is on spell 58; the power-aware seed-59127 run reaches full power by 5,536, passes spell 58,
+then hits on spell 62. The new survival-horizon validation remains separate. Native follow remains consistent, and independent
 diagnostic replay matches every actual digest, including every hit. These runs
 do not establish Extra NMNB or stable online 60 FPS. All cases have zero OOM
 events under the verified 2-GiB/no-swap cap; the largest peak is 495.38 MiB.

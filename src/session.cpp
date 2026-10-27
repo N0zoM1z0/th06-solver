@@ -343,6 +343,19 @@ std::uint64_t Session::observation_digest() const {
     return hash;
 }
 
+bool Session::survival_spell() const {
+    if (!g_EnemyManager.spellcardInfo.isActive)
+        return false;
+    bool present = false;
+    for (const auto *boss : g_EnemyManager.bosses) {
+        if (!boss || !boss->flags.isSlotOccupied || !boss->flags.isBoss)
+            continue;
+        present = true;
+        if (boss->flags.isDamageable || boss->flags.isCollidable || boss->flags.isInteractable)
+            return false;
+    }
+    return present;
+}
 double Session::proposal_cost(bool laser_aware, bool power_aware) const {
     const float x = g_Player.positionCenter.x, y = g_Player.positionCenter.y;
     double cost = 0;

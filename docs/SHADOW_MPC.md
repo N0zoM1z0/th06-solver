@@ -13,7 +13,11 @@ once a full future exists, reserving time for final verification. The candidate
 minimum becomes best effort; failed/unfinished futures still cannot publish.
 Optional `--power-aware` guides native proposals toward original power items
 until full power and rewards actual native pickup outcomes. It never changes
-retail resources, item rules or input restrictions.
+retail resources, item rules or input restrictions. Optional
+`--survival-horizon 256` selects a longer certified future from native active-spell
+and boss-interaction flags. The 110-ms cap/lead stay unchanged, and every actual
+horizon is logged. The [targeted study](EXTRA_SEARCH.md) retains both its passing
+latest window and older failed seed.
 
 
 Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
