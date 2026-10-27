@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
         bool pulse_on_failure = false;
         bool laser_aware = false;
         bool anytime = false;
+        bool power_aware = false;
         bool recorded = false;
         bool fresh = false;
         unsigned proposals = 1;
@@ -100,12 +101,16 @@ int main(int argc, char **argv) {
                 anytime = true;
                 continue;
             }
+            if (key == "--power-aware") {
+                power_aware = true;
+                continue;
+            }
             if (key == "--help") {
                 std::cout
                     << "th06_shadow_online --data DIR --directory DIR [--horizon 32..592] "
                        "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
                        "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware] "
-                       "[--anytime]\n";
+                       "[--anytime] [--power-aware]\n";
                 return 0;
             }
             if (++i == argc)
@@ -182,6 +187,7 @@ int main(int argc, char **argv) {
         unsigned recovery_searches = 0, recovery_publications = 0;
         unsigned orbital_publications = 0;
         unsigned deadline_checkpoints = 0, checkpoint_publications = 0;
+        unsigned ranking_yields = 0;
         bool recovery_armed = false;
         unsigned forecasts = 0, checks = 0, recorded_selected = 0;
         std::array<unsigned, 8> timeouts_by_phase{};
@@ -278,8 +284,9 @@ int main(int argc, char **argv) {
                 recovery_searches += recovery;
                 const auto result = b::search(game, active, previous, lead, horizon, budget, reuse,
                                               pulse || recovery, motion_cursor, recorded, proposals,
-                                              laser_aware, anytime);
+                                              laser_aware, anytime, power_aware);
                 deadline_checkpoints += result.deadline_checkpoint;
+                ranking_yields += result.prediction.ranking_yielded;
                 // Try motion once after an unsuccessful ordinary search, then
                 // restore ordinary proposals even when that rescue also fails.
                 recovery_armed = pulse_on_failure && !recovery && !result.prediction.count;
@@ -334,6 +341,8 @@ int main(int argc, char **argv) {
                           << ",\"orbital\":" << (result.prediction.orbital ? "true" : "false")
                           << ",\"deadline_checkpoint\":"
                           << (result.deadline_checkpoint ? "true" : "false")
+                          << ",\"ranking_yielded\":"
+                          << (result.prediction.ranking_yielded ? "true" : "false")
                           << ",\"published\":" << (published ? "true" : "false") << "}\n";
                 decisions.flush();
             }
@@ -378,8 +387,10 @@ int main(int argc, char **argv) {
                << ",\"recovery_publications\":" << recovery_publications
                << ",\"laser_aware\":" << laser_aware
                << ",\"orbital_publications\":" << orbital_publications << ",\"anytime\":" << anytime
+               << ",\"power_aware\":" << power_aware
                << ",\"deadline_checkpoints\":" << deadline_checkpoints
                << ",\"checkpoint_publications\":" << checkpoint_publications
+               << ",\"ranking_yields\":" << ranking_yields
                << ",\"motion_attempts\":" << motion_attempts
                << ",\"motion_publications\":" << motion_selected
                << ",\"motion_cursor\":" << motion_cursor

@@ -80,6 +80,7 @@ parser.add_argument('--pulse', action='store_true', help='try rotating native mo
 parser.add_argument('--pulse-on-failure', action='store_true', help='try motion once after an unsuccessful ordinary search')
 parser.add_argument('--laser-aware', action='store_true', help='guide native proposals with observed laser motion and orbital futures')
 parser.add_argument('--anytime', action='store_true', help='retain the first complete native certificate if later ranking times out')
+parser.add_argument('--power-aware', action='store_true', help='guide native proposals toward power pickups until full power')
 parser.add_argument('--precise-limiter', action='store_true', help='scope the replay-tested long-uptime precision correction to the original live limiter')
 parser.add_argument('--sleep-limiter', action='store_true', help='use coarse sleeps before final limiter checks; implies precise limiter')
 parser.add_argument('--recorded', action='store_true', help='propose multi-turn paths from conditional native collision geometry')
@@ -185,6 +186,8 @@ if args.laser_aware:
     worker_config['controller'].append('--laser-aware')
 if args.anytime:
     worker_config['controller'].append('--anytime')
+if args.power_aware:
+    worker_config['controller'].append('--power-aware')
 if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:

@@ -28,6 +28,7 @@ struct Observation {
     float x, y, axis, diagonal, focused_axis, focused_diagonal, target_x;
     std::vector<MovingHazard> hazards;
     std::vector<LaserForecast> lasers;
+    unsigned power = 128;
 };
 // One source game per process. Branches use fork(), never byte copies of the
 // managers: their pointers refer to mutable actors and loaded script storage.
@@ -40,8 +41,8 @@ class Session {
     State state() const;
     State step(std::uint16_t input);
     std::uint64_t observation_digest() const;
-    double proposal_cost(bool laser_aware = false) const;
-    Observation observe(bool laser_aware = false) const;
+    double proposal_cost(bool laser_aware = false, bool power_aware = false) const;
+    Observation observe(bool laser_aware = false, bool power_aware = false) const;
     void enable_laser_guidance() {
         track_lasers_ = true;
     }

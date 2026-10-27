@@ -152,3 +152,47 @@ leaked scope. The optional sleep retains the original final checks and clock
 values. Lightweight forwarding wrappers do not collect render timings. The
 startup wait remains 30 seconds and the MPC budget is unchanged. The actual
 stuck subtraction is covered by the asset-free x87 regression.
+
+## Cooperative ranking and native power pickups
+
+With `--anytime`, ranking can now yield after 75% of the requested whole-search
+budget, but only once a full native future exists. The remaining time is for
+literal winner verification and cleanup; it is a reserve, not a separate budget
+or a guarantee that one native branch finishes in time. The hard group deadline
+and first-certificate fallback still apply. `--proposals` becomes a best-effort
+candidate target under this option. Returned ranking yields have their own
+counter. An expired soft deadline cannot publish a failed/unfinished future.
+
+Optional `--power-aware` adds pickup attraction and a native power-deficit cost
+until power reaches 128. The nearest actual small/large/full-power item guides
+horizontal proposals; bomb/life/point items and the source's failed-spawn dummy
+are excluded. Item motion, collision and rewards still run in original
+ItemManager. No remaining item means no attraction penalty, including just after
+collecting the last one. Full power restores the original ranking/scoring policy.
+Thirty-six CTest contracts pass, including original large-item pickup (64 to at
+least 72), independent input/digest replay and identical full-power routes.
+
+Two captured-seed opening latency controls start at update 256 with the same
+144 queued actual inputs. At about 10,250 updates, the original policy has power
+64/73 for seeds 13662/5092; the promoted pickup implementation has 128/128, with
+zero hits/fallback. Both promoted tapes pass the frozen pre-change checker.
+These are native prefixes, not normal-start Wine clears. The first pickup
+prototype's mixed 53/81 result remains in the private ledger.
+
+For the spell-58 failure, a six-candidate soft-deadline prototype ends the spell
+from both 35,800/36,300 origins; its hard-ranking controls hit at 36,064 and end
+at 37,453 respectively. Both soft tapes pass frozen fresh replay. A separate
+320-tail/anytime model from the old spell-62 origin 43,000 ends the spell at
+47,416 with 25 deadline checkpoints and no fallback; its control hits at 43,880.
+The earlier 42,600-origin 320-tail controls still fail. Field-orbit, four-edge
+penalty and native feedback-tree alternatives show no reliable advantage and
+remain unshipped. All failures/retries are retained.
+
+The complete `online-anytime128-004` Wine attempt (seed 13662, normal power 0)
+passes spell 55, then hits at 36,587 on spell 58 / ECL subroutine 48. All retail
+projections and independent native digests agree, including the hit. It publishes
+8,707 plans from 8,888 searches, with 179 timeouts, one recovered deadline
+certificate and five fallback inputs (four startup). Search p50/p99/max is
+41.21/111.43/117.28 ms including cleanup. All 36,706 limiter scopes restore;
+296,895 coarse sleeps occur. Peak is 475,500,544 bytes (453.47 MiB), OOM 0 under
+the verified 2-GiB/no-swap cap. This is another failed full attempt, not a clear.

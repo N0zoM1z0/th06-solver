@@ -1,5 +1,6 @@
 #pragma once
 #include "th06/session.hpp"
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <vector>
@@ -13,6 +14,11 @@ struct PlannerOptions {
     bool diverse_first = false;
     bool laser_aware = false;
     bool laser_orbits = false;
+    bool power_aware = false;
+    // Stop further ranking only after a complete native future exists. The
+    // caller still owns the hard deadline, verification and descendant cleanup.
+    std::chrono::steady_clock::time_point ranking_deadline =
+        std::chrono::steady_clock::time_point::max();
     // Retain a literal native future prefix only after a full horizon or terminal.
     // Zero preserves the commit-sized action; nonzero requires commit..horizon.
     unsigned reuse = 0;
@@ -42,6 +48,7 @@ struct Decision {
     std::uint64_t reactive_branches = 0;
     std::uint64_t orbital_branches = 0;
     bool orbital_selected = false;
+    bool ranking_yielded = false;
     unsigned lookahead_frames = 0, unique_inputs = 0;
     bool future_complete = false;
     std::vector<std::uint64_t> expected_digests;

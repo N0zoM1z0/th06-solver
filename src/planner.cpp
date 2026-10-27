@@ -74,7 +74,8 @@ std::vector<LaserShape> laser_samples(const Observation &o, unsigned horizon, un
     return samples;
 }
 double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving, unsigned horizon,
-                     const std::vector<LaserShape> &lasers, unsigned stride = 4) {
+                     const std::vector<LaserShape> &lasers, unsigned stride = 4,
+                     bool power_aware = false) {
     const int dx = bool(input & 128) - bool(input & 64), dy = bool(input & 32) - bool(input & 16);
     const bool focus = input & 4;
     const float speed =
@@ -97,13 +98,13 @@ double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving,
         for (unsigned i = 0; i < o.lasers.size(); ++i)
             local += laser_proposal_cost(lasers[samples * o.lasers.size() + i], x, y);
         const double edge = std::max(0.f, 40.f - std::min(x - 8.f, 376.f - x));
-        result += local + std::abs(x - o.target_x) * 0.003 + std::abs(y - 380.f) * 0.006 +
-                  edge * edge * 0.002;
+        result += local + std::abs(x - o.target_x) * (power_aware && o.power < 128 ? .025 : .003) +
+                  std::abs(y - 380.f) * 0.006 + edge * edge * 0.002;
         ++samples;
     }
     return result / samples + (dx || dy ? 0.02 : 0);
 }
-std::uint16_t reactive_input(const Observation &observation) {
+std::uint16_t reactive_input(const Observation &observation, bool power_aware) {
     constexpr std::array<std::uint16_t, 9> directions = {0,       16,       32,      64,      128,
                                                          16 | 64, 16 | 128, 32 | 64, 32 | 128};
     double best = std::numeric_limits<double>::infinity();
@@ -116,8 +117,9 @@ std::uint16_t reactive_input(const Observation &observation) {
             if (!direction && !focus)
                 continue;
             const auto input = std::uint16_t(direction | focus | 1u | 256u);
-            const double cost = std::min(proposal_rank(observation, input, 16, 40, lasers, 8),
-                                         proposal_rank(observation, input, 40, 40, lasers, 8));
+            const double cost =
+                std::min(proposal_rank(observation, input, 16, 40, lasers, 8, power_aware),
+                         proposal_rank(observation, input, 40, 40, lasers, 8, power_aware));
             if (cost < best) {
                 best = cost;
                 selected = input;
@@ -147,8 +149,8 @@ void transfer(int fd, void *data, std::size_t size, bool output) {
 }
 Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned horizon,
                unsigned commit, unsigned retained, bool reactive, bool profile, bool digests,
-               bool laser_aware, const std::vector<std::uint16_t> *literal = nullptr,
-               Orbit orbit = {}) {
+               bool laser_aware, bool power_aware,
+               const std::vector<std::uint16_t> *literal = nullptr, Orbit orbit = {}) {
     int pipefd[2];
     if (::pipe(pipefd))
         throw std::runtime_error("pipe failed");
@@ -184,7 +186,8 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                     // to this branch. Retention records the literal actions,
                     // including turns; it never repeats just the initial input.
                     if (frame >= commit && (frame - commit) % 16 == 0)
-                        action = reactive_input(game.observe(laser_aware));
+                        action =
+                            reactive_input(game.observe(laser_aware, power_aware), power_aware);
                 } else
                     action = frame < moving ? input : std::uint16_t(input & ~std::uint16_t(0xf0));
                 if (profile) {
@@ -208,7 +211,7 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                 }
                 ++result.safe;
                 start = profile ? Clock::now() : Clock::time_point{};
-                result.cost += game.proposal_cost(laser_aware);
+                result.cost += game.proposal_cost(laser_aware, power_aware);
                 if (profile)
                     result.timings.scoring += seconds_since(start);
                 if (state.complete) {
@@ -218,7 +221,8 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
             }
             if (result.safe) {
                 const auto start = profile ? Clock::now() : Clock::time_point{};
-                result.cost = result.cost / result.safe + game.proposal_cost(laser_aware);
+                result.cost =
+                    result.cost / result.safe + game.proposal_cost(laser_aware, power_aware);
                 if (profile)
                     result.timings.scoring += seconds_since(start);
             }
@@ -274,7 +278,7 @@ Decision choose(Session &game, const PlannerOptions &options,
         const auto verified =
             rollout(game, decision.input, decision.certified_frames, decision.certified_frames,
                     options.commit, decision.certified_frames, false, options.profile, true,
-                    options.laser_aware, &decision.expected_inputs);
+                    options.laser_aware, options.power_aware, &decision.expected_inputs);
         if (verified.safe != decision.certified_frames ||
             verified.complete != (decision.future_complete &&
                                   decision.certified_frames == decision.lookahead_frames))
@@ -291,7 +295,7 @@ Decision choose(Session &game, const PlannerOptions &options,
     std::vector<Candidate> candidates;
     if (options.laser_aware)
         game.enable_laser_guidance();
-    const auto observation = game.observe(options.laser_aware);
+    const auto observation = game.observe(options.laser_aware, options.power_aware);
     const auto lasers = laser_samples(observation, options.horizon, 4);
     for (const auto direction : directions) {
         for (unsigned focus : {4u, 0u}) {
@@ -303,9 +307,9 @@ Decision choose(Session &game, const PlannerOptions &options,
                 const auto input = std::uint16_t(direction | focus | 1u | 256u);
                 if (int(input) == options.excluded_input)
                     continue;
-                candidates.push_back(
-                    {input, moving,
-                     proposal_rank(observation, input, moving, options.horizon, lasers)});
+                candidates.push_back({input, moving,
+                                      proposal_rank(observation, input, moving, options.horizon,
+                                                    lasers, 4, options.power_aware)});
             }
         }
     }
@@ -366,6 +370,12 @@ Decision choose(Session &game, const PlannerOptions &options,
         decision.timings.ranking = seconds_since(start);
     std::array<bool, 512> evaluated{};
     for (const auto &candidate : candidates) {
+        if (options.ranking_deadline != Clock::time_point::max() &&
+            (best_complete || best_safe == options.horizon) &&
+            Clock::now() >= options.ranking_deadline) {
+            decision.ranking_yielded = true;
+            break;
+        }
         const auto input = candidate.input;
         const auto moving = candidate.moving;
         Orbit orbit;
@@ -380,9 +390,10 @@ Decision choose(Session &game, const PlannerOptions &options,
         }
         const bool digests = !options.defer_later_digests || decision.branches == 0;
         start = options.profile ? Clock::now() : Clock::time_point{};
-        const auto result = rollout(game, input, moving, options.horizon, options.commit,
-                                    std::max(options.commit, options.reuse), candidate.reactive,
-                                    options.profile, digests, options.laser_aware, nullptr, orbit);
+        const auto result =
+            rollout(game, input, moving, options.horizon, options.commit,
+                    std::max(options.commit, options.reuse), candidate.reactive, options.profile,
+                    digests, options.laser_aware, options.power_aware, nullptr, orbit);
         if (options.profile) {
             decision.timings.rollout_wall += seconds_since(start);
             decision.timings += result.timings;

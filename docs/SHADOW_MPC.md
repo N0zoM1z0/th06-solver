@@ -8,6 +8,14 @@ the decision budget. The live limiter hooks install before the first menu
 callback to fix a demonstrated long-uptime startup hang. These are separate from
 stable online FPS and Extra completion acceptance. See [focused evidence](EXTRA_SEARCH.md).
 
+With `--anytime`, further ranking may yield after 75% of the original budget
+once a full future exists, reserving time for final verification. The candidate
+minimum becomes best effort; failed/unfinished futures still cannot publish.
+Optional `--power-aware` guides native proposals toward original power items
+until full power and rewards actual native pickup outcomes. It never changes
+retail resources, item rules or input restrictions.
+
+
 Latest Extra work: [laser-aware search optimization](EXTRA_SEARCH.md) adds
 optional observed-laser guidance and native-verified curved futures. The first
 Wine sample passes the previous spell-55 failure, then hits on spell 62 at update

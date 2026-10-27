@@ -18,6 +18,28 @@ ChainCallbackResult GameManager_OnUpdate(GameManager *);
 namespace th06::solver {
 namespace {
 bool active = false;
+struct PowerTarget {
+    double squared_distance = 1e30;
+    float x = 192;
+    bool found = false;
+};
+PowerTarget power_target(float x, float y) {
+    PowerTarget target;
+    // Item positions guide proposals only. Original ItemManager owns movement,
+    // collision, power thresholds and rewards. Exclude its failed-spawn dummy.
+    for (unsigned i = 0; i < MAX_ITEMS; ++i) {
+        const auto &item = g_ItemManager.items[i];
+        if (!item.isInUse || (item.itemType != ITEM_POWER_SMALL &&
+                              item.itemType != ITEM_POWER_BIG && item.itemType != ITEM_FULL_POWER))
+            continue;
+        const double dx = item.currentPosition.x - x, dy = item.currentPosition.y - y;
+        const double weight = item.itemType == ITEM_POWER_SMALL ? 1. : 1.7;
+        const double distance = (dx * dx + dy * dy * .25) / (weight * weight);
+        if (distance < target.squared_distance)
+            target = {distance, item.currentPosition.x, true};
+    }
+    return target;
+}
 ChainElem game_chain;
 void require(ZunResult result, const char *message) {
     if (result != ZUN_SUCCESS)
@@ -321,7 +343,7 @@ std::uint64_t Session::observation_digest() const {
     return hash;
 }
 
-double Session::proposal_cost(bool laser_aware) const {
+double Session::proposal_cost(bool laser_aware, bool power_aware) const {
     const float x = g_Player.positionCenter.x, y = g_Player.positionCenter.y;
     double cost = 0;
     for (const auto &bullet : g_BulletManager.bullets) {
@@ -357,9 +379,17 @@ double Session::proposal_cost(bool laser_aware) const {
             forecast.angular_speed = laser_motion_[i].angular_speed;
             cost += laser_proposal_cost(advance_laser(forecast), x, y);
         }
+    if (power_aware && g_GameManager.currentPower < 128) {
+        cost += (128 - g_GameManager.currentPower) * .15;
+        const auto target = power_target(x, y);
+        // No item means no attraction penalty, including immediately after
+        // collecting the last one. Actual native power is rewarded separately.
+        if (target.found)
+            cost += std::min(240., std::sqrt(target.squared_distance)) * .02;
+    }
     return cost;
 }
-Observation Session::observe(bool laser_aware) const {
+Observation Session::observe(bool laser_aware, bool power_aware) const {
     const auto &speed = g_Player.characterData;
     Observation out{g_Player.positionCenter.x,
                     g_Player.positionCenter.y,
@@ -370,6 +400,7 @@ Observation Session::observe(bool laser_aware) const {
                     192,
                     {},
                     {}};
+    out.power = g_GameManager.currentPower;
     out.hazards.reserve(700);
     for (const auto &bullet : g_BulletManager.bullets) {
         if (bullet.state == BULLET_STATE_INACTIVE || bullet.state == BULLET_STATE_DESPAWNING)
@@ -398,6 +429,11 @@ Observation Session::observe(bool laser_aware) const {
             laser.angular_speed = laser_motion_[i].angular_speed;
             out.lasers.push_back(laser);
         }
+    if (power_aware && out.power < 128) {
+        const auto target = power_target(out.x, out.y);
+        if (target.found)
+            out.target_x = target.x;
+    }
     return out;
 }
 } // namespace th06::solver

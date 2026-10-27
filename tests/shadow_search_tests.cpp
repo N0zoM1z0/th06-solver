@@ -186,6 +186,13 @@ int main(int argc, char **argv) {
                             checkpointed.expected_inputs == deferred.expected_inputs &&
                             checkpointed.expected_digests == deferred.expected_digests,
                         "first later full candidate receives its own literal certificate once");
+                options.ranking_deadline = std::chrono::steady_clock::time_point::min();
+                options.proposals = 50;
+                const auto yielded = choose(game, options);
+                require(yielded.ranking_yielded && yielded.lookahead_frames == 32 &&
+                            yielded.expected_inputs == deferred.expected_inputs &&
+                            yielded.expected_digests == deferred.expected_digests,
+                        "expired ranking budget still finds and verifies the first full future");
                 require(game.observation_digest() == before && calls == 0,
                         "deferred COW isolation");
                 for (unsigned i = 0; i < 32; ++i) {

@@ -87,7 +87,7 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 } // namespace
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
-              bool recorded, unsigned proposals, bool laser_aware, bool anytime) {
+              bool recorded, unsigned proposals, bool laser_aware, bool anytime, bool power_aware) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
@@ -215,6 +215,10 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     options.defer_later_digests = true;
                     options.laser_aware = laser_aware;
                     options.laser_orbits = laser_aware;
+                    options.power_aware = power_aware;
+                    if (anytime)
+                        options.ranking_deadline =
+                            begin + std::chrono::milliseconds(budget * 3 / 4);
                     std::function<void(const Decision &)> checkpoint;
                     if (anytime)
                         checkpoint = [&](const Decision &decision) {
@@ -250,6 +254,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     if (decision.lookahead_frames == horizon || decision.future_complete) {
                         tail.count = decision.certified_frames;
                         tail.orbital = decision.orbital_selected;
+                        tail.ranking_yielded = decision.ranking_yielded;
                         std::copy(decision.expected_inputs.begin(), decision.expected_inputs.end(),
                                   tail.inputs.begin());
                         std::copy(decision.expected_digests.begin(),
@@ -262,6 +267,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     result.motion = tail.motion;
                     result.recorded = tail.recorded;
                     result.orbital = tail.orbital;
+                    result.ranking_yielded = tail.ranking_yielded;
                     std::copy_n(tail.inputs.begin(), tail.count, result.inputs.begin() + lead);
                     std::copy_n(tail.digests.begin(), tail.count, result.digests.begin() + lead);
                 }
