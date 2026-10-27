@@ -122,6 +122,25 @@ process failure fails the run; stopped/failed footage remains distinct from a
 complete clear. Verify complete native agreement and terminal state separately
 from full media decode, both streams, audible audio and capture PTS/cadence.
 
+The complete 2026-10-27 recording is retained at
+`reports/local/replay-video-20261027/story-compact001/`, with the delivery hard-linked
+as `reports/local/replay-video-20261027/th06-lunatic-reimuA-story-compact.mp4`.
+The published replay SHA-256 is unchanged. Wine again clears all six stages NMNB
+and matches all 127,737 native updates. The 503,859,305-byte MP4 is 2,135.744 s;
+all 128,141 frames decode, and every relative capture PTS matches the source.
+Capture intervals have p99/max 17/36 ms; AAC stereo audio is audible at −10.6 dB
+mean. Visual checks include the Sakuya fight and final `All Clear!` screen.
+
+This audio-on recording is **not a passing pacing run**: actual window output is
+59.928 Hz / slowest 5 s 56.4 Hz / p99 19 ms / maximum 305 ms, below the unchanged
+58-Hz five-second minimum. Capture cadence does not remove those game handoff
+gaps. The game and encoder exit successfully; `--require-pacing` returns 1.
+The combined group peaks at 1,611,669,504 bytes with zero OOM/OOM-kill events under
+verified 2-GiB/no-swap limits. Group CPU includes post-game encoding and must not
+be compared with the no-record baseline. The original 1,589,766,991-byte video,
+409,985,558-byte PCM audio, successful 2,400-update prefix smoke and full recording
+receipts remain private; no new solving campaign ran.
+
 ## Clocks and the limiter correction
 
 The original loop draws, runs its calculation chain, waits for its 60-Hz deadline

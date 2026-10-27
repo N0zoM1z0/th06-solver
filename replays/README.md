@@ -24,6 +24,9 @@ clears. The private recording is retained under
 `reports/local/replay-video-20261027/story-compact001/`; the
 [recording command](../docs/REPLAY_PACING.md#record-the-replay) produces a
 640×480 original-speed compact MP4 with the game's WAV music and sound effects.
+The verified compact delivery is 35:35.744 / 503,859,305 bytes; all 128,141 video
+frames decode with the original capture timestamps. It is also hard-linked as
+`reports/local/replay-video-20261027/th06-lunatic-reimuA-story-compact.mp4`.
 Audio-on recording has separate pacing evidence from the earlier audio-off run.
 
 [Retail verification](../docs/RETAIL_REPLAY.md) describes export, observation,

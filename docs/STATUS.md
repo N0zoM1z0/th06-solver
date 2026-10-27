@@ -26,6 +26,8 @@ The new `run_wine_replay.py --compact` captures the full 640×480 rectangle and
 private original game audio, then compresses after Wine exits. With WAV music
 and effects enabled, its handoff gaps are longer. This recording does not pass the
 unchanged presentation gate or replace the earlier audio-off pacing acceptance.
+The complete compact MP4 is 35:35.744 / 503,859,305 bytes. All 128,141 frames decode
+with unchanged capture PTS and audible AAC audio; group peak is 1.501 GiB, OOM 0.
 See [recording instructions](REPLAY_PACING.md#record-the-replay).
 
 For the 2026-10-26 restart point, prioritized unfinished tasks, implementation

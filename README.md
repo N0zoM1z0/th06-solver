@@ -33,6 +33,9 @@ Peak Wine-tree memory is 468.1 MiB with zero OOM events; group CPU time falls
 statistics, including a 145-ms maximum window interval. This is one measured
 replay under the declared local tolerance; online MPC remains unverified.
 See the [pinned runtime](docs/REPLAY_RUNTIME.json).
+A [complete Wine recording](docs/REPLAY_PACING.md#record-the-replay) is now
+verified with original game audio: 35:35.744, 640×480, 504-MB compact MP4.
+Its audio-on handoff pacing remains below the gate; the replay file is unchanged.
 The latest [search-volume study](docs/PERFORMANCE.md) retains verified native
 future inputs with opt-in `--reuse 32`: 20 new paired cases clear 20/20 after
 recovery, with 72% fewer speculative updates and 65% less planner CPU. First-pass
