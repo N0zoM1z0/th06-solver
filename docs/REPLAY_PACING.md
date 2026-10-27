@@ -253,7 +253,7 @@ and native comparison run after Wine exits; every recorded field remains availab
 Clocks, timestamps and version-4 acceptance thresholds are unchanged.
 
 The mapped-collector milestone passed 26 focused contracts, including
-publication-before- consumption, invalid counts, unused-tail rejection and typed CSV
+publication before consumption, invalid counts, unused-tail rejection and typed CSV
 conversion. A real Wine diagnostic prefix retains all 78,000 native-matching NMNB
 updates, peaks at 279,580,672 bytes and reports zero OOM events. Fast diagnostic
 prefixes skip early raster work and waits to reach the retained failure quickly; they

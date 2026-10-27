@@ -408,5 +408,5 @@ maximum-size 600-input plans, independent deferred-hash and recorded winner
 verification, raw collision geometry, explicit index-capacity rejection, and
 repeated forced deadlines in nested source rollout descendants with no surviving
 children or zombies. The initial live milestone passed 23 focused contracts;
-[Validation](VALIDATION.md) owns the current gate. Full matrices and other-
-difficulty story tests were not rerun for that optimization.
+[Validation](VALIDATION.md) owns the current gate. Full matrices and story
+tests at other difficulties were not rerun for that optimization.

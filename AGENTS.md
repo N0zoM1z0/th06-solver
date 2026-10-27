@@ -3,8 +3,8 @@
 Read README.md and docs/STATUS.md before changing behavior. Current gameplay
 work focuses on live Extra shadow MPC in the owned Wine retail game, using
 th08-solver as a reference. Measure actual decision deadlines, queue behavior
-and presentation. The selected Extra clear/replay/recording is complete; random-
-seed robustness and stable online 60 FPS remain open. Lunatic coverage is limited
+and presentation. The selected Extra clear/replay/recording is complete;
+robustness across random seeds and stable online 60 FPS remain open. Lunatic coverage is limited
 to the documented live components and historical native/replay campaigns.
 
 Keep native search, actual online control, original-loader replay and recording
