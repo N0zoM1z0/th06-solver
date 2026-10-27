@@ -50,8 +50,15 @@ Japanese 1.02h game's `replay/` directory and select it in the replay menu.
 - Source actual tape SHA-256: `98025c911e03c56225a83819ac3461eeb76d4b39fbeff3b77bab1f8acd9aee61`.
 
 The owner's requested compact recording uses actual Wine replay playback of
-this file, separately from the original online decision-time evidence. Its
-1,200-update loader/capture smoke test matches the fresh native export; full
-playback and recording acceptance are reported separately when complete.
+this file, separately from the original online decision-time evidence. The original replay loader completes all 43,126 updates NMNB under Wine 11;
+every declared native projection field matches the fresh export. The replay
+returns through the original replay-menu path, separately from the live game's
+result-screen path. Its 1,200-update smoke and earlier monitor-stage rejection
+remain in the attempt ledger. The compact recording is fully verified: 12:04.267, 172,025,731 bytes,
+640×480 H.264/AAC stereo with original game audio; all 43,454 frames decode with
+identical relative capture timestamps. Peak is 1,119.20 MiB under the explicitly
+authorized 4-GiB/no-swap cap, OOM 0. See
+[full recording details](../docs/REPLAY_PACING.md#extra-online-route-recording).
+Audio-on recording does not pass the unchanged frame-pacing gate.
 The owner authorizes this second tracked replay exception; assets, tapes,
 recordings and raw evidence remain private.

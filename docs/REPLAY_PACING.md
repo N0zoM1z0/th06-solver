@@ -111,8 +111,10 @@ and subsequent encoding. The previous no-record pacing acceptance remains separa
 Prepare a separate owned game copy with original WAV music and effects enabled;
 the pacing baseline has audio disabled. The recorder routes only that Wine child
 to a dedicated PulseAudio null sink. No host microphone or other application audio
-is recorded. A 2-GiB/no-swap cgroup covers Wine, Xvfb, PulseAudio, both capture
-processes and the final encoder. The recorder uses the root rectangle so startup
+is recorded. The default 2-GiB/no-swap cgroup covers Wine, Xvfb, PulseAudio,
+both capture processes and the final encoder. For the owner-authorized Extra
+recording, `--memory-gib 4` selects a 4-GiB hard / 3-GiB high cap; the verified
+resource receipt records the actual limit and peak. Swap remains disabled. The recorder uses the root rectangle so startup
 window recreation cannot invalidate its capture target.
 
 The output retains `video.mkv`, lossless `audio.wav`, clock-origin/alignment data
@@ -140,6 +142,54 @@ verified 2-GiB/no-swap limits. Group CPU includes post-game encoding and must no
 be compared with the no-record baseline. The original 1,589,766,991-byte video,
 409,985,558-byte PCM audio, successful 2,400-update prefix smoke and full recording
 receipts remain private; no new solving campaign ran.
+
+## Extra online-route recording
+
+The owner-requested [`th6_02.rpy`](../replays/th6_02.rpy), published in
+`61c0eaefc46fd3df597e3748635967cf9117a7b1`, records actual Extra online inputs:
+Reimu B, seed 35964, original power 0, complete NMNB at 43,126 updates.
+The original retail replay loader under Wine 11 independently reaches the
+natural replay-menu return with every declared native projection field matching.
+This recording uses no MPC or native follower; export verification occurs first.
+
+Use the Wine 11/Mesa/DXVK/audio profile above with `--start-stage 7`,
+`--replay replay/th6_02.rpy`, its fresh `--native-trace`, `--compact`,
+`--memory-gib 4`, `--updates 50000` and `--seconds 2400`. Extra stores one record
+in the original seventh stage slot; it is not a main-game practice checkpoint.
+The default memory limit remains 2 GiB. The owner's explicit 4-GiB recording
+allowance applies to Wine, display, private audio, capture and post-game encoder,
+with a 3-GiB high watermark and swap disabled.
+
+The complete private case is `reports/local/extra-video-20261027/extra-compact001/`.
+Its compact delivery is hard-linked as
+`reports/local/extra-video-20261027/th06-extra-reimuB-replay-compact.mp4`:
+
+| Check | Result |
+|---|---|
+| Delivery | 12:04.267, 172,025,731 bytes, 640×480 H.264 / AAC stereo |
+| Original playback | 43,126 updates, one natural Extra clear, zero misses/bombs |
+| Complete source/compact/decode frames | 43,454 / 43,454 / 43,454 |
+| Relative capture timestamps | Identical; zero duplicates, max error 0 µs |
+| Capture interval p99 / max | 18 / 57 ms |
+| Game audio mean | −10.4 dB; original WAV music/effects, private audio sink |
+| Whole recording/encoding peak | 1,173,569,536 bytes, 1,119.20 MiB |
+| Verified hard cap / swap / OOM / OOM-kill | 4 GiB / 0 / 0 / 0 |
+| Limiter scopes / drawing scopes | All 43,192 / 43,072 restore |
+
+The MP4 SHA-256 is `9186dcdfbc6c655f52577111515be183acb7167b03ef2a203f98f9a6adc333eb`.
+Visual checks include the Flandre fight and final `All Clear!` screen. The
+1,200-update smoke passes; an earlier ten-update attempt stopped because the
+monitor rejected valid stage 7. Both are retained in `recording-attempts.json`,
+with a regression accepting stage 7 and rejecting stage 8. A corrected VFR
+null-output decode check avoids quantizing valid capture timestamps to 60-Hz
+output ticks; all final media checks pass without changing the video.
+
+Recording presentation is separate from route and media acceptance: actual
+window output is 59.972 Hz / slowest 5 s 57.4 Hz / p99 19 ms / maximum 223 ms,
+so this audio-on recording does not pass the unchanged pacing gate. It also
+does not establish online-controller FPS or another online clear. All raw media,
+receipts, checks and the delivery manifest remain ignored; only the two explicitly
+authorized input-only replay files are tracked.
 
 ## Clocks and the limiter correction
 
@@ -241,7 +291,8 @@ native route. Native internal digest agreement and retail equivalence are separa
 
 One owned Wine tree runs at a time. Both launchers share a project lock, with the
 legacy prefix lock retained. Wine, Xvfb, the frozen worker, display observer and
-optional screenshot share **2 GiB hard / 1.5 GiB high / no swap**, finite runtime
+optional screenshot share **2 GiB hard / 1.5 GiB high / no swap** by default
+(or explicitly authorized `--memory-gib 4`: 4 GiB / 3 GiB / no swap), finite runtime
 and a 256-task cap. No solver/controller is launched. The runner verifies actual
 cgroup limits and records memory/OOM, CPU usage, host load/pressure and cache state.
 

@@ -15,7 +15,12 @@ Reimu B, captured seed 35964, original power-0 entry, 43,126 updates and one
 natural clear. Every actual retail projection matches native, and the complete
 actual-input tape passes independent frozen fresh replay. The
 [combined profile and full failed-attempt ledger](docs/EXTRA_SEARCH.md) retain
-eight earlier full hits and targeted native counterexamples. This one clear
+eight earlier full hits and targeted native counterexamples. The owner-requested
+[Extra Reimu B input-only replay](replays/th6_02.rpy) is committed and also
+completes all 43,126 updates through the original Wine replay loader. Its
+[compact Wine recording](docs/REPLAY_PACING.md#extra-online-route-recording)
+is verified: 12:04.267, 640×480 with original audio, 172 MB.
+This one clear
 establishes neither all-seed robustness nor stable online 60 FPS.
 The [live Wine shadow controller](docs/SHADOW_MPC.md) clears two Lunatic Stage 5 /
 Reimu B runs and one Stage 6 / Marisa B run NMNB, including an actual Stage 5

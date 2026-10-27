@@ -123,3 +123,24 @@ incomplete/premature completion records.
 Unsupported evidence claims: this successful retail story does not certify the
 other 111 native cases, every seed, all Wine/renderer versions, or complete hidden
 state equality. Logs and exact binary/replay identities identify the tested run.
+
+
+## Extra online-clear replay
+
+The owner-requested [`replays/th6_02.rpy`](../replays/th6_02.rpy) is exported
+from actual online shadow-MPC inputs, not a newly solved offline route:
+Extra / Reimu B / seed 35964, normal power 0, complete at 43,126 updates NMNB.
+Export verifies the entire source tape in a fresh native process. Original
+`ReplayData::stageReplayData[6]` carries its sole Extra record; slots 0–5 stay
+empty. Only complete normal-start Extra is accepted alongside complete stories;
+power-128 checkpoints and prefixes remain rejected. Re-exporting the historical
+Lunatic story retains its exact published hash.
+
+The original retail replay loader under Wine 11 completes the same 43,126
+updates with zero misses/bombs. All declared native projection fields agree.
+Source `Gui::ReadMsg` returns replays to the replay menu (state 8), whereas the
+original live Extra clear enters the result screen (state 7); each is validated
+against its own natural lifecycle. This replay recording does not establish a
+second online decision-time result or stable online 60 FPS. See
+[recording details](REPLAY_PACING.md#extra-online-route-recording) and
+[replay provenance](../replays/README.md#extra-online-nmnb-route).

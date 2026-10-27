@@ -36,7 +36,14 @@ Private evidence roots are `reports/local/shadow-extra-20261027/`,
 `reports/local/extra-online-20261027/`. The successful case is
 `online-acceleration-reimuB-008`; its `proof.json`, actual tape, all receipts,
 complete resource/binary receipts and independent checker results are retained.
-Generated Extra tapes remain ignored; the tracked Lunatic replay is unchanged.
+The owner-requested Extra [input-only replay](../replays/th6_02.rpy) is now
+committed as the second explicit replay exception. Original-loader Wine playback
+also completes all 43,126 updates NMNB with full native projection agreement.
+Its [compact replay recording](REPLAY_PACING.md#extra-online-route-recording)
+is verified: 12:04.267 / 172,025,731 bytes / 640×480 H.264/AAC; all 43,454
+frames decode with unchanged capture timestamps. Peak is 1,119.20 MiB under the
+owner-authorized 4-GiB/no-swap cap, OOM 0. Recording pacing remains below its
+gate. Other generated tapes remain ignored; the Lunatic replay is unchanged.
 
 Previous pacing scope (owner clarification, 2026-10-26):
 [native-generated `.rpy` → actual Wine replay → stable 60-FPS presentation](REPLAY_PACING.md),
