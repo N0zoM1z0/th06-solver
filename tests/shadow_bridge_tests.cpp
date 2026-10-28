@@ -11,6 +11,18 @@ void require(bool value, const char *message) {
 }
 int main() {
     try {
+        b::Search backup;
+        backup.warm_selected = true;
+        backup.prediction.count = 80;
+        require(b::covered_warm_backup(backup, 140) && b::covered_warm_backup(backup, 80) &&
+                    !b::covered_warm_backup(backup, 79),
+                "a nominal backup must add certified time before replacing the old queue");
+        backup.warm_selected = false;
+        require(!b::covered_warm_backup(backup, 140),
+                "fresh alternatives can change a longer queue");
+        backup.warm_selected = true;
+        backup.prediction.count = 0;
+        require(!b::covered_warm_backup(backup, 140), "a failed search is not a covered backup");
         require(b::recovery_horizon(128, 64, 16, 81, true) == 128 &&
                     b::recovery_horizon(128, 64, 16, 80, true) == 64,
                 "short native rescue starts only at the declared low-queue boundary");

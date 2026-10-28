@@ -61,6 +61,9 @@ def extract(directory, origin):
         unsigned(certificate[name], 2**32 - 1)
     begin, size = certificate['origin'], certificate['count']
     lead, horizon = certificate['lead'], certificate['horizon']
+    if ('requested_horizon' in certificate and
+            not horizon <= unsigned(certificate['requested_horizon'], 600) <= 600 - lead):
+        raise ValueError('certificate exceeds its requested fresh horizon')
     if (not 1 <= certificate['stage'] <= 7 or not 1 <= size <= 600 or
             not 1 <= lead <= 64 or not 8 <= horizon <= 600 - lead or
             not lead < size <= lead + horizon or
@@ -91,10 +94,11 @@ def extract(directory, origin):
                 'certificate_journal_sha256': hashlib.sha256(
                     (directory / 'certificates.jsonl').read_bytes()).hexdigest()}
     query = {}
-    for name in ('horizon', 'normal_horizon', 'motion_cursor_before'):
+    for name in ('horizon', 'normal_horizon', 'motion_cursor_before', 'warm_horizon',
+                 'certified_horizon'):
         if name in decision:
             query[name] = unsigned(decision[name], 2**32 - 1)
-    for name in ('pulse_recovery', 'previous_replacement_failed', 'shortened'):
+    for name in ('pulse_recovery', 'previous_replacement_failed', 'shortened', 'covered_backup'):
         if name in decision:
             if type(decision[name]) is not bool:
                 raise ValueError('invalid captured query flag')

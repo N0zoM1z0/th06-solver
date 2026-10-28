@@ -27,9 +27,14 @@ struct Search {
     bool deadline_checkpoint = false;
     bool warm_attempted = false, warm_certified = false, warm_selected = false;
     bool warm_checkpoint = false;
+    // Requested fresh lookahead can exceed a separately certified backup.
+    unsigned certified_horizon = 0, warm_horizon = 0;
     unsigned motion_attempts = 0, motion_cursor = 0;
     unsigned recorded_forecasts = 0, recorded_checks = 0, last_phase = 0;
 };
+inline bool covered_warm_backup(const Search &result, unsigned queued) {
+    return result.warm_selected && result.prediction.count && result.prediction.count <= queued;
+}
 // The caller owns a single native world. Search forks it and enforces a wall
 // budget on the whole owned process group, including proposal descendants.
 Search search(solver::Session &game, const Plan &active, std::uint16_t previous, unsigned lead,
@@ -37,5 +42,5 @@ Search search(solver::Session &game, const Plan &active, std::uint16_t previous,
               unsigned motion_cursor = 0, bool recorded = false, unsigned proposals = 1,
               bool laser_aware = false, bool anytime = false, bool power_aware = false,
               bool damage_aware = false, bool acceleration_aware = false,
-              bool diverse_first = false, bool warm_start = false);
+              bool diverse_first = false, bool warm_start = false, unsigned warm_horizon = 0);
 } // namespace th06::shadow

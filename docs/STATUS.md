@@ -83,6 +83,14 @@ and [Performance](PERFORMANCE.md). They are not erased by later successes.
 Current actual Extra accounting is **three full clears, twelve full hits, four
 prefixes and three zero-frame starts**; the two pure replay diagnostics are separate.
 
+The optional [independent warm horizon](SHADOW_MPC.md#independent-warm-horizon)
+now permits a fully verified 64-update nominal backup alongside a normal fresh
+search. Covered backups keep the longer acknowledged queue; actual proof length
+is recorded separately. Sixteen captured-state native phase models pass fresh
+replay, as do their controls. A repeated-origin benchmark preserves all fresh
+inputs/digests and reduces native update count, but shows no reliable CPU benefit.
+The option remains experimental and defaults to the previous behavior.
+
 ## Published replays and recordings
 
 | Input-only replay | Origin | Verified Wine recording |
@@ -106,7 +114,7 @@ file hashes and publication identities.
 
 ## Validation and resource rules
 
-The 2026-10-28 validated build has 48 local CTest contracts with private DATs;
+The 2026-10-28 validated build has 51 local CTest contracts with private DATs;
 CI checks the asset-free subset. [Validation](VALIDATION.md) lists dependencies,
 entry profiles, focused tests, full replay checks and export commands.
 Use the configured test list rather than old milestone counts in archived notes.

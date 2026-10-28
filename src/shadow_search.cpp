@@ -88,12 +88,16 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
               bool recorded, unsigned proposals, bool laser_aware, bool anytime, bool power_aware,
-              bool damage_aware, bool acceleration_aware, bool diverse_first, bool warm_start) {
+              bool damage_aware, bool acceleration_aware, bool diverse_first, bool warm_start,
+              unsigned warm_horizon) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
     if (warm_start && !anytime)
         throw std::invalid_argument("warm start requires anytime certificates");
+    if (warm_horizon && (!warm_start || warm_horizon < 8 || warm_horizon > capacity - lead))
+        throw std::invalid_argument("warm horizon requires warm start and 8..capacity-lead");
+    const auto backup_horizon = warm_horizon ? std::min(horizon, warm_horizon) : horizon;
     if (prctl(PR_SET_CHILD_SUBREAPER, 1))
         throw std::runtime_error("set child subreaper");
     if (laser_aware)
@@ -154,7 +158,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     origin + lead < active.origin + active.count) {
                     b::save(progress.words + 2, 2);
                     b::save(progress.words + 8, 1);
-                    warm = nominal(game, active, origin, lead, horizon, previous);
+                    warm = nominal(game, active, origin, lead, backup_horizon, previous);
                     ++result.branches;
                     result.updates += warm.updates;
                     if (warm.count) {
@@ -377,6 +381,9 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
         b::load(progress.words + 7) && progress.data->warm_ns <= std::uint64_t(budget) * 1000000;
     result.warm_selected =
         result.warm_attempted && result.prediction.count && result.prediction.nominal;
+    result.warm_horizon = result.warm_attempted ? backup_horizon : 0;
+    result.certified_horizon =
+        result.prediction.count ? (result.warm_selected ? backup_horizon : horizon) : 0;
     result.motion_attempts = b::load(progress.words + 1);
     result.motion_cursor = b::load(progress.words);
     result.last_phase = b::load(progress.words + 2);

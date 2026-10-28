@@ -338,6 +338,28 @@ requested-horizon fields when available, separately from the acknowledged plan's
 older horizon. Missing legacy fields remain absent. A later policy episode must
 declare its cursor, recovery state and timing model separately from gameplay RNG.
 
+### Independent warm horizon
+
+Experimental `--warm-horizon 64` caps only the separately verified nominal backup;
+fresh search still requests the selected 128/256 horizon. It requires warm start
+and anytime mode, accepts 32..base horizon, and defaults to zero (follow the
+query horizon). A short backup is a complete native future of its own declared
+length, never the unfinished prefix of a failed longer search. Full fresh
+certificates retain priority and all child completion timestamps still apply.
+
+With the cap enabled, a nominal backup that adds no time beyond the acknowledged
+queue is reported as `covered_backup` and leaves that longer queue intact.
+Fresh alternatives may change its suffix. Decisions separate requested `horizon`,
+`warm_horizon` and `certified_horizon`; published journals store the actual
+certificate horizon and optional `requested_horizon`. `covered_backups` and
+`short_warm_publications` are reported separately. Queue extraction retains these
+fields without relabeling a short proof as a long one. The wire plan is unchanged.
+
+Sixteen captured-state native phase models and 51 CTests validate the option,
+including long-future failure, timeout cleanup, literal digest replay and fresh
+priority. The model controls also survive; these do not establish a robustness
+or CPU/FPS improvement. See [the study](EXTRA_SEARCH.md#2026-10-28-independent-warm-horizon).
+
 ## Short native rescue horizon
 
 Experimental `--rescue-horizon 64` keeps the normal requested lookahead until a

@@ -45,6 +45,12 @@ with tempfile.TemporaryDirectory() as temp:
     assert metadata['query_state'] == state and metadata['horizon'] == 8
     reject(query={**decision, **state, 'pulse_recovery': 1})
     reject(query={**decision, **state, 'motion_cursor_before': -1})
+    changed = copy.deepcopy(certificate)
+    changed['requested_horizon'] = 32
+    write(changed)
+    assert module.extract(root, 2)[3]['horizon'] == 8
+    changed['requested_horizon'] = 7
+    reject(changed)
     write(query={'origin': 4, 'active_generation': 2, 'queue_before': 0})
     assert module.extract(root, 4)[3]['remaining'] == 0
     for field, value in [('count', 5), ('generation', 4), ('first_change', 4), ('version', True)]:

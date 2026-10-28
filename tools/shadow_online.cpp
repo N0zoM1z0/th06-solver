@@ -68,7 +68,8 @@ int main(int argc, char **argv) {
         std::string data, directory;
         unsigned horizon = 128, lead = 16, budget = 110, interval = 16;
         unsigned survival_horizon = 0;
-        unsigned rescue_horizon = 0;
+        unsigned rescue_horizon = 0, warm_horizon = 0;
+        unsigned covered_backups = 0, short_warm_publications = 0;
         unsigned refresh_updates = 0;
         bool pulse = false;
         bool pulse_on_failure = false;
@@ -138,7 +139,8 @@ int main(int argc, char **argv) {
                     << "th06_shadow_online --data DIR --directory DIR [--horizon 32..592] "
                        "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
                        "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware] "
-                       "[--anytime] [--warm-start] [--power-aware] [--damage-aware] "
+                       "[--anytime] [--warm-start] [--warm-horizon N] [--power-aware] "
+                       "[--damage-aware] "
                        "[--acceleration-aware] "
                        "[--survival-horizon N] [--rescue-horizon N] [--refresh-updates N] "
                        "[--diverse-first] "
@@ -163,6 +165,8 @@ int main(int argc, char **argv) {
                     survival_horizon = n;
                 else if (key == "--rescue-horizon")
                     rescue_horizon = n;
+                else if (key == "--warm-horizon")
+                    warm_horizon = n;
                 else if (key == "--refresh-updates")
                     refresh_updates = n;
                 else if (key == "--lead")
@@ -190,6 +194,8 @@ int main(int argc, char **argv) {
             throw std::runtime_error("recorded proposals require horizon <= 240");
         if (pulse && pulse_on_failure)
             throw std::runtime_error("choose one pulse policy");
+        if (warm_horizon && (!warm_start || warm_horizon < 32 || warm_horizon > horizon))
+            throw std::runtime_error("warm horizon requires warm start and 32..base horizon");
         if (warm_start && !anytime)
             throw std::runtime_error("warm start requires anytime certificates");
         if (refresh_updates && (fresh || refresh_updates < interval || refresh_updates > horizon))
@@ -355,10 +361,11 @@ int main(int argc, char **argv) {
                 const bool extended = selected_horizon > horizon;
                 short_searches += shortened;
                 survival_searches += extended;
-                const auto result = b::search(
-                    game, active, previous, lead, selected_horizon, budget, reuse,
-                    pulse || recovery, motion_cursor, recorded, proposals, laser_aware, anytime,
-                    power_aware, damage_aware, acceleration_aware, diverse_first, warm_start);
+                const auto result =
+                    b::search(game, active, previous, lead, selected_horizon, budget, reuse,
+                              pulse || recovery, motion_cursor, recorded, proposals, laser_aware,
+                              anytime, power_aware, damage_aware, acceleration_aware, diverse_first,
+                              warm_start, warm_horizon);
                 warm_attempts += result.warm_attempted;
                 warm_certificates += result.warm_certified;
                 deadline_checkpoints += result.deadline_checkpoint;
@@ -390,8 +397,12 @@ int main(int argc, char **argv) {
                     matches = h.frame == f && h.input == result.prediction.inputs[i] &&
                               h.digest == result.prediction.digests[i];
                 }
+                const bool covered_backup = warm_horizon && matches &&
+                                            b::load(map + b::Outcome) == b::Running &&
+                                            b::covered_warm_backup(result, queue_before);
+                covered_backups += covered_backup;
                 bool published = false;
-                if (matches && b::load(map + b::Outcome) == b::Running) {
+                if (matches && !covered_backup && b::load(map + b::Outcome) == b::Running) {
                     pending = {};
                     pending.generation = (submitted + 1) * 2;
                     pending.origin = origin;
@@ -410,14 +421,17 @@ int main(int argc, char **argv) {
                     checkpoint_publications += result.deadline_checkpoint;
                     survival_publications += extended;
                     warm_publications += result.warm_selected;
+                    short_warm_publications +=
+                        result.warm_selected && result.certified_horizon < selected_horizon;
                     short_publications += shortened;
                     if (save_certificates) {
-                        certificates << "{\"version\":1,\"generation\":" << pending.generation
-                                     << ",\"origin\":" << pending.origin
-                                     << ",\"stage\":" << pending.stage
-                                     << ",\"first_change\":" << pending.first_change
-                                     << ",\"count\":" << pending.count << ",\"lead\":" << lead
-                                     << ",\"horizon\":" << selected_horizon << ",\"inputs\":[";
+                        certificates
+                            << "{\"version\":1,\"generation\":" << pending.generation
+                            << ",\"origin\":" << pending.origin << ",\"stage\":" << pending.stage
+                            << ",\"first_change\":" << pending.first_change
+                            << ",\"count\":" << pending.count << ",\"lead\":" << lead
+                            << ",\"horizon\":" << result.certified_horizon
+                            << ",\"requested_horizon\":" << selected_horizon << ",\"inputs\":[";
                         for (unsigned i = 0; i < pending.count; ++i)
                             certificates << (i ? "," : "") << pending.inputs[i];
                         certificates << "],\"digests\":[";
@@ -426,9 +440,9 @@ int main(int argc, char **argv) {
                         certificates << "]}\n";
                         certificates.flush();
                     }
-                } else if (result.prediction.count)
+                } else if (result.prediction.count && !covered_backup)
                     ++stale;
-                else if (!result.timeout)
+                else if (!result.timeout && !result.prediction.count)
                     ++failed;
                 last_unpublished = !published;
                 decisions << "{\"origin\":" << origin << ",\"caught_up\":" << now.frame
@@ -437,6 +451,9 @@ int main(int argc, char **argv) {
                           << (previous_failed ? "true" : "false")
                           << ",\"shortened\":" << (shortened ? "true" : "false")
                           << ",\"horizon\":" << selected_horizon
+                          << ",\"certified_horizon\":" << result.certified_horizon
+                          << ",\"warm_horizon\":" << result.warm_horizon
+                          << ",\"covered_backup\":" << (covered_backup ? "true" : "false")
                           << ",\"active_generation\":" << active_generation
                           << ",\"published_generation\":" << (published ? pending.generation : 0)
                           << ",\"motion_cursor_before\":" << cursor_before
@@ -459,6 +476,7 @@ int main(int argc, char **argv) {
                           << ",\"fallback_total\":" << b::load(map + b::Fallback)
                           << ",\"result_reason\":\""
                           << (published                  ? "published"
+                              : covered_backup           ? "covered_backup"
                               : now.stage != state.stage ? "stage_reset"
                               : result.prediction.count  ? "stale"
                               : result.timeout           ? "timeout"
@@ -498,7 +516,10 @@ int main(int argc, char **argv) {
                << ",\"budget_ms\":" << budget << ",\"interval\":" << interval
                << ",\"fresh_only\":" << fresh << ",\"proposals\":" << proposals
                << ",\"refresh_updates\":" << refresh_updates << ",\"searches\":" << attempts
-               << ",\"warm_start\":" << warm_start << ",\"warm_attempts\":" << warm_attempts
+               << ",\"warm_start\":" << warm_start << ",\"warm_horizon\":" << warm_horizon
+               << ",\"covered_backups\":" << covered_backups
+               << ",\"short_warm_publications\":" << short_warm_publications
+               << ",\"warm_attempts\":" << warm_attempts
                << ",\"warm_certificates\":" << warm_certificates
                << ",\"warm_publications\":" << warm_publications
                << ",\"save_certificates\":" << save_certificates << ",\"timeouts\":" << timeouts

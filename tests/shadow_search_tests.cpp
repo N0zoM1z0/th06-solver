@@ -77,6 +77,62 @@ int main(int argc, char **argv) {
         Session game(config);
         const auto before = game.observation_digest();
         const std::string mode = argv[2];
+        if (mode == "warm-short" || mode == "warm-short-deadline" || mode == "warm-short-fresh") {
+            b::Plan active;
+            active.generation = 2;
+            active.stage = config.stage;
+            active.first_change = 9;
+            active.count = 64;
+            active.inputs.fill(261);
+            for (const auto cap : {7u, b::capacity}) {
+                bool rejected = false;
+                try {
+                    b::search(game, active, 261, 8, 32, 1000, false, false, 0, false, 1, false,
+                              true, false, false, false, false, true, cap);
+                } catch (const std::invalid_argument &) {
+                    rejected = true;
+                }
+                require(rejected, "invalid backup cap fails before forking");
+            }
+            const bool timed = mode == "warm-short-deadline";
+            const bool fresh = mode == "warm-short-fresh";
+            th06::ChainElem callback;
+            if (!fresh) {
+                callback.SetCallback(reinterpret_cast<th06::ChainCallback>(inject));
+                require(th06::g_FuncChain.AddToCalcChain(&callback, 15) == ZUN_SUCCESS,
+                        "inject long-future failure after a complete short backup");
+            }
+            if (timed) {
+                checkpoint_mode = checkpoint_delay = true;
+                blocked = static_cast<std::uint32_t *>(
+                    mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
+                require(blocked != MAP_FAILED, "shared short backup deadline receipt");
+            }
+            const auto result =
+                b::search(game, active, 261, 8, 32, timed ? 150 : 1000, false, false, 0, false, 1,
+                          false, true, false, false, false, false, true, 8);
+            require(game.observation_digest() == before && !calls && result.warm_certified &&
+                        result.warm_horizon == 8 && result.certified_horizon == (fresh ? 32 : 8) &&
+                        result.prediction.count == (fresh ? 40 : 16) &&
+                        result.warm_selected == !fresh && result.timeout == timed &&
+                        result.warm_checkpoint == timed,
+                    "short backup never claims the fresh horizon; full fresh success wins");
+            if (timed) {
+                require(b::load(blocked) == 2, "fresh work blocks after the short certificate");
+                checkpoint_delay = false;
+            }
+            for (unsigned i = 0; i < result.prediction.count; ++i)
+                require(!game.step(result.prediction.inputs[i]).hit &&
+                            game.observation_digest() == result.prediction.digests[i],
+                        "short or fresh certificate independently replays");
+            int status;
+            errno = 0;
+            require(waitpid(-1, &status, WNOHANG) == -1 && errno == ECHILD,
+                    "short backup reaps all descendants");
+            if (blocked)
+                munmap(blocked, 4096);
+            return 0;
+        }
         if (mode == "warm" || mode == "warm-deadline" || mode == "warm-failure") {
             b::Plan active;
             active.generation = 2;

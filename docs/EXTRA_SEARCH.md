@@ -699,3 +699,33 @@ cumulative actual Extra ledger is **three full clears, twelve full hits, four
 prefixes and three zero-frame starts**. No new replay is published. Random-seed
 robustness and stable online 60 FPS remain open; next work should target earlier
 route choices and measured timing sensitivity in these captured spell-57 windows.
+
+
+## 2026-10-28 independent warm horizon
+
+Private evidence: `reports/local/extra-backup-20261028/`. A separately certified
+64-update nominal backup can reserve more of the unchanged 110-ms cap for fresh
+128/256-update futures. It never certifies the requested longer horizon. With
+`--warm-horizon 64`, a backup covered by the old acknowledged queue leaves that
+queue intact. Default zero retains the previous warm behavior; this option is
+experimental, with no established random-seed or FPS benefit.
+
+The seed-43546 spell-57 queues at 22,684 and 22,803 provide exact native prefixes,
+remaining inputs, proposal cursors and initial recovery/replacement state.
+Eight 128-horizon models alternate full/64 backup ordering over two repeats;
+four more request 192. Four final 128-horizon models include the queue-preservation
+guard and use the promoted implementation. All **sixteen phase episodes** survive
+without hit/fallback and pass independent fresh replay. Their controls also
+survive. One early short-backup phase ends at 24,651; the other episodes end at
+24,846. Consumption is still `ceil(search_ms * 0.06)` on the shared host, not the
+recorded varying retail cadence. GNU time retains CPU, elapsed time and maximum
+single-process RSS; it is not a whole-tree memory measurement.
+
+A full/64/64/full repeated-origin benchmark runs 30 fresh queries each at origin
+22,803 with a 2,000-ms cap. All four fresh input/digest checksums match, with 240
+branches each. Update counts are 31,200 / 29,280 / 29,280 / 31,200. Child CPU is
+3.506 / 3.500 / 3.459 / 3.356 s: fewer updates do not establish a CPU reduction.
+The first benchmark may overlap fresh-check work, so no timing speedup is claimed.
+All four trials are retained. The final code passes **51 CTests** with real DATs,
+including short-proof length, failed long futures, deadline cleanup, native
+literal replay, fresh priority and preserving longer acknowledged queues.
