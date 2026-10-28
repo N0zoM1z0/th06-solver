@@ -7,7 +7,7 @@ actual tape matches every digest. The [full combined profile](EXTRA_SEARCH.md#fi
 has only four startup fallback inputs, peak 342.85 MiB and OOM 0. New
 [verified samples](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures),
 seeds 61515 / 57265, clear in 44,959 / 47,986 updates with verified nominal
-backups and optional shorter futures. Twelve failed full hits remain in the
+backups and optional shorter futures. Thirteen failed full hits remain in the
 ledger. Random-seed robustness and stable online 60 FPS remain open.
 
 Optional `--anytime` retains the first full native certificate if later ranking
@@ -355,10 +355,11 @@ certificate horizon and optional `requested_horizon`. `covered_backups` and
 `short_warm_publications` are reported separately. Queue extraction retains these
 fields without relabeling a short proof as a long one. The wire plan is unchanged.
 
-Sixteen captured-state native phase models and 51 CTests validate the option,
+Sixteen initial captured-state native phase models and 51 CTests cover the option,
 including long-future failure, timeout cleanup, literal digest replay and fresh
 priority. The model controls also survive; these do not establish a robustness
-or CPU/FPS improvement. See [the study](EXTRA_SEARCH.md#2026-10-28-independent-warm-horizon).
+or CPU/FPS improvement. The first actual trial hits on spell 62 at 34,033;
+the option is not recommended from that result. See [the study](EXTRA_SEARCH.md#2026-10-28-independent-warm-horizon).
 
 ## Short native rescue horizon
 

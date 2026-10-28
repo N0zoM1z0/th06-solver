@@ -13,7 +13,7 @@ budget exhaustion stays incomplete.
 
 | Evidence | Verified result | Limit |
 | --- | --- | --- |
-| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 / 57265 clear in 43,126 / 44,959 / 47,986 updates | Three successful samples; twelve full hits retained |
+| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 / 57265 clear in 43,126 / 44,959 / 47,986 updates | Three successful samples; thirteen full hits retained |
 | Lunatic online components | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear | Five failed Stage 6 controls; no full live story or all-shot coverage |
 | Live story handoff | Natural Stage 1 → 2, 20,000-update NMNB prefix | Incomplete story |
 | Original-loader replay | Lunatic Reimu A seed 0: 127,737 updates/six clears; Extra Reimu B seed 35964: 43,126 updates/one clear | Both whole traces agree with their fresh native export |
@@ -42,17 +42,18 @@ These options do not change native collision authority or the immutable lead.
 | `online-rescue-002` / 61515, Wine 8 | **NMNB clear 44,959** | 9,045 / 1,721 / 8,719 | 4 startup | 447.27 MiB / 0 |
 | `online-rescue-003` / 57265, Wine 8 | **NMNB clear 47,986** | 10,066 / 2,818 / 9,432 | 4 startup | 388.54 MiB / 0 |
 | `online-runtime-full-008` / 43546, Wine 11/DXVK | Hit 23,036, spell 57 | 4,393 / 1,387 / 4,171 | 4 startup + 2 exhausted | 404.38 MiB / 0 |
+| `online-short-warm-001` / 24944, Wine 8, warm cap 64 | Hit 34,033, spell 62 | 7,004 / 1,021 / 6,557 | 4 startup + 2 exhausted | 609.82 MiB / 0 |
 
-All four actual traces match independent retail projection and native digest
+All five actual traces match independent retail projection and native digest
 replay, including hits. Both new clears pass frozen `--require-complete` replay;
 all captured queue/generation/policy transitions pass independent journal checks.
 The two clears publish 548 / 1,091 warm backups and 31 / 91 shorter native futures.
-All four have verified 2-GiB hard / 1.5-GiB high / no-swap limits. Search cleanup
+All five have verified 2-GiB hard / 1.5-GiB high / no-swap limits. Search cleanup
 and actual over-budget costs remain reported; only complete in-budget immutable
 checkpoints survive a timeout. See [the full study](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures)
 for exact settings, timing distributions, costs and every native control.
 
-The newest [counterexample](EXTRA_SEARCH.md#2026-10-28-wine-11-full-run-counterexample)
+The retained Wine 11 [counterexample](EXTRA_SEARCH.md#2026-10-28-wine-11-full-run-counterexample)
 is spell 57 / ECL sub 44, boss HP 1,264. Its final 80-update warm plan, from
 22,954, ends at 23,034. Nineteen unsuccessful replacements (15 timeouts) follow,
 then two fallback inputs and the hit. Three exact checked queues now restore
@@ -80,7 +81,7 @@ and shared-host scheduling limit attribution, and batching stays replay-only.
 Earlier seed-24443/4902 hits, the seed-61531 rendering prefix, deadline negative
 controls and native performance studies remain in [Extra search](EXTRA_SEARCH.md)
 and [Performance](PERFORMANCE.md). They are not erased by later successes.
-Current actual Extra accounting is **three full clears, twelve full hits, four
+Current actual Extra accounting is **three full clears, thirteen full hits, four
 prefixes and three zero-frame starts**; the two pure replay diagnostics are separate.
 
 The optional [independent warm horizon](SHADOW_MPC.md#independent-warm-horizon)
@@ -90,6 +91,15 @@ is recorded separately. Sixteen captured-state native phase models pass fresh
 replay, as do their controls. A repeated-origin benchmark preserves all fresh
 inputs/digests and reduces native update count, but shows no reliable CPU benefit.
 The option remains experimental and defaults to the previous behavior.
+Its first Wine trial, seed 24944, hits at 34,033 on spell 62 / sub 60. All native
+and retail projections, including the hit, and all 7,004 query transitions
+independently match. The last 80-update backup ends at 34,031; two exhausted-queue
+inputs follow. Window mean / slowest five seconds / p99 is 47.22 Hz / 20.2 Hz /
+45 ms. Both gates fail. The run exercises 431 covered backups and 15 short-proof
+publications without extending their declared proof lengths; it does not establish improved
+robustness. Six further backup controls and six reactive-order controls
+retain mixed phase outcomes, all independently replayed. Neither reactive-first
+ordering nor vertical-edge scoring is promoted. See [the counterexample](EXTRA_SEARCH.md#2026-10-28-short-backup-retail-failure-and-search-cost).
 
 ## Published replays and recordings
 

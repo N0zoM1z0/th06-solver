@@ -67,7 +67,7 @@ in two of three windows, but retain declared initial planner-state differences
 and host-timing dependence. Repeat the same live profile on natural seeds before
 claiming broader stability; retain every attempt.
 
-The newest counterexample is **seed 43546**, `online-runtime-full-008`, in the
+The earlier Wine 11 counterexample is **seed 43546**, `online-runtime-full-008`, in the
 same private root: Wine 11/DXVK, hit 23,036 on spell 57 / sub 44. The last short
 warm plan from 22,954 ends at 23,034, followed by two exhausted-queue inputs.
 Exact checked queues at **22,495 / 22,684 / 22,803** retain **140 / 139 / 139**
@@ -77,6 +77,20 @@ models independently replay, including failures; `diverse-first` loses the late
 window against its surviving control. No candidate-order change is promoted.
 The native clock remains `ceil(search_ms * 0.06)`, rather than the actual varying
 retail cadence: matching initial state alone does not make the episode identical.
+
+The latest natural seed **24944**, `online-short-warm-001`, hits at 34,033 on
+spell 62 / sub 60 with optional warm cap 64. Exact verified queues at
+**33,003 / 33,402 / 33,750** preserve **265 / 267 / 265** inputs and cursors
+**22 / 24 / 42**; initial recovery/replacement-failure flags are off. Both full
+and short backup models fail from the first origin and survive later origins in
+one batch. Repeated identical baseline episodes change outcomes with the modeled
+wall-clock latency, so keep the timing model explicit when comparing policy.
+A 512-tail probe at 33,750 finds a complete safe future crossing the original hit
+in 505.95 ms; reactive-first finds one in 385.52 ms. Both fail to certify within
+110 ms. A private vertical-margin variant exhausts 50 candidates without that
+512-frame certificate. All remain private negative/feasibility controls; no new
+default ordering or edge score is promoted. Target useful multi-turn candidates
+inside the actual budget, and separate fixed-work quality from latency effects.
 
 ## P0: Attribute frame pacing and establish a 60-FPS gate
 

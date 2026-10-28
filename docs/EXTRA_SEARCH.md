@@ -729,3 +729,67 @@ The first benchmark may overlap fresh-check work, so no timing speedup is claime
 All four trials are retained. The final code passes **51 CTests** with real DATs,
 including short-proof length, failed long futures, deadline cleanup, native
 literal replay, fresh priority and preserving longer acknowledged queues.
+
+
+## 2026-10-28 short-backup retail failure and search cost
+
+The first actual `--warm-horizon 64` trial, `online-short-warm-001` under private
+`reports/local/extra-backup-20261028/`, captures Reimu B seed **24944**, natural
+power-0 Extra. It hits at **34,033**, spell 62 / sub 60, boss HP 1,000. All native
+digests and retail projections match independent replay including the hit;
+all 7,004 queries and 6,557 literal publications pass the updated journal graph.
+The final publication at 33,951 certifies 80 updates (lead 16 + backup 64),
+correctly recording requested horizon 256 separately. It ends at 34,031; thirteen
+unsuccessful replacements (nine timeouts) follow, then two fallback inputs and
+the hit. Total fallback is six including four startup. No stale/rejected plan
+or native follower error occurs.
+
+The run retains 1,021 timeouts, 431 covered backups, 16 warm publications and
+15 short-warm publications. Verified limits are 2-GiB hard / 1.5-GiB high /
+no swap, peak **609.82 MiB**, OOM 0. Controller/children use 15.78/471.54 s CPU
+over 720.61 s controller wall time. Actual window mean / slowest five seconds /
+p99 is **47.22 Hz / 20.2 Hz / 45 ms**, with steady draw/Present-call means
+0.95/14.43 ms. Both unchanged gates fail. This one different-seed failure neither
+proves a regression from the backup cap nor establishes benefit; the cap remains
+experimental and is not recommended from this result.
+
+Six subsequent native phase models restore exact queues and planner state with
+256-tail/110-ms/six-proposal policy:
+
+| Origin / queue / cursor (recovery off) | Full backup | Short backup with queue protection |
+| --- | --- | --- |
+| 33,003 / 265 / 22 | Hit 33,792; 1 fallback | Hit 34,035; 1 fallback |
+| 33,402 / 267 / 24 | Phase ends 37,762; no hit/fallback | Same phase end; no hit/fallback |
+| 33,750 / 265 / 42 | Phase ends 37,762; no hit/fallback | Same phase end; no hit/fallback |
+
+All six whole traces independently replay, including hits. A second six-episode
+batch compares the unchanged full-backup policy with privately reordered
+reactive/orbital candidates first during invulnerable survival phases. At the
+first origin, the control survives while reactive-first hits at 34,043 with
+11 fallback; both survive the middle origin; both hit at the last origin
+(control 34,046 / 5 fallback, variant 34,319 / 3 fallback). All six also replay
+independently. The identical baseline binary, initial queue and planner state
+can change outcome between these batches: `ceil(search_ms * 0.06)` consumption
+and deadline truncation remain host-timing dependent. These comparisons cannot
+establish causal retail recovery. Reactive-first is not promoted.
+
+A checked snapshot at 33,750 has player (267.549, 432), 386 visible bullets,
+no lasers, and bullet flags 0x202 (spawn effect/sound, no turning/acceleration
+mode). Current linear forecasts omit future spawns. A native 512-tail probe
+finds a multi-turn reactive path across the old hit: **528 certified updates**,
+30 branches, 4,618 updates, **505.95 ms**. Privately prioritizing reactive paths
+finds a full future in 13 branches / 2,922 updates / **385.52 ms**. Both complete
+prefix-plus-future tapes pass frozen fresh replay, but both 110-ms probes time
+out with no certificate. Feasibility with a 2,000-ms cap is not online feasibility.
+A private vertical-margin score instead exhausts 50 candidates / 6,780 updates
+in 832.54 ms without a complete 512-tail future; it is not promoted either.
+
+This continuation retains **one failed actual full trial, 28 native phase
+episodes and five fixed-prefix probes**, including every negative outcome.
+Native model GNU-time CPU totals are 1,005.70 s across 11,048 queries; maximum
+RSS remains per process rather than a tree peak. The cumulative actual Extra
+ledger is **three full clears, thirteen full hits, four prefixes and three
+zero-frame starts**. No new replay or asset is tracked. Random-seed robustness
+and stable online 60 FPS remain open. Next work should separate repeatable
+candidate-quality checks from captured-latency policy episodes and reduce the
+cost of useful multi-turn proposals, rather than raising the online cap.
