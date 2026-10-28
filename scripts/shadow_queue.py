@@ -90,6 +90,16 @@ def extract(directory, origin):
                     (directory / 'actual.actions').read_bytes()).hexdigest(),
                 'certificate_journal_sha256': hashlib.sha256(
                     (directory / 'certificates.jsonl').read_bytes()).hexdigest()}
+    query = {}
+    for name in ('horizon', 'normal_horizon', 'motion_cursor_before'):
+        if name in decision:
+            query[name] = unsigned(decision[name], 2**32 - 1)
+    for name in ('pulse_recovery', 'previous_replacement_failed', 'shortened'):
+        if name in decision:
+            if type(decision[name]) is not bool:
+                raise ValueError('invalid captured query flag')
+            query[name] = decision[name]
+    metadata['query_state'] = query
     return lines[:2], fingerprint, rows, metadata
 
 

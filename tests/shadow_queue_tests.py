@@ -37,6 +37,14 @@ with tempfile.TemporaryDirectory() as temp:
     _, fingerprint, actual, metadata = module.extract(root, 2)
     assert fingerprint == 42 and actual == rows and metadata['remaining'] == 2
     assert not metadata['native_verified'] and not metadata['retail_proof']
+    assert metadata['query_state'] == {}
+    state = {'horizon': 64, 'normal_horizon': 256, 'motion_cursor_before': 39,
+             'pulse_recovery': True, 'previous_replacement_failed': True, 'shortened': True}
+    write(query={**decision, **state})
+    metadata = module.extract(root, 2)[3]
+    assert metadata['query_state'] == state and metadata['horizon'] == 8
+    reject(query={**decision, **state, 'pulse_recovery': 1})
+    reject(query={**decision, **state, 'motion_cursor_before': -1})
     write(query={'origin': 4, 'active_generation': 2, 'queue_before': 0})
     assert module.extract(root, 4)[3]['remaining'] == 0
     for field, value in [('count', 5), ('generation', 4), ('first_change', 4), ('version', True)]:
