@@ -11,7 +11,7 @@ fresh native replay and original-loader Wine `.rpy` playback.
 
 | Verified result | Scope |
 | --- | --- |
-| Extra online NMNB | One Reimu B clear; eight failed full attempts retained |
+| Extra online NMNB | One Reimu B clear; ten failed full attempts retained |
 | Lunatic online NMNB | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear; no complete live story |
 | Retail replay | Complete Lunatic Reimu A story and Extra Reimu B route |
 | Replay presentation gate | One audio-off Lunatic story passes; online 60 FPS and audio-on recording pacing remain unresolved |

@@ -1,6 +1,6 @@
 # Current status
 
-Updated 2026-10-27. Gameplay work focuses on Extra online shadow MPC in the
+Updated 2026-10-28. Gameplay work focuses on Extra online shadow MPC in the
 owned Wine game, following th08-solver. Keep original-runtime, offline/native,
 retail replay, recording and online evidence separate. This page owns the current
 summary; [Continuation](CONTINUATION.md) owns the operational restart checklist.
@@ -13,7 +13,7 @@ budget exhaustion stays incomplete.
 
 | Evidence | Verified result | Limit |
 | --- | --- | --- |
-| Extra online | Reimu B, captured retail seed 35964, normal power 0, 43,126 actual updates and one natural clear | One successful sample; eight earlier full hits retained |
+| Extra online | Reimu B, captured retail seed 35964, normal power 0, 43,126 actual updates and one natural clear | One successful sample; ten full hits retained |
 | Lunatic online components | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear | Five failed Stage 6 controls; no full live story or all-shot coverage |
 | Live story handoff | Natural Stage 1 → 2, 20,000-update NMNB prefix | Incomplete story |
 | Original-loader replay | Lunatic Reimu A seed 0: 127,737 updates/six clears; Extra Reimu B seed 35964: 43,126 updates/one clear | Both whole traces agree with their fresh native export |
@@ -58,6 +58,29 @@ failed survival/damage/long-horizon models in [Extra search](EXTRA_SEARCH.md).
 The earlier Lunatic component clear uses a separate 64/8/80-ms profile; do not
 silently replace its evidence with the Extra settings.
 
+The [2026-10-28 study](EXTRA_SEARCH.md#2026-10-28-stability-and-deadline-study)
+retains two new Reimu B failures: seed 24443 at 10,575 updates and seed 4902 at
+38,787, spell 62. Both actual routes match independent replay, including each
+hit. The latter queue ends at 38,782 after 61 unsuccessful replacement searches
+(57 timeouts); five further fallback updates end in the hit. Its verified
+2-GiB/1.5-GiB/no-swap limits, peak 393.63 MiB and OOM 0 are retained. The first
+trial's interrupted launcher leaves incomplete peak/OOM evidence.
+
+Checked-prefix probes, queue/cleanup diagnostics and child completion timestamps
+now expose these failures and enforce the deadline when the parent is
+descheduled. A frozen negative control admits a late 40-frame certificate;
+the repaired regression rejects it. Removing unused literal-verification scores
+reduces child CPU 18.0% in one repeated-origin native workload with identical
+routes. All fixed-prefix comparisons and 15 closed native models remain private;
+nominal refresh and candidate diversity are optional, with retained failures.
+
+Optional `--render-timing` records actual online update/draw/Present API clocks.
+A replay-checked 1,200-update seed-61531 prefix has zero hits/bombs, 1,199
+Present samples and no sequence skips/flags. Full Present mean is 40.64 Hz;
+steady draw/Present-call means are 0.76/19.18 ms. It fails the pacing gate and
+remains incomplete, with no independent window clock. Current accounting is
+ten full hits, one full clear, two prefixes and three earlier zero-frame starts.
+
 ## Published replays and recordings
 
 | Input-only replay | Origin | Verified Wine recording |
@@ -81,7 +104,7 @@ file hashes and publication identities.
 
 ## Validation and resource rules
 
-The 2026-10-27 validated build has 40 local CTest contracts with private DATs;
+The 2026-10-28 validated build has 43 local CTest contracts with private DATs;
 CI checks the asset-free subset. [Validation](VALIDATION.md) lists dependencies,
 entry profiles, focused tests, full replay checks and export commands.
 Use the configured test list rather than old milestone counts in archived notes.
@@ -102,12 +125,14 @@ retention tradeoffs; those are not online speedup or robustness guarantees.
    actual Wine samples. Retain fixed-prefix and latency-model counterexamples.
 2. Measure online queue risk and presentation together; a replay-only FPS pass
    cannot close online pacing. Preserve all loading/transition gaps.
-3. Promote a minimal checked-prefix diagnostic from the private prototypes before
-   broadening Lunatic live coverage or attempting a complete online story.
+3. Extend checked-prefix diagnostics to repeatable policy episodes with the
+   original remaining queue before broadening Lunatic live coverage or attempting
+   a complete online story.
 
 [Continuation](CONTINUATION.md) gives acceptance checks and source entry points.
 The open tracker is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
-Private evidence roots include `reports/local/extra-online-20261027/`,
+Private evidence roots include `reports/local/extra-stability-20261028/`,
+`reports/local/extra-online-20261027/`,
 `extra-search-20261027/`, `shadow-extra-20261027/`, `shadow-20261025/`,
 `pacing-20261026/`, `extra-video-20261027/` and `replay-video-20261027/`.
 [Native history](NATIVE_HISTORY.md) and [online history](ONLINE_HISTORY.md)

@@ -399,3 +399,121 @@ not establish a single-change speedup or general robustness. Stable online
 60-FPS presentation also remains unestablished. Next work should test selected
 hard seeds and earlier route choices, while measuring online pacing separately;
 do not rerun the full matrix or discard the retained counterexamples.
+
+## 2026-10-28 stability and deadline study
+
+Private evidence is under `reports/local/extra-stability-20261028/`. This study
+keeps fixed-prefix native probes, timing-dependent native policy models and
+new actual Wine trials separate. All shots in the new Wine trials are Reimu B
+with natural power-0 Extra entry. No historical matrix/story campaign was rerun.
+
+The maintained `th06_shadow_probe` checks the DAT identity, every prefix/lead
+digest and independent literal execution of each returned certificate. Six
+captured seeds (24443, 5594, 24237, 13662, 59127, 35964), three alternating
+before/after pairs each, produce identical prefix-plus-certificate tapes after removing
+unused scores from literal winner verification. All 36 tapes pass a frozen
+fresh checker. These 2,000-ms probes isolate route equivalence from the 110-ms
+online deadline; their noisy wall times do not establish an online speedup.
+
+A separate repeated-origin benchmark on seed 5594 / origin 21,700 uses 30
+`choose` calls per run, ordered before/after/after/before. Child CPU averages
+2.191665 s before and 1.797685 s after (18.0% lower); all four runs have identical
+input/digest checksums, 210 branches and 19,110 native updates. This measures
+one native workload under shared-host load, not complete-game or online FPS.
+
+Periodic nominal extension (`--refresh-updates 32`) is retained as an opt-in
+experiment, following th08. Its three captured-window latency controls use the
+same initial 144 actual queued inputs, horizon 128 (256 for spell 62), lead 16,
+cap 110 ms and six-candidate target:
+
+| Captured seed / origin | Fresh control | Refresh every 32 updates |
+| --- | --- | --- |
+| 5594 / 21,700 | Spell 57 ends at 22,595, no hit/fallback | Hit 22,082, one fallback |
+| 24237 / 27,900 | Spell 58 ends at 28,431, no hit/fallback | Hit 28,129, one fallback |
+| 59127 / 39,700 | Hit 39,984, 12 fallback | Hit 39,984, two fallback |
+
+Nominal extension reduces repeated search work but fails the first two controls;
+it is not a recommended replacement for the successful fresh profile. A separate
+six-run native latency batch exposes the existing planner's `--diverse-first`
+ordering. All six runs hit: seed 5594 ends at 21,990/21,982, seed 24237 at
+28,078/28,121 and seed 13662 at 36,690/36,803 (ordinary/diverse). The last diverse
+case reduces fallback from 38 to two, but still fails NMNB. These timing-dependent
+models use `ceil(search_ms * .06)` consumed updates; host load changes their
+trajectories. They are counterexamples, not paired retail wins.
+
+The first actual new-seed baseline retains the prior combined profile and
+captures seed **24443**. It hits during the midboss section at **10,575**:
+2,391 searches, 606 timeouts, 2,170 publications, 11 fallback and no stale or
+rejected plan. The last publication originates at 10,424 and ends at 10,568.
+Independent source-context replay matches all retail projections; frozen
+diagnostic replay matches every digest including the hit. Build/tests overlapped
+this baseline. The interactive launcher was interrupted before its final resource
+receipt: systemd retains configured 2-GiB/1.5-GiB/no-swap limits, but measured peak
+and OOM counters are unavailable. This failed route has incomplete resource proof
+and is not used as a clean pacing comparison. The runner now atomically snapshots
+measured resources every second and explicitly labels unfinished receipts.
+
+The second actual trial (`fresh3-002`, seed **4902**) keeps the combined profile
+with three candidates instead of six. It hits at **38,787**, spell 62 / subroutine
+60. All retail projections and native digests match frozen independent replay.
+There are 9,196 searches, 2,443 timeouts, 7,670 publications and nine fallback
+inputs (four startup). Search p50/p99/max is 89.74/147.14/267.84 ms including
+cleanup; actual receipt mean is 31.94 Hz, p99/max gap 78.18/635.97 ms. The
+verified 2-GiB/1.5-GiB/no-swap tree peaks at 393.63 MiB with OOM 0.
+
+Its first survival query is at 37,689. The last publication, a recovery from
+38,510, certifies through 38,782. The following **61** replacement searches fail
+(57 timeouts); five exhausted-queue fallback inputs then end in the hit. No plan
+is stale/rejected and the native follower reports no error. This is an earlier
+route/continuation failure, not a collision-model disagreement or certified rescue.
+
+Nine maintained fixed-prefix probes use origins 37,700/38,100/38,500 and
+256-tail/110-ms, 256-tail/200-ms or 320-tail/200-ms profiles, each with lead 16
+and a three-candidate target. Every probe returns a complete certificate; all
+nine prefix-plus-future tapes pass frozen fresh replay. Three subsequent native
+latency episodes from 38,100 retain 144 initial actual queued inputs:
+
+| Tail / cap | Outcome | Timeouts / searches | Fallback |
+| --- | --- | --- | --- |
+| 256 / 110 ms | Spell ends 42,728, no hit | 210 / 809 | 0 |
+| 256 / 200 ms | Hit 38,894 | 21 / 92 | 4 |
+| 320 / 200 ms | Spell ends 42,728, no hit | 72 / 602 | 77 |
+
+All three complete generated traces independently replay, including the failed
+trace's hit. These are phase endpoints, not game clears. The larger-cap failure
+and the longer-horizon fallback rule out claiming a general recovery. The last
+model overlaps the functional rendering smoke below; all latency models remain
+host-timing dependent. Fixed-prefix probe start hashes are recorded, but the
+initial paired study used a mutable build path for its after binary; the frozen
+output tapes, independent checker and separately copied benchmark binaries remain.
+
+The deadline regression then proves a separate protocol bug: if the parent is
+stopped while search finishes after its cap, the old code accepts a readable
+40-update certificate with `timeout=false`. The repaired search checks the
+child's final completion timestamp, rejects the late result, kills/reaps the
+group and admits only an independently complete in-budget anytime checkpoint.
+Both anytime settings pass the adversarial test; all **43** local CTest contracts
+pass. The two full new Wine failures above predate this guard and retain their
+original timing evidence.
+
+The new optional live `--render-timing` uses the existing mapped replay journals
+to measure actual update/draw/Present API clocks. `render-smoke-003` captures
+seed **61531** and ends at its 1,200-update budget with no miss/bomb. Frozen
+native replay and retail projection checks pass. There are 1,199 Present records,
+no skipped sequences or draw/error/repeat flags, and 1,319 limiter entries and
+restores. Resource limits are verified at 2 GiB / 1.5 GiB / no swap, peak
+335.54 MiB, OOM 0. This is an incomplete functional prefix under shared CPU load.
+
+Full Present cadence is 40.64 Hz / slowest five seconds 31.4 Hz / p99 58.92 ms;
+the unchanged pacing/acceptance gates fail. After the explicitly reported
+120-update warmup, draw mean/p99 is 0.76/1.32 ms and Present-call mean/p99 is
+19.18/51.65 ms. Most measured wall time is inside Present in this opening; that
+does not distinguish driver waits from host scheduling or certify window FPS.
+The next pacing investigation should inspect that boundary alongside online
+search, retaining full clocks and an independent window observer.
+
+This follow-up adds **two failed full retail attempts, one incomplete retail
+prefix, 45 fixed-prefix probe tapes and 15 closed native models**. Every failed
+retry remains in the private ledger. The original verified clear remains the
+only full Extra online clear; random-seed robustness and stable online 60 FPS
+are still open.

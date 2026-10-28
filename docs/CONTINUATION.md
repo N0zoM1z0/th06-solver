@@ -31,6 +31,10 @@ sources are evidence, not supported tools that exist in a fresh checkout.
 Extra failures include spells 57, 58 and 62. The retained Stage 6 seed-47489
 right-edge failure is another useful older control. Start before the trap:
 more time after every candidate fails does not create a continuation.
+The newest Extra seed-4902 spell-62 capture has checked 38,100/38,500 windows;
+its actual queue ends at 38,782 and the hit is at 38,787. A 256/110-ms native
+latency model ends the phase, while 256/200 ms hits and 320/200 ms incurs 77
+fallback inputs. These are retained counterexamples, not retail recoveries.
 
 `th06_shadow_probe` now takes an actual tape, origin, immutable lead and search
 profile. It checks every prefix/lead digest and literally replays each returned
@@ -64,6 +68,10 @@ page faults, scheduling, rendering and capture. Retain full-run clocks plus
 separate startup/dialogue/handoff/combat windows. Do not hide loading gaps or
 use new random seeds as paired pacing controls. Add only the measurements needed
 to distinguish a hypothesis; preserve source clocks and gameplay semantics.
+Live `--render-timing` now supplies the shared update/draw/Present journals.
+The short seed-61531 prefix has draw mean 0.76 ms and Present-call mean 19.18 ms,
+with a failing gate. Add the independent window clock before any pacing claim;
+this functional smoke is not a paired renderer or complete-game comparison.
 
 Acceptance: measured sustained combat presentation under a declared profile and
 jitter tolerance, complete NMNB route correctness, intact lead/deadline rules

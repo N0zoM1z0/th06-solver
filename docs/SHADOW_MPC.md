@@ -4,7 +4,7 @@
 35964, normal power-0 retail entry, 43,126 actual updates and one natural clear.
 All retail projections follow native; independent complete frozen replay of the
 actual tape matches every digest. The [full combined profile](EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear)
-has only four startup fallback inputs, peak 342.85 MiB and OOM 0. Eight prior
+has only four startup fallback inputs, peak 342.85 MiB and OOM 0. Ten failed
 full hits remain in the ledger. Random-seed robustness and stable online 60 FPS
 remain open.
 
@@ -173,9 +173,11 @@ independent retail seeds; these are not paired policy comparisons):
 | 24237 | 128 / 16 / 110, survival horizon 256 | Hit, spell 58 | 28,121 | 111.34 | 132 / 6,398 | 5 |
 | 5594 | 128 / 16 / 110, damage-aware | Hit, spell 57 | 22,062 | 111.08 | 81 / 4,921 | 8 |
 | 35964 (Reimu B) | 128 / 16 / 110, combined acceleration profile, survival 256 | Complete NMNB | 43,126 | 111.27 | 360 / 9,590 | 4 |
+| 24443 (Reimu B) | Same combined profile | Hit, midboss section | 10,575 | 132.37 | 606 / 2,391 | 11 |
+| 4902 (Reimu B) | Same combined profile, three candidates | Hit, spell 62 | 38,787 | 147.14 | 2,443 / 9,196 | 9 |
 
 **One complete Extra online NMNB clear is established for the declared case.**
-Completed gameplay trials comprise one budget prefix, eight actual-hit attempts
+Completed gameplay trials comprise two budget prefixes, ten actual-hit attempts
 and one complete clear; three zero-frame startup attempts are accounted
 separately. Every actual native digest matches independent replay. The strict
 NMNB checker rejects every failed route and accepts the clear's entire actual
@@ -183,13 +185,16 @@ tape with `--require-complete`. The clear exercises survival-only extension in
 actual Wine, with 1,063 searches and 966 publications. It has no stale/rejected
 plans, follower error or fallback after its four startup inputs.
 
-Every Wine tree uses the verified 2-GiB/no-swap cap with zero OOM/OOM-kill events;
+The 2026-10-27 Wine trees use verified 2-GiB/no-swap caps with zero OOM/OOM-kill events;
 the largest peak including the prefix is 495.38 MiB. The clear peaks at
 342.85 MiB. Live FPS and random-seed robustness remain unresolved. Frozen tools,
 complete actual inputs, every failed retry and source context remain under
 private `reports/local/shadow-extra-20261027/`,
 `reports/local/extra-search-20261027/` and
 `reports/local/extra-online-20261027/`, with per-root acceptance ledgers.
+The [2026-10-28 follow-up](EXTRA_SEARCH.md#2026-10-28-stability-and-deadline-study)
+retains the new failures and resource-proof exception under
+`reports/local/extra-stability-20261028/`.
 
 ## Checked-prefix probes
 
@@ -223,6 +228,22 @@ also checks actual `memory.high` against 1.5 GiB, alongside hard/swap limits.
 It atomically snapshots resource measurements every second with
 `runner_finished:false`; only the final receipt sets it true. An interrupted
 launcher cannot turn a partial resource receipt into complete acceptance.
+
+Final results now carry the child's monotonic completion timestamp. A readable
+result that completed after the hard budget is a timeout; only an earlier,
+complete anytime checkpoint can survive it. This closes a demonstrated case
+where a descheduled parent accepted a late certificate. Timeout after an
+interrupted poll is also accounted for. Cleanup remains included in wall time.
+Legacy runs retain their measured wall/timeout evidence; they lack this final
+completion-time guard. Their independent route proofs remain separate.
+
+With `--render-timing`, the online observer records `update-times.bin` and
+`render-times.bin` using the existing replay clock/journal implementation. It
+wraps and forwards the original BeginScene/EndScene/Present calls, preserving
+limiter precision restoration before drawing. Analyze a completed run with
+`python3 scripts/replay_pacing.py reports/local/CASE`. This measures actual
+online update and Present API cadence; independent window presentation and
+complete-game NMNB acceptance remain separate. The option defaults off.
 
 Optional `--refresh-updates 32` replaces attempt-count nominal scheduling with
 a period measured in actual updates. It is incompatible with `--fresh` and
