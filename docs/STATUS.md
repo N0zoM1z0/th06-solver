@@ -13,7 +13,7 @@ budget exhaustion stays incomplete.
 
 | Evidence | Verified result | Limit |
 | --- | --- | --- |
-| Extra online | Reimu B, captured retail seed 35964, normal power 0, 43,126 actual updates and one natural clear | One successful sample; ten full hits retained |
+| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 clear in 43,126 / 44,959 actual updates | Two successful samples; eleven full hits retained |
 | Lunatic online components | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear | Five failed Stage 6 controls; no full live story or all-shot coverage |
 | Live story handoff | Natural Stage 1 → 2, 20,000-update NMNB prefix | Incomplete story |
 | Original-loader replay | Lunatic Reimu A seed 0: 127,737 updates/six clears; Extra Reimu B seed 35964: 43,126 updates/one clear | Both whole traces agree with their fresh native export |
@@ -28,7 +28,7 @@ different seeds/policies as paired optimization comparisons.
 
 ## Current Extra online profile
 
-The successful case is `online-acceleration-reimuB-008` under private
+The original successful case is `online-acceleration-reimuB-008` under private
 `reports/local/extra-online-20261027/`. The original retail terminal and a frozen
 independent checker both confirm the entire actual-input route. Every declared
 retail projection matches native; native replay matches each observable digest.
@@ -79,7 +79,29 @@ A replay-checked 1,200-update seed-61531 prefix has zero hits/bombs, 1,199
 Present samples and no sequence skips/flags. Full Present mean is 40.64 Hz;
 steady draw/Present-call means are 0.76/19.18 ms. It fails the pacing gate and
 remains incomplete, with no independent window clock. Current accounting is
-ten full hits, one full clear, two prefixes and three earlier zero-frame starts.
+eleven full hits, two full clears, two prefixes and three earlier zero-frame starts.
+
+The [queue-rescue study](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures)
+adds seed **61515**, `online-rescue-002`, under private
+`reports/local/extra-control-20261028/`: **44,959 actual updates, NMNB clear**,
+complete frozen replay and matching retail projections. The combined profile
+adds `--warm-start --rescue-horizon 64 --save-certificates --render-timing`.
+Its 9,045 searches publish 8,719 certificates, including 548 verified nominal
+backups and 31 shorter futures from 41 short searches. All four fallback inputs
+are at startup; stale/rejected plans and follower errors remain zero. Independent
+journal checks reconstruct every acknowledged queue and policy transition.
+Search p50/p99/max including cleanup is 93.05/124.85/164.13 ms; the verified
+2-GiB/1.5-GiB/no-swap group peaks at 447.27 MiB with OOM 0.
+
+The same study retains seed **27718**, a full hit at 24,033 with warm backups
+but no short horizon. Its last certificate ends at 24,032. These different-seed
+outcomes cannot isolate the rescue policy's effect. Native latency comparisons
+retain all fourteen phase episodes, including failures; only six rescue episodes
+have the additional complete-trace independent checks documented here.
+Full Present cadence for the new clear is **45.83 Hz**, slowest five seconds
+22.8 Hz, p99 47.37 ms. Steady draw/Present-call means are 0.94/15.85 ms.
+The unchanged pacing gate fails, with no independent window clock; this is
+neither a 60-FPS result nor general random-seed robustness.
 
 ## Published replays and recordings
 
@@ -104,7 +126,7 @@ file hashes and publication identities.
 
 ## Validation and resource rules
 
-The 2026-10-28 validated build has 46 local CTest contracts with private DATs;
+The 2026-10-28 validated build has 47 local CTest contracts with private DATs;
 CI checks the asset-free subset. [Validation](VALIDATION.md) lists dependencies,
 entry profiles, focused tests, full replay checks and export commands.
 Use the configured test list rather than old milestone counts in archived notes.
@@ -131,7 +153,8 @@ retention tradeoffs; those are not online speedup or robustness guarantees.
 
 [Continuation](CONTINUATION.md) gives acceptance checks and source entry points.
 The open tracker is [issue #1](https://github.com/N0zoM1z0/th06-solver/issues/1).
-Private evidence roots include `reports/local/extra-stability-20261028/`,
+Private evidence roots include `reports/local/extra-control-20261028/`,
+`reports/local/extra-stability-20261028/`,
 `reports/local/extra-online-20261027/`,
 `extra-search-20261027/`, `shadow-extra-20261027/`, `shadow-20261025/`,
 `pacing-20261026/`, `extra-video-20261027/` and `replay-video-20261027/`.

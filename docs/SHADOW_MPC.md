@@ -4,9 +4,11 @@
 35964, normal power-0 retail entry, 43,126 actual updates and one natural clear.
 All retail projections follow native; independent complete frozen replay of the
 actual tape matches every digest. The [full combined profile](EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear)
-has only four startup fallback inputs, peak 342.85 MiB and OOM 0. Ten failed
-full hits remain in the ledger. Random-seed robustness and stable online 60 FPS
-remain open.
+has only four startup fallback inputs, peak 342.85 MiB and OOM 0. A second
+[verified sample](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures),
+seed 61515, clears in 44,959 updates with verified nominal backups and optional
+shorter futures. Eleven failed full hits remain in the ledger. Random-seed
+robustness and stable online 60 FPS remain open.
 
 Optional `--anytime` retains the first full native certificate if later ranking
 times out, while preserving timeout accounting, whole-group cleanup and retail

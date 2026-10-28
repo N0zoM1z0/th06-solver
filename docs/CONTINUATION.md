@@ -2,9 +2,9 @@
 
 Read [engineering rules](../AGENTS.md) and [current status](STATUS.md) first.
 The current gameplay target is Extra online robustness and decision/presentation
-performance. One normal-start Extra Reimu B sample clears NMNB; its original
-inputs, replay and compact recording are verified. Full-story online coverage
-and stable online 60 FPS remain open. Detailed historical Lunatic investigations
+performance. Two normal-start Extra Reimu B seeds clear NMNB with complete
+fresh native replay; the original sample also has verified retail replay and
+recording. Full-story online coverage and stable online 60 FPS remain open. Detailed historical Lunatic investigations
 are preserved in [Online history](ONLINE_HISTORY.md), not a second current plan.
 
 ## Restart checklist
@@ -54,6 +54,18 @@ separate timeout, completed no-certificate, stale rejection, stage reset and
 queue exhaustion. Blocked descendants must still be killed/reaped without
 mutating the parent world. Retain all negative outcomes.
 
+The newest verified clear is seed 61515, `online-rescue-002` under private
+`reports/local/extra-control-20261028/`, using full native warm backups and
+`--rescue-horizon 64` with the original 128/256 horizons and 110-ms cap.
+The journal captures every published future, acknowledged generation and proposal
+cursor. Use `scripts/shadow_queue.py` at an exact query origin to reconstruct
+and independently verify the actual remaining queue. It never turns a speculative
+native future into retail evidence. Seed 27718's retained spell-58 hit supplies
+exact queues at 23,190 and 23,904. Native paired phase models favor short futures
+in two of three windows, but retain declared initial planner-state differences
+and host-timing dependence. Repeat the same live profile on natural seeds before
+claiming broader stability; retain every attempt.
+
 ## P0: Attribute frame pacing and establish a 60-FPS gate
 
 Actual update/presentation clocks and a v4 gate already exist for
@@ -102,8 +114,8 @@ an A/B policy win. Do not broaden the full historical matrix as routine testing.
 ## Later coverage
 
 Lunatic live evidence covers selected Stage 5/6 shots and one incomplete
-Stage 1 → 2 story handoff. Extra has one full Reimu B clear. Neither establishes
-all main-game stages/shots, arbitrary seeds or a complete live story.
+Stage 1 → 2 story handoff. Extra has two full Reimu B clear samples. Neither
+establishes all main-game stages/shots, arbitrary seeds or a complete live story.
 
 The live runner captures the original retail seed and has no public `--seed`
 selector. A maintained controlled common-start fixture remains open work;

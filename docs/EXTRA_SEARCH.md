@@ -517,3 +517,73 @@ prefix, 45 fixed-prefix probe tapes and 15 closed native models**. Every failed
 retry remains in the private ledger. The original verified clear remains the
 only full Extra online clear; random-seed robustness and stable online 60 FPS
 are still open.
+
+## 2026-10-28 verified backup and shorter futures
+
+Private evidence: `reports/local/extra-control-20261028/`. Sharing scalar bullet
+forecasts across root/reactive proposal inputs preserves six captured input/digest
+tapes exactly. A before/cache/cache/before 30-query workload has identical branch,
+update and checksum totals and 4.0% lower mean child CPU. This is native workload
+evidence, not online FPS. O3 also passes the complete old clear replay but is
+slower in that microbenchmark; deployment retains O2.
+
+Optional `--warm-start` verifies an extended nominal backup before fresh search.
+Fresh certificates take priority. A timeout can recover only a complete,
+immutable, in-budget checkpoint after whole-group cleanup. A selected warm backup
+still arms the next one-shot motion recovery. `--rescue-horizon 64` tries a full
+shorter native future after an unsuccessful replacement when the queue reaches
+lead + half the normal horizon; successful publication retries the normal horizon.
+It never publishes a partial failed rollout. All **47** configured CTest contracts
+pass, including deadline, warm-backup and acknowledged-queue corruption checks.
+
+Four private reactive-cadence models and four earlier warm-backup prototype
+models retain mixed outcomes and no demonstrated general policy win. Six further
+110-ms latency models compare rescue off/64 with lead 16 and six proposals:
+
+| Seed / origin / initial queue | Rescue off | Rescue 64 |
+| --- | --- | --- |
+| 27718 / 23,190 / exact captured queue | Phase 58 ends 25,024; no hit/fallback | Ends 25,021; no hit/fallback; 7 short publications |
+| 27718 / 23,904 / exact captured queue | Hit 24,189; 4 fallback | Phase ends 24,979; no hit/fallback; 4 short publications |
+| 59127 / 39,700 / synthetic 144-input queue | Hit 39,984; 6 fallback | Phase 62 ends 43,999; no hit/fallback; 6 short publications |
+
+Every rescue-model trace independently matches all native digests, including hits;
+all four surviving prefixes also pass strict fresh replay. These are phase
+endpoints, not full clears. All six start the proposal cursor at zero and motion
+recovery unarmed rather than claiming the original planner state; game RNG follows
+the exact actual prefix. Latency consumption is `ceil(search_ms * 0.06)`, so these
+models remain host-timing dependent. The earlier eight prototype episodes have
+separate behavior/verification scope. Every retry remains in the ledger.
+
+Two actual Wine trials then use Reimu B, natural power-0 Extra, the 128/256-tail,
+16-lead, 110-ms, interval-4, six-proposal combined profile, with warm backups,
+render clocks and full certificate capture. No build/native experiments run
+alongside these measurements:
+
+| Trial / seed | Actual outcome | Searches / timeouts / publications | Fallback | Peak / OOM |
+| --- | --- | --- | --- | --- |
+| `online-warm-001` / 27718, rescue disabled | Hit 24,033, spell 58 / sub 48 | 4,884 / 732 / 4,742 | 4 startup + 1 exhausted | 497.00 MiB / 0 |
+| `online-rescue-002` / 61515, rescue 64 | **NMNB clear 44,959** | 9,045 / 1,721 / 8,719 | 4 startup only | 447.27 MiB / 0 |
+
+Both have verified 2-GiB hard / 1.5-GiB high / no-swap limits. The first hit
+matches every independent native digest and retail projection. Its final
+certificate ends at 24,032. The second has a complete frozen `--require-complete`
+replay with every digest matching, original terminal / spell 63 / sub 69 / HP 0,
+zero misses/bombs and matching retail projections throughout. Its tape SHA-256 is
+`e8ceb854fb043ec84997e59db25b45db69068e0962633b461d133d78cb2f6d6a`.
+Every acknowledged queue, publication lead and recovery/horizon transition passes
+independent journal checks. It publishes 548 warm backups and 31 short futures
+from 41 short queries, with zero stale/rejected plans or follower error.
+These different seeds do not establish a single-change improvement.
+
+The first actual short query is at 25,347 with 78 queued inputs: it publishes an
+80-update full warm checkpoint; the next query at 25,352 publishes a normal
+144-update future. This demonstrates short-certificate adoption and expansion,
+not a counterfactual proof that this particular query prevented a hit.
+
+Full Present mean / slowest five seconds / p99 is 47.87 Hz / 21.6 Hz / 44.65 ms
+for the failed warm trial and 45.83 Hz / 22.8 Hz / 47.37 ms for the clear.
+Steady draw/Present-call means are 0.96/13.98 ms and 0.94/15.85 ms. Full-run
+loading gaps remain; the pacing gate fails and no independent window clock is
+claimed. Cumulative Extra accounting is **two full clears, eleven full hits,
+two prefixes and three zero-frame starts**. Random-seed robustness and stable
+online 60 FPS remain open; published replay selections are unchanged.
