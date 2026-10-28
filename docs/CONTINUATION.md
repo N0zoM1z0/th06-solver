@@ -86,6 +86,15 @@ The short seed-61531 prefix has draw mean 0.76 ms and Present-call mean 19.18 ms
 with a failing gate. Add the independent window clock before any pacing claim;
 this functional smoke is not a paired renderer or complete-game comparison.
 
+The live runtime selector now supports the pinned Wine 11 wow64 / DXVK setup
+and an independent X11 damage clock. Native-checked opening prefixes measure
+51.96 Hz with default Wine 8 and 55.95 Hz with DXVK; both gates fail. Two pure
+replay controls of the same seed-14702 input prefix, without MPC/follower,
+measure 58.97 Hz (hardware bullets) and 59.62 Hz (CPU batching), still window
+p99 28 ms and failing gates. Cache warmth and host load remain confounders.
+Keep batching replay-only until a live change has stronger evidence, and inspect
+render/host scheduling alongside actual decision and queue costs.
+
 Acceptance: measured sustained combat presentation under a declared profile and
 jitter tolerance, complete NMNB route correctness, intact lead/deadline rules
 and verified resource bounds. Smooth media or fast decisions alone do not pass.

@@ -624,3 +624,26 @@ paired speedup. Current cumulative Extra accounting is **three full clears,
 eleven full hits, four prefixes and three zero-frame starts**. All raw inputs,
 window/API clocks, runtime versions/hashes, effective environments and measured
 whole-cgroup CPU totals remain private. The runtime/queue build passes 48 CTests.
+
+
+Two separate **pure original-loader replay** diagnostics then reuse exactly the
+3,600 actual inputs from seed 14702, with MPC and native follower both absent.
+A private diagnostic builder checks every prefix digest and explicitly rejects
+complete tapes; the public exporter's whole-clear requirement is unchanged.
+All 3,600 supplied native projection rows match both playback traces. The
+comparison's `complete_route` field covers the supplied prefix only: both retail
+outcomes remain frame-budget stops with zero clears.
+
+| Same-input replay control | Full API Present / window cadence | Window slowest 5 s / p99 | Peak / OOM |
+| --- | --- | --- | --- |
+| Hardware bullet path | 59.02 / 58.97 Hz | 54.0 Hz / 28 ms | 271.55 MiB / 0 |
+| CPU bullet path with batching | 59.68 / 59.62 Hz | 57.2 Hz / 28 ms | 220.16 MiB / 0 |
+
+Both retain actual 2-GiB/1.5-GiB/no-swap proofs and independent window clocks;
+both unchanged pacing gates fail. The CPU path restores all 3,599 draw scopes.
+Replay controls reuse warmed caches after the online run, and shared-host load
+is uncontrolled. They do not measure a causal MPC slowdown or certify live FPS.
+Persistent jitter without MPC rules out treating online search as the only
+pacing cause in these observations. Batching remains replay-only; no live
+rendering callback changes are promoted from this small comparison. Both pure
+prefixes remain separate from the four actual online prefixes in the ledger.
