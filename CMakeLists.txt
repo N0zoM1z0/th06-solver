@@ -81,6 +81,8 @@ if(BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/retail_trace_tests.py)
     add_test(NAME replay_pacing_contracts COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/replay_pacing_tests.py)
+    add_test(NAME shadow_queue_contracts COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/shadow_queue_tests.py)
   endif()
   add_executable(retail_clock_tests tests/retail_clock_tests.cpp)
   target_include_directories(retail_clock_tests PRIVATE include)
