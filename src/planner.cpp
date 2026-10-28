@@ -73,8 +73,20 @@ std::vector<LaserShape> laser_samples(const Observation &o, unsigned horizon, un
         }
     return samples;
 }
+std::vector<std::pair<float, float>> hazard_samples(const Observation &o, unsigned horizon,
+                                                    unsigned stride) {
+    // Each input uses the same observed bullet forecast. Cache scalar positions
+    // only for this observation; native branches and their RNG remain separate.
+    std::vector<std::pair<float, float>> positions;
+    positions.reserve(((horizon + stride - 1) / stride) * o.hazards.size());
+    for (unsigned t = 1; t <= horizon; t += stride)
+        for (const auto &hazard : o.hazards)
+            positions.push_back(hazard.position(t));
+    return positions;
+}
 double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving, unsigned horizon,
-                     const std::vector<LaserShape> &lasers, unsigned stride = 4,
+                     const std::vector<LaserShape> &lasers,
+                     const std::vector<std::pair<float, float>> &positions, unsigned stride = 4,
                      bool power_aware = false, bool damage_aware = false) {
     const int dx = bool(input & 128) - bool(input & 64), dy = bool(input & 32) - bool(input & 16);
     const bool focus = input & 4;
@@ -87,8 +99,9 @@ double proposal_rank(const Observation &o, std::uint16_t input, unsigned moving,
         const float x = std::clamp(o.x + dx * speed * duration, 8.f, 376.f);
         const float y = std::clamp(o.y + dy * speed * duration, 16.f, 432.f);
         double local = 0;
-        for (const auto &hazard : o.hazards) {
-            const auto [px, py] = hazard.position(t);
+        for (unsigned i = 0; i < o.hazards.size(); ++i) {
+            const auto &hazard = o.hazards[i];
+            const auto [px, py] = positions[samples * o.hazards.size() + i];
             const double hx = px - x, hy = py - y;
             const double d2 = hx * hx + hy * hy;
             if (d2 < 14400)
@@ -114,14 +127,16 @@ std::uint16_t reactive_input(const Observation &observation, bool power_aware, b
     // Every direction shares one conditional forecast from this same native
     // branch state. Reuse geometry, never actor memory or another branch's RNG.
     const auto lasers = laser_samples(observation, 40, 8);
+    const auto positions = hazard_samples(observation, 40, 8);
     for (const auto direction : directions)
         for (unsigned focus : {4u, 0u}) {
             if (!direction && !focus)
                 continue;
             const auto input = std::uint16_t(direction | focus | 1u | 256u);
-            const double cost = std::min(
-                proposal_rank(observation, input, 16, 40, lasers, 8, power_aware, damage_aware),
-                proposal_rank(observation, input, 40, 40, lasers, 8, power_aware, damage_aware));
+            const double cost = std::min(proposal_rank(observation, input, 16, 40, lasers,
+                                                       positions, 8, power_aware, damage_aware),
+                                         proposal_rank(observation, input, 40, 40, lasers,
+                                                       positions, 8, power_aware, damage_aware));
             if (cost < best) {
                 best = cost;
                 selected = input;
@@ -313,6 +328,7 @@ Decision choose(Session &game, const PlannerOptions &options,
     const auto observation =
         game.observe(options.laser_aware, options.power_aware, options.acceleration_aware);
     const auto lasers = laser_samples(observation, options.horizon, 4);
+    const auto positions = hazard_samples(observation, options.horizon, 4);
     for (const auto direction : directions) {
         for (unsigned focus : {4u, 0u}) {
             if (!direction && !focus)
@@ -325,8 +341,8 @@ Decision choose(Session &game, const PlannerOptions &options,
                     continue;
                 candidates.push_back(
                     {input, moving,
-                     proposal_rank(observation, input, moving, options.horizon, lasers, 4,
-                                   options.power_aware, options.damage_aware)});
+                     proposal_rank(observation, input, moving, options.horizon, lasers, positions,
+                                   4, options.power_aware, options.damage_aware)});
             }
         }
     }

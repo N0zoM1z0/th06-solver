@@ -1,4 +1,21 @@
-# Lunatic hard-stage performance
+# Native and online performance
+
+## Shared bullet forecasts (2026-10-28)
+
+Proposal inputs now share the scalar bullet positions sampled from one
+observation, as they already share laser samples. Both root ordering and reactive
+future steering reuse these immutable forecasts; native actors, callbacks and RNG
+remain owned by each rollout. Forecast times and arithmetic are unchanged.
+
+Six captured Extra prefixes give identical before/after input/digest tapes at
+2,000-ms query caps. A before/cache/cache/before repeated-origin benchmark uses
+seed 5594 / origin 21,700, 30 queries per run: mean child CPU falls from 1.741055
+to 1.671195 s (4.0%). Each run keeps 210 branches, 19,110 native updates and the
+same checksum. O2 and O3 builds pass 43 local CTest contracts. The O3 control
+passes the complete 43,126-update native replay but is slower in this benchmark;
+it is not adopted as an online speedup. These are native measurements; online
+robustness and presentation remain separate. Frozen controls and raw data stay
+under `reports/local/extra-control-20261028/`.
 
 ## Live shadow decision costs
 
