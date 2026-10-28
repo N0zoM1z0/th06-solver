@@ -551,10 +551,11 @@ all four surviving prefixes also pass strict fresh replay. These are phase
 endpoints, not full clears. All six start the proposal cursor at zero and motion
 recovery unarmed rather than claiming the original planner state; game RNG follows
 the exact actual prefix. Latency consumption is `ceil(search_ms * 0.06)`, so these
-models remain host-timing dependent. The earlier eight prototype episodes have
-separate behavior/verification scope. Every retry remains in the ledger.
+models remain host-timing dependent. The earlier eight prototype episodes also
+independently replay with matching digests, including their two hits; their
+prototype behavior remains separate. Every retry remains in the ledger.
 
-Two actual Wine trials then use Reimu B, natural power-0 Extra, the 128/256-tail,
+Three actual Wine trials then use Reimu B, natural power-0 Extra, the 128/256-tail,
 16-lead, 110-ms, interval-4, six-proposal combined profile, with warm backups,
 render clocks and full certificate capture. No build/native experiments run
 alongside these measurements:
@@ -563,8 +564,9 @@ alongside these measurements:
 | --- | --- | --- | --- | --- |
 | `online-warm-001` / 27718, rescue disabled | Hit 24,033, spell 58 / sub 48 | 4,884 / 732 / 4,742 | 4 startup + 1 exhausted | 497.00 MiB / 0 |
 | `online-rescue-002` / 61515, rescue 64 | **NMNB clear 44,959** | 9,045 / 1,721 / 8,719 | 4 startup only | 447.27 MiB / 0 |
+| `online-rescue-003` / 57265, same profile | **NMNB clear 47,986** | 10,066 / 2,818 / 9,432 | 4 startup only | 388.54 MiB / 0 |
 
-Both have verified 2-GiB hard / 1.5-GiB high / no-swap limits. The first hit
+All three have verified 2-GiB hard / 1.5-GiB high / no-swap limits. The first hit
 matches every independent native digest and retail projection. Its final
 certificate ends at 24,032. The second has a complete frozen `--require-complete`
 replay with every digest matching, original terminal / spell 63 / sub 69 / HP 0,
@@ -575,6 +577,15 @@ independent journal checks. It publishes 548 warm backups and 31 short futures
 from 41 short queries, with zero stale/rejected plans or follower error.
 These different seeds do not establish a single-change improvement.
 
+The same-profile repeat, seed 57265, also reaches the original terminal with
+zero misses/bombs. Complete frozen replay matches all 47,986 native digests;
+all retail projections and all 10,066 captured query transitions pass independent
+checks. It publishes 1,091 warm backups and 91 short futures from 150 short
+queries, with no stale/rejected plans or follower error. Its tape SHA-256 is
+`3c9747c55cc71ad4cda96f6865e2de524bf8db2261915779c677e61cf1c96c76`.
+The tested warm/rescue profile therefore has two consecutive natural-seed clears,
+without attributing the combined change to any one feature or arbitrary seeds.
+
 The first actual short query is at 25,347 with 78 queued inputs: it publishes an
 80-update full warm checkpoint; the next query at 25,352 publishes a normal
 144-update future. This demonstrates short-certificate adoption and expansion,
@@ -584,6 +595,32 @@ Full Present mean / slowest five seconds / p99 is 47.87 Hz / 21.6 Hz / 44.65 ms
 for the failed warm trial and 45.83 Hz / 22.8 Hz / 47.37 ms for the clear.
 Steady draw/Present-call means are 0.96/13.98 ms and 0.94/15.85 ms. Full-run
 loading gaps remain; the pacing gate fails and no independent window clock is
-claimed. Cumulative Extra accounting is **two full clears, eleven full hits,
-two prefixes and three zero-frame starts**. Random-seed robustness and stable
+claimed. The repeat reaches 40.51 Hz / 19.2 Hz / 54.13 ms, with steady
+draw/Present-call means 0.97/20.09 ms, also a failing gate. Cumulative Extra accounting before the
+subsequent runtime smokes is **three full clears, eleven full hits, two prefixes
+and three zero-frame starts**. Random-seed robustness and stable
 online 60 FPS remain open; published replay selections are unchanged.
+
+
+The runtime follow-up adds two bounded actual online prefixes with the same MPC
+policy and independent X11 window clocks. `online-runtime-default-004` uses the
+new runner's default Wine 8 / win32 configuration, seed 23430, and stops at
+1,200 updates. `online-runtime-dxvk-005` uses Wine 11 wow64 / the pinned private
+DXVK early-flush DLLs and eight renderer threads, seed 14702, and stops at 3,600.
+Both have zero misses/bombs, four startup fallback, complete independent prefix
+replay and matching retail projections. Both intentionally end at the frame
+budget (exit 4), never a clear. Private 64-bit Unix graphics libraries reach only
+Wine; the native/display worker environment checks pass.
+
+| Actual online prefix | Full API Present / window cadence | Steady draw / Present-call mean | Peak / OOM |
+| --- | --- | --- | --- |
+| Default, 1,200 updates | 51.88 / 51.96 Hz | 0.77 / 9.03 ms | 332.81 MiB / 0 |
+| DXVK, 3,600 updates | 55.96 / 55.95 Hz | 1.30 / 4.68 ms | 351.63 MiB / 0 |
+
+All resource caps are verified at 2 GiB / 1.5 GiB / no swap. The DXVK prefix's
+window slowest five seconds / p99 is 43.0 Hz / 32 ms; both unchanged gates fail.
+These different seeds, lengths and runtimes are functional observations, not a
+paired speedup. Current cumulative Extra accounting is **three full clears,
+eleven full hits, four prefixes and three zero-frame starts**. All raw inputs,
+window/API clocks, runtime versions/hashes, effective environments and measured
+whole-cgroup CPU totals remain private. The runtime/queue build passes 48 CTests.

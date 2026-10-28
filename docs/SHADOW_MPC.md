@@ -4,10 +4,10 @@
 35964, normal power-0 retail entry, 43,126 actual updates and one natural clear.
 All retail projections follow native; independent complete frozen replay of the
 actual tape matches every digest. The [full combined profile](EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear)
-has only four startup fallback inputs, peak 342.85 MiB and OOM 0. A second
-[verified sample](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures),
-seed 61515, clears in 44,959 updates with verified nominal backups and optional
-shorter futures. Eleven failed full hits remain in the ledger. Random-seed
+has only four startup fallback inputs, peak 342.85 MiB and OOM 0. New
+[verified samples](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures),
+seeds 61515 / 57265, clear in 44,959 / 47,986 updates with verified nominal
+backups and optional shorter futures. Eleven failed full hits remain in the ledger. Random-seed
 robustness and stable online 60 FPS remain open.
 
 Optional `--anytime` retains the first full native certificate if later ranking
@@ -90,13 +90,36 @@ uses the source's normal entry with practice disabled, captured initial power 0,
 rank bounds 14–18 and score extends disabled. It is separate from the historical
 power-128 Extra checkpoints. `--story --stage 1`
 requests a natural story start; a frame-limited handoff check is not a complete
-story. The EXE and dedicated 32-bit Wine prefix requirements are the same as
+story. The EXE and default dedicated 32-bit Wine prefix requirements are the same as
 [retail replay](RETAIL_REPLAY.md). The runner checks the pinned EXE and equality
 of all six DAT files, snapshots executable/controller/DLL identities, locks the
 owned prefix, freezes the Python runner/capture modules as well, and places
 Wine, Xvfb, controller, descendants and optional capture
 processes in one 2-GiB/no-swap user-systemd cgroup. It never attaches to an
 existing game or changes the disk EXE.
+
+### Online runtime and presentation clocks
+
+The live runner accepts `--wine`, `--wineserver`, `--wine-arch` and
+`--dll-overrides` for a separately prepared owned runtime. The prefix architecture
+must match: `win32` uses a 32-bit prefix; `win64`/`wow64` use a 64-bit prefix.
+Defaults retain the system Wine loader, two renderer threads and disabled shader
+cache. Optional `--renderer-threads`, `--vblank off` and `--shader-cache` expose
+the existing replay runner's rendering controls. This does not change MPC's
+budget, lead or native collision verification.
+
+Runtime loader/server hashes, version, game DLL/config hashes and the declared
+and effective environments are saved privately with the case. Custom Unix
+`LD_LIBRARY_PATH`/`LIBGL_DRIVERS_PATH` reach only Wine; the 32-bit native controller
+and display worker do not inherit those graphics libraries. All processes still
+share the unchanged 2-GiB hard / 1.5-GiB high / no-swap cgroup and retail lock.
+
+Use `--render-timing --display-timing` to add the existing independent X11 damage
+observer to actual online control. It observes the owned window and never sends
+input. After the run, `python3 scripts/replay_pacing.py reports/local/CASE`
+evaluates the original API and window gates, retaining full clocks and explicitly
+reporting the warmup exclusion. Prefixes stay incomplete, and a replay runtime's
+previous pacing result cannot certify this live workload.
 
 The Extra startup/plan boundary accepts stage 7 only with Extra difficulty and
 rejects Extra stories, mismatched difficulty and plans beyond stage 7. Native
@@ -310,8 +333,10 @@ prefix plus the old plan's remaining future. The sidecar records hashes and all
 verification attempts. A possible native terminal in that future is separate
 from the actual online result. An expired queue exports only the checked actual
 prefix with zero remaining frames. Existing outputs are never overwritten.
-Motion cursor values are logged separately from the gameplay RNG; a later policy
-episode must declare its cursor, recovery state and timing model as well.
+The sidecar's `query_state` preserves captured proposal cursor, recovery and
+requested-horizon fields when available, separately from the acknowledged plan's
+older horizon. Missing legacy fields remain absent. A later policy episode must
+declare its cursor, recovery state and timing model separately from gameplay RNG.
 
 ## Short native rescue horizon
 

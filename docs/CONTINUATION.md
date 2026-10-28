@@ -2,10 +2,10 @@
 
 Read [engineering rules](../AGENTS.md) and [current status](STATUS.md) first.
 The current gameplay target is Extra online robustness and decision/presentation
-performance. Two normal-start Extra Reimu B seeds clear NMNB with complete
+performance. Three normal-start Extra Reimu B seeds clear NMNB with complete
 fresh native replay; the original sample also has verified retail replay and
-recording. Full-story online coverage and stable online 60 FPS remain open. Detailed historical Lunatic investigations
-are preserved in [Online history](ONLINE_HISTORY.md), not a second current plan.
+recording. Full-story online coverage and stable online 60 FPS remain open.
+Detailed historical Lunatic investigations are preserved in [Online history](ONLINE_HISTORY.md), not a second current plan.
 
 ## Restart checklist
 
@@ -54,7 +54,8 @@ separate timeout, completed no-certificate, stale rejection, stage reset and
 queue exhaustion. Blocked descendants must still be killed/reaped without
 mutating the parent world. Retain all negative outcomes.
 
-The newest verified clear is seed 61515, `online-rescue-002` under private
+The newest verified clear is seed 57265, `online-rescue-003`, following seed
+61515, `online-rescue-002`, under private
 `reports/local/extra-control-20261028/`, using full native warm backups and
 `--rescue-horizon 64` with the original 128/256 horizons and 110-ms cap.
 The journal captures every published future, acknowledged generation and proposal
@@ -114,7 +115,7 @@ an A/B policy win. Do not broaden the full historical matrix as routine testing.
 ## Later coverage
 
 Lunatic live evidence covers selected Stage 5/6 shots and one incomplete
-Stage 1 → 2 story handoff. Extra has two full Reimu B clear samples. Neither
+Stage 1 → 2 story handoff. Extra has three full Reimu B clear samples. Neither
 establishes all main-game stages/shots, arbitrary seeds or a complete live story.
 
 The live runner captures the original retail seed and has no public `--seed`

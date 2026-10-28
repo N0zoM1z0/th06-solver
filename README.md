@@ -5,14 +5,14 @@ following [th08-solver](https://github.com/N0zoM1z0/th08-solver)'s common-start,
 true-RNG rollout approach. The original game decides collisions and outcomes;
 isolated native futures propose verified inputs to the owned retail process.
 
-**Extra has two complete online NMNB clears:** Reimu B, captured retail seeds
-35964 and 61515, natural power-0 entry, 43,126 and 44,959 updates. Both actual
-input routes pass complete fresh native replay. Seed 35964 also passes
+**Extra has three complete online NMNB clears:** Reimu B, captured retail seeds
+35964, 61515 and 57265, natural power-0 entry, 43,126 / 44,959 / 47,986 updates.
+All three actual input routes pass complete fresh native replay. Seed 35964 also passes
 original-loader Wine `.rpy` playback.
 
 | Verified result | Scope |
 | --- | --- |
-| Extra online NMNB | Two Reimu B seeds clear; eleven failed full attempts retained |
+| Extra online NMNB | Three Reimu B seeds clear; eleven failed full attempts retained |
 | Lunatic online NMNB | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear; no complete live story |
 | Retail replay | Complete Lunatic Reimu A story and Extra Reimu B route |
 | Replay presentation gate | One audio-off Lunatic story passes; online 60 FPS and audio-on recording pacing remain unresolved |

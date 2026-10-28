@@ -4,6 +4,7 @@ import argparse
 import fcntl
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import shutil
@@ -11,15 +12,34 @@ import signal
 import time
 import uuid
 import sys
+from wine_runtime import apply_environment, render_environment, resolve_runtime
 
 
 def worker(directory):
     output = Path(directory)
     config = json.loads((output / 'worker.json').read_text())
+    actual = {name: os.environ.get(name) for name in config['expected_environment']}
+    (output / 'effective-worker-environment.json').write_text(json.dumps(actual, indent=2) + '\n')
+    if actual != config['expected_environment']:
+        raise RuntimeError('owned worker did not receive the declared rendering environment')
+    wine_env = apply_environment(os.environ, config['expected_wine_environment'])
+    effective = {name: wine_env.get(name) for name in config['expected_wine_environment']}
+    (output / 'effective-environment.json').write_text(json.dumps(effective, indent=2) + '\n')
+    version = subprocess.run([config['wine'][0], '--version'], env=wine_env,
+                             capture_output=True, text=True, check=True)
+    identity = {'launcher': config['wine'][0], 'wineserver': config['wineserver'],
+                'launcher_sha256': hashlib.sha256(Path(config['wine'][0]).read_bytes()).hexdigest(),
+                'wineserver_sha256': hashlib.sha256(Path(config['wineserver']).read_bytes()).hexdigest(),
+                'version': version.stdout.strip()}
+    (output / 'wine-runtime.json').write_text(json.dumps(identity, indent=2) + '\n')
+    if (identity['launcher_sha256'] != config['runtime_sha256']['loader'] or
+            identity['wineserver_sha256'] != config['runtime_sha256']['server']):
+        raise RuntimeError('selected Wine runtime changed after launch preparation')
     native_log = (output / 'controller.log').open('wb')
     controller = subprocess.Popen(config['controller'], stdout=native_log, stderr=subprocess.STDOUT)
     game = None
     capture = None
+    display_monitor = None
     try:
         deadline = time.monotonic() + 15
         while not (output / 'bridge.bin').exists():
@@ -29,10 +49,21 @@ def worker(directory):
         if config.get('record'):
             from shadow_capture import Capture
             capture = Capture(output)
-        game = subprocess.Popen(config['wine'])
+            wine_env.update(capture.metadata['audio_environment'])
+        game = subprocess.Popen(config['wine'], env=wine_env)
         if capture:
             capture.attach(game)
         while game.poll() is None:
+            if config.get('display_timing') and display_monitor is None:
+                windows = subprocess.run(['xdotool', 'search', '--onlyvisible', '--class', '^th06.exe$'],
+                                         capture_output=True, text=True)
+                if windows.stdout.split():
+                    with (output / 'display-monitor.log').open('wb') as log:
+                        display_monitor = subprocess.Popen(
+                            [sys.executable, str(Path(__file__).with_name('replay_display.py')),
+                             windows.stdout.split()[0], str(output)], stdout=log, stderr=subprocess.STDOUT)
+            if display_monitor and display_monitor.poll() not in (None, 0):
+                raise RuntimeError('owned display monitor failed; inspect display-monitor.log')
             if controller.poll() is not None:
                 # Normal completion can race the final owner ExitProcess.
                 try:
@@ -51,8 +82,11 @@ def worker(directory):
             except subprocess.TimeoutExpired:
                 game.kill()
                 game.wait()
-        subprocess.run(['wineserver', '-k'], check=False)
-        subprocess.run(['wineserver', '-w'], timeout=10, check=False)
+        if display_monitor and display_monitor.poll() is None:
+            display_monitor.terminate()
+            display_monitor.wait(timeout=3)
+        subprocess.run([config['wineserver'], '-k'], env=wine_env, check=False)
+        subprocess.run([config['wineserver'], '-w'], env=wine_env, timeout=10, check=False)
         if controller.poll() is None:
             controller.terminate()
             try: controller.wait(timeout=3)
@@ -71,6 +105,14 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--game', type=Path, required=True)
 parser.add_argument('--build', type=Path, default=Path('build'))
 parser.add_argument('--prefix', type=Path, required=True)
+parser.add_argument('--wine', default='wine', help='owned Wine loader; private runtimes stay outside Git')
+parser.add_argument('--wineserver', type=Path, help='matching server; otherwise use the loader sibling')
+parser.add_argument('--wine-arch', choices=['win32', 'win64', 'wow64'], default='win32')
+parser.add_argument('--dll-overrides', default='mscoree,mshtml=')
+parser.add_argument('--renderer-threads', type=int, default=2)
+parser.add_argument('--vblank', choices=['inherit', 'off'], default='inherit')
+parser.add_argument('--shader-cache', type=Path)
+parser.add_argument('--display-timing', action='store_true', help='record independent X11 window damage timing; requires render timing')
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--data', type=Path, required=True)
 parser.add_argument('--stage', type=int, default=5)
@@ -109,6 +151,10 @@ if args.record:
         parser.error('recording tools unavailable: ' + ', '.join(missing))
 if not 1 <= args.updates <= 1000000 or not 1 <= args.seconds <= 7200:
     parser.error('invalid frame/time budget')
+if not 1 <= args.renderer_threads <= 16:
+    parser.error('renderer threads require 1..16')
+if args.display_timing and (not args.render_timing or shutil.which('xdotool') is None):
+    parser.error('display timing requires --render-timing and xdotool')
 if not 1 <= args.stage <= 7 or not 0 <= args.shot <= 3 or (args.story and args.stage != 1):
     parser.error('invalid Lunatic/Extra stage/shot/story start')
 difficulty = 4 if args.stage == 7 else 3
@@ -131,14 +177,18 @@ args.data = args.data.resolve()
 args.game = args.game.resolve()
 args.build = args.build.resolve()
 args.prefix = args.prefix.resolve()
+if args.shader_cache:
+    args.shader_cache = args.shader_cache.resolve()
+try:
+    wine_loader, wine_server = resolve_runtime(args.wine, args.wineserver, args.prefix, args.wine_arch)
+except ValueError as error:
+    parser.error(str(error))
 args.output = args.output.resolve()
 args.output.mkdir(parents=True, exist_ok=False)
 exe = args.game / 'th06.exe'
 pinned = '9f76483c46256804792399296619c1274363c31cd8f1775fafb55106fb852245'
 if hashlib.sha256(exe.read_bytes()).hexdigest() != pinned:
     parser.error('retail executable identity mismatch')
-if not (args.prefix / 'system.reg').exists():
-    parser.error('initialize the dedicated 32-bit Wine prefix first')
 archives = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
             for p in args.data.iterdir() if p.is_file() and p.suffix.lower() == '.dat'}
 retail_archives = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
@@ -161,6 +211,9 @@ sources = {'launch.exe': args.build / 'wine-replay/launch.exe',
            'shadow.dll': args.build / 'wine-replay/shadow.dll',
            'th06_shadow_online': args.build / 'th06_shadow_online',
            'run_wine_shadow.py': Path(__file__).resolve(),
+           'wine_runtime.py': Path(__file__).with_name('wine_runtime.py').resolve(),
+           'replay_display.py': Path(__file__).with_name('replay_display.py').resolve(),
+           'replay_pacing.py': Path(__file__).with_name('replay_pacing.py').resolve(),
            'shadow_capture.py': Path(__file__).with_name('shadow_capture.py').resolve()}
 for name, source in sources.items():
     expected = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -178,9 +231,7 @@ command = ['systemd-run', '--user', '--unit=' + unit, '--wait', '--pipe',
            '-p', 'TasksMax=256', '-p', 'RuntimeMaxSec=' + str(args.seconds),
            '-p', 'TimeoutStopSec=5', '-p', 'KillMode=control-group',
            '--working-directory=' + str(args.game), '/usr/bin/env',
-           'WINEPREFIX=' + str(args.prefix), 'WINEARCH=win32', 'WINEDEBUG=-all',
-           'WINEDLLOVERRIDES=mscoree,mshtml=', 'LANG=ja_JP.UTF-8', 'LC_ALL=ja_JP.UTF-8',
-           'LP_NUM_THREADS=2', 'LIBGL_ALWAYS_SOFTWARE=1', 'MESA_SHADER_CACHE_DISABLE=true',
+           'WINEDEBUG=-all', 'LANG=ja_JP.UTF-8', 'LC_ALL=ja_JP.UTF-8',
            'TH06_RETAIL_UPDATES=' + str(args.updates),
            'TH06_SHADOW_STAGE=' + str(args.stage), 'TH06_SHADOW_SHOT=' + str(args.shot),
            'TH06_SHADOW_STORY=' + str(int(args.story)),
@@ -189,12 +240,25 @@ command = ['systemd-run', '--user', '--unit=' + unit, '--wait', '--pipe',
            'TH06_SHADOW_SLEEP_LIMITER=' + str(int(args.sleep_limiter)),
            '/usr/bin/xvfb-run', '-a', sys.executable,
            str(frozen / 'run_wine_shadow.py'), '--worker', str(args.output)]
+wine_environment, worker_environment = render_environment(
+    os.environ, args.prefix, args.wine_arch, wine_server, args.dll_overrides,
+    args.renderer_threads, args.vblank, args.shader_cache)
+runtime_hashes = {'loader': hashlib.sha256(wine_loader.read_bytes()).hexdigest(),
+                  'server': hashlib.sha256(wine_server.read_bytes()).hexdigest()}
+env_start = command.index('/usr/bin/env') + 1
+command[env_start:env_start] = [item for name in worker_environment for item in ['-u', name]]
+index = command.index('/usr/bin/xvfb-run')
+command[index:index] = [name + '=' + value for name, value in worker_environment.items() if value is not None]
 worker_config = {
+    'expected_environment': worker_environment,
+    'expected_wine_environment': wine_environment,
+    'runtime_sha256': runtime_hashes,
+    'display_timing': args.display_timing, 'wineserver': str(wine_server),
     'controller': [str(frozen / 'th06_shadow_online'), '--data', str(args.data),
                    '--directory', str(args.output), '--horizon', str(args.horizon),
                    '--lead', str(args.lead), '--budget-ms', str(args.budget_ms),
                    '--interval', str(args.interval), '--proposals', str(args.proposals)],
-    'wine': ['wine', str(frozen / 'launch.exe'), 'th06.exe', windows(frozen / 'shadow.dll'),
+    'wine': [str(wine_loader), str(frozen / 'launch.exe'), 'th06.exe', windows(frozen / 'shadow.dll'),
              windows(args.output)], 'record': args.record}
 if args.pulse:
     worker_config['controller'].append('--pulse')
@@ -230,8 +294,16 @@ if args.refresh_updates:
 receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3,
            'memory_high_bytes': 1536 * 1024**2, 'swap_max_bytes': 0,
            'peak_cgroup_bytes': 0, 'oom': 0, 'oom_kill': 0,
+           'cgroup_cpu_usage_usec': 0,
            'cgroup_limits_verified': False,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
+           'wine_loader': str(wine_loader), 'wineserver': str(wine_server), 'wine_arch': args.wine_arch,
+           'runtime_sha256': runtime_hashes,
+           'render_environment': wine_environment, 'display_timing': args.display_timing,
+           'game_runtime_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                                  for p in args.game.iterdir() if p.suffix.lower() in ('.dll', '.conf')},
+           'host_load_average_start': os.getloadavg(),
+           'host_cpu_pressure_start': Path('/proc/pressure/cpu').read_text(),
            'stage': args.stage, 'shot': args.shot, 'difficulty': difficulty, 'story': args.story,
            'survival_horizon': args.survival_horizon,
            'rescue_horizon': args.rescue_horizon,
@@ -262,6 +334,11 @@ with (args.output / 'process.log').open('wb') as log:
                 if result.returncode == 0 and result.stdout.strip():
                     cgroup = Path('/sys/fs/cgroup') / result.stdout.strip().lstrip('/')
             if cgroup is not None:
+                try:
+                    usage = dict(line.split() for line in (cgroup / 'cpu.stat').read_text().splitlines())
+                    receipt['cgroup_cpu_usage_usec'] = max(receipt['cgroup_cpu_usage_usec'], int(usage['usage_usec']))
+                except FileNotFoundError:
+                    pass
                 if not receipt['cgroup_limits_verified']:
                     try:
                         actual_max = int((cgroup / 'memory.max').read_text())
@@ -300,6 +377,8 @@ with (args.output / 'process.log').open('wb') as log:
 receipt['process_exit'] = child.returncode
 receipt['runner_finished'] = True
 receipt['wall_seconds'] = time.monotonic() - started
+receipt['host_load_average_end'] = os.getloadavg()
+receipt['host_cpu_pressure_end'] = Path('/proc/pressure/cpu').read_text()
 state = subprocess.run(['systemctl', '--user', 'show', unit, '-p', 'Result', '-p', 'ExecMainStatus'],
                        capture_output=True, text=True, check=True)
 receipt['systemd'] = dict(line.split('=', 1) for line in state.stdout.splitlines())

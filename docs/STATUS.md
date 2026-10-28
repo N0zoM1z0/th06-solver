@@ -13,7 +13,7 @@ budget exhaustion stays incomplete.
 
 | Evidence | Verified result | Limit |
 | --- | --- | --- |
-| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 clear in 43,126 / 44,959 actual updates | Two successful samples; eleven full hits retained |
+| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 / 57265 clear in 43,126 / 44,959 / 47,986 updates | Three successful samples; eleven full hits retained |
 | Lunatic online components | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear | Five failed Stage 6 controls; no full live story or all-shot coverage |
 | Live story handoff | Natural Stage 1 → 2, 20,000-update NMNB prefix | Incomplete story |
 | Original-loader replay | Lunatic Reimu A seed 0: 127,737 updates/six clears; Extra Reimu B seed 35964: 43,126 updates/one clear | Both whole traces agree with their fresh native export |
@@ -79,7 +79,7 @@ A replay-checked 1,200-update seed-61531 prefix has zero hits/bombs, 1,199
 Present samples and no sequence skips/flags. Full Present mean is 40.64 Hz;
 steady draw/Present-call means are 0.76/19.18 ms. It fails the pacing gate and
 remains incomplete, with no independent window clock. Current accounting is
-eleven full hits, two full clears, two prefixes and three earlier zero-frame starts.
+eleven full hits, three full clears, four prefixes and three earlier zero-frame starts.
 
 The [queue-rescue study](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures)
 adds seed **61515**, `online-rescue-002`, under private
@@ -96,12 +96,31 @@ Search p50/p99/max including cleanup is 93.05/124.85/164.13 ms; the verified
 The same study retains seed **27718**, a full hit at 24,033 with warm backups
 but no short horizon. Its last certificate ends at 24,032. These different-seed
 outcomes cannot isolate the rescue policy's effect. Native latency comparisons
-retain all fourteen phase episodes, including failures; only six rescue episodes
-have the additional complete-trace independent checks documented here.
+retain all fourteen phase episodes, including failures; every trace now independently
+replays with matching digests.
 Full Present cadence for the new clear is **45.83 Hz**, slowest five seconds
 22.8 Hz, p99 47.37 ms. Steady draw/Present-call means are 0.94/15.85 ms.
 The unchanged pacing gate fails, with no independent window clock; this is
 neither a 60-FPS result nor general random-seed robustness.
+
+A same-profile natural-seed repeat, **57265**, `online-rescue-003`, also clears
+NMNB at **47,986 actual updates**, with complete frozen replay and matching retail
+projections. It publishes 9,432 plans from 10,066 searches (2,818 timeouts), with
+1,091 warm and 91 short publications. The only fallback remains four startup
+inputs; every captured queue/policy transition passes independent journal checks.
+Search p50/p99/max is 99.42/130.25/211.72 ms; verified group peak is 388.54 MiB,
+OOM 0. Full Present mean / slowest five seconds / p99 is 40.51 Hz / 19.2 Hz /
+54.13 ms, with steady draw/Present-call means 0.97/20.09 ms. This is the second
+consecutive clear of the warm/rescue profile, still a small sampled result;
+it does not close the all-seed or 60-FPS targets.
+
+The optional live runtime selector and independent window observer pass two
+native-checked bounded prefixes: Wine 8 seed 23430 / 1,200 updates and Wine 11
+wow64/DXVK seed 14702 / 3,600 updates. Both have zero misses/bombs, four startup
+fallback and verified resource limits (peaks 332.81 / 351.63 MiB, OOM 0).
+Actual window means are 51.96 / 55.95 Hz. The latter's slowest five seconds / p99
+is 43.0 Hz / 32 ms, so both gates fail. These unpaired runtime smokes add two
+incomplete prefixes; current accounting retains all four prefixes.
 
 ## Published replays and recordings
 
@@ -126,7 +145,7 @@ file hashes and publication identities.
 
 ## Validation and resource rules
 
-The 2026-10-28 validated build has 47 local CTest contracts with private DATs;
+The 2026-10-28 validated build has 48 local CTest contracts with private DATs;
 CI checks the asset-free subset. [Validation](VALIDATION.md) lists dependencies,
 entry profiles, focused tests, full replay checks and export commands.
 Use the configured test list rather than old milestone counts in archived notes.
