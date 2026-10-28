@@ -647,3 +647,55 @@ Persistent jitter without MPC rules out treating online search as the only
 pacing cause in these observations. Batching remains replay-only; no live
 rendering callback changes are promoted from this small comparison. Both pure
 prefixes remain separate from the four actual online prefixes in the ledger.
+
+
+## 2026-10-28 Wine 11 full-run counterexample
+
+`online-runtime-full-008` keeps the tested warm/rescue MPC profile and Wine 11 /
+DXVK hardware bullet rendering, with warmed caches and independent window timing.
+Natural Extra seed **43546**, Reimu B, hits at **23,036**, spell 57 / ECL sub 44,
+boss HP 1,264. Every native digest, retail projection and captured queue/policy
+transition matches independent replay, including the hit. Tape SHA-256:
+`67690e3f6a1b0eeebe915a029c1becddfee3b9726ee8b082b296c7d076abd122`.
+
+There are 4,393 searches, 1,387 timeouts and 4,171 publications, including 563
+warm backups and 14 short futures from 33 short searches. The last publication
+at 22,954 is an 80-update warm checkpoint, ending at 23,034. Nineteen subsequent
+replacements fail (15 timeouts), ending with two exhausted-queue inputs and the
+hit. Total fallback is six including four startup; no rejected generation or
+follower error occurs. One certificate is stale. Search p50/p99/max including
+cleanup is 99.45/139.62/311.96 ms; actual deadline overruns remain reported.
+
+The whole group has verified 2-GiB hard / 1.5-GiB high / no-swap limits, peak
+404.38 MiB, OOM 0, measured CPU 886.91 s. Controller/children use 10.81/245.15 s
+CPU over 505.94 s controller wall time. Full API/window means are 45.53/45.42 Hz;
+window slowest five seconds / p99 is 21.8 Hz / 52 ms. Steady draw/Present-call
+means are 1.20/16.02 ms. Both unchanged pacing gates fail. Different seeds,
+profiles, cache states and host load prevent a causal renderer/algorithm claim.
+
+Three source-replayed queue extractions capture exact initial planner state:
+
+| Origin / remaining queue | Cursor / initial motion recovery | Ordinary sorting model | `diverse-first` model |
+| --- | --- | --- | --- |
+| 22,495 / 140 | 48 / off | Phase 57 ends 24,846, no hit/fallback | Same phase end, no hit/fallback |
+| 22,684 / 139 | 56 / on | Hit 23,078, 6 fallback | Hit 23,739, 1 fallback |
+| 22,803 / 139 | 21 / off | Phase ends 24,846, no hit/fallback | Hit 23,215, 1 fallback |
+
+All six use full native futures, lead 16, 128/64 horizons, cap 110 ms, six
+proposals and warm backups. The actual prefix supplies gameplay RNG; the exact
+remaining literal queue is rebased at the target. Initial cursor/recovery and
+previous replacement state are restored from the journal. Subsequent consumption
+is still `max(1, ceil(search_ms * 0.06))` on this shared host. These phase episodes
+are timing-dependent native experiments, not deterministic reproductions of the
+actual varying Wine cadence or complete retail clears. Every whole trace passes
+independent diagnostic digest replay, including all three hits; all surviving
+prefixes also pass strict fresh replay. Their mixed outcomes do not justify
+promoting diversity. All six attempts remain under private `captured-model/`.
+
+This continuation retains **six actual online trials** (two clears, two hits,
+two prefixes), **twenty native phase episodes**, the six-context scalar-cache
+checks/benchmarks, and two separate original-loader diagnostic prefixes. The
+cumulative actual Extra ledger is **three full clears, twelve full hits, four
+prefixes and three zero-frame starts**. No new replay is published. Random-seed
+robustness and stable online 60 FPS remain open; next work should target earlier
+route choices and measured timing sensitivity in these captured spell-57 windows.

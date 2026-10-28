@@ -67,6 +67,17 @@ in two of three windows, but retain declared initial planner-state differences
 and host-timing dependence. Repeat the same live profile on natural seeds before
 claiming broader stability; retain every attempt.
 
+The newest counterexample is **seed 43546**, `online-runtime-full-008`, in the
+same private root: Wine 11/DXVK, hit 23,036 on spell 57 / sub 44. The last short
+warm plan from 22,954 ends at 23,034, followed by two exhausted-queue inputs.
+Exact checked queues at **22,495 / 22,684 / 22,803** retain **140 / 139 / 139**
+inputs and cursor **48 / 56 / 21**; recovery is **off / on / off**. Keep these
+initial planner states when comparing policy episodes. All six latest native
+models independently replay, including failures; `diverse-first` loses the late
+window against its surviving control. No candidate-order change is promoted.
+The native clock remains `ceil(search_ms * 0.06)`, rather than the actual varying
+retail cadence: matching initial state alone does not make the episode identical.
+
 ## P0: Attribute frame pacing and establish a 60-FPS gate
 
 Actual update/presentation clocks and a v4 gate already exist for

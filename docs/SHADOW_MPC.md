@@ -7,8 +7,8 @@ actual tape matches every digest. The [full combined profile](EXTRA_SEARCH.md#fi
 has only four startup fallback inputs, peak 342.85 MiB and OOM 0. New
 [verified samples](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures),
 seeds 61515 / 57265, clear in 44,959 / 47,986 updates with verified nominal
-backups and optional shorter futures. Eleven failed full hits remain in the ledger. Random-seed
-robustness and stable online 60 FPS remain open.
+backups and optional shorter futures. Twelve failed full hits remain in the
+ledger. Random-seed robustness and stable online 60 FPS remain open.
 
 Optional `--anytime` retains the first full native certificate if later ranking
 times out, while preserving timeout accounting, whole-group cleanup and retail

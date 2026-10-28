@@ -13,7 +13,7 @@ budget exhaustion stays incomplete.
 
 | Evidence | Verified result | Limit |
 | --- | --- | --- |
-| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 / 57265 clear in 43,126 / 44,959 / 47,986 updates | Three successful samples; eleven full hits retained |
+| Extra online | Reimu B, natural power 0; seeds 35964 / 61515 / 57265 clear in 43,126 / 44,959 / 47,986 updates | Three successful samples; twelve full hits retained |
 | Lunatic online components | Two Stage 5 / Reimu B clears and one Stage 6 / Marisa B clear | Five failed Stage 6 controls; no full live story or all-shot coverage |
 | Live story handoff | Natural Stage 1 → 2, 20,000-update NMNB prefix | Incomplete story |
 | Original-loader replay | Lunatic Reimu A seed 0: 127,737 updates/six clears; Extra Reimu B seed 35964: 43,126 updates/one clear | Both whole traces agree with their fresh native export |
@@ -28,99 +28,60 @@ different seeds/policies as paired optimization comparisons.
 
 ## Current Extra online profile
 
-The original successful case is `online-acceleration-reimuB-008` under private
-`reports/local/extra-online-20261027/`. The original retail terminal and a frozen
-independent checker both confirm the entire actual-input route. Every declared
-retail projection matches native; native replay matches each observable digest.
+The original seed-35964 clear uses the [combined profile](EXTRA_SEARCH.md#first-complete-extra-online-nmnb-clear).
+The tested warm/rescue continuation adds `--warm-start --rescue-horizon 64`:
+base/survival horizons 128/256, lead 16, cap 110 ms, interval 4, six proposals,
+fresh/pulse-on-failure/laser/anytime/power/damage/acceleration guidance and
+sleep-limiter. `--render-timing --save-certificates` capture actual clocks and
+literal published futures; the optional runtime selector adds a window observer.
+These options do not change native collision authority or the immutable lead.
 
-| Setting or measurement | Result |
-| --- | --- |
-| Profile | Base horizon 128, survival horizon 256, lead 16, cap 110 ms, interval 4, candidate target 6 |
-| Options | Fresh, pulse-on-failure, laser-aware, anytime, power-aware, damage-aware, acceleration-aware, sleep-limiter |
-| Searches / timeouts / publications | 9,590 / 360 / 9,307 |
-| Published deadline certificates / ranking yields | 81 / 207 |
-| Survival searches / publications | 1,063 / 966 |
-| Planned / fallback inputs | 43,122 / 4, all fallback at startup |
-| Stale / rejected plans / follower errors | 0 / 0 / 0 |
-| Search p50 / p99 / max, including cleanup | 59.54 / 111.27 / 119.00 ms |
-| Actual receipt mean / p99 gap / max gap | 57.08 Hz / 27.49 ms / 628.02 ms |
-| Whole Wine-tree memory | 342.85 MiB peak, verified 2-GiB/no-swap cap, OOM 0 |
+| Private case / seed | Actual result | Searches / timeouts / publications | Fallback | Peak / OOM |
+| --- | --- | --- | --- | --- |
+| `online-warm-001` / 27718, rescue disabled | Hit 24,033, spell 58 | 4,884 / 732 / 4,742 | 4 startup + 1 exhausted | 497.00 MiB / 0 |
+| `online-rescue-002` / 61515, Wine 8 | **NMNB clear 44,959** | 9,045 / 1,721 / 8,719 | 4 startup | 447.27 MiB / 0 |
+| `online-rescue-003` / 57265, Wine 8 | **NMNB clear 47,986** | 10,066 / 2,818 / 9,432 | 4 startup | 388.54 MiB / 0 |
+| `online-runtime-full-008` / 43546, Wine 11/DXVK | Hit 23,036, spell 57 | 4,393 / 1,387 / 4,171 | 4 startup + 2 exhausted | 404.38 MiB / 0 |
 
-The requested cap includes the whole search group. Cleanup can finish later;
-actual overrun/timeout costs remain reported. `--anytime` can retain an already
-complete immutable certificate after group cleanup, never unfinished work.
-Its 75% ranking reserve makes the candidate target best effort. Full native
-verification, lead checks and retail adoption still apply.
+All four actual traces match independent retail projection and native digest
+replay, including hits. Both new clears pass frozen `--require-complete` replay;
+all captured queue/generation/policy transitions pass independent journal checks.
+The two clears publish 548 / 1,091 warm backups and 31 / 91 shorter native futures.
+All four have verified 2-GiB hard / 1.5-GiB high / no-swap limits. Search cleanup
+and actual over-budget costs remain reported; only complete in-budget immutable
+checkpoints survive a timeout. See [the full study](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures)
+for exact settings, timing distributions, costs and every native control.
 
-**Extra random-seed robustness and stable online 60 FPS remain open.** The
-combined shot/seed/profile success is not a single-change attribution. Keep the
-failed survival/damage/long-horizon models in [Extra search](EXTRA_SEARCH.md).
-The earlier Lunatic component clear uses a separate 64/8/80-ms profile; do not
-silently replace its evidence with the Extra settings.
+The newest [counterexample](EXTRA_SEARCH.md#2026-10-28-wine-11-full-run-counterexample)
+is spell 57 / ECL sub 44, boss HP 1,264. Its final 80-update warm plan, from
+22,954, ends at 23,034. Nineteen unsuccessful replacements (15 timeouts) follow,
+then two fallback inputs and the hit. Three exact checked queues now restore
+proposal cursor/recovery as well as the actual prefix and remaining inputs.
+Six new 110-ms native phase models retain three hits and three surviving prefixes,
+all independently replayed. `diverse-first` loses the late window against its
+surviving control, so it is not promoted. These remain timing-dependent models;
+all twenty phase episodes and failed attempts are retained in the private ledger.
 
-The [2026-10-28 study](EXTRA_SEARCH.md#2026-10-28-stability-and-deadline-study)
-retains two new Reimu B failures: seed 24443 at 10,575 updates and seed 4902 at
-38,787, spell 62. Both actual routes match independent replay, including each
-hit. The latter queue ends at 38,782 after 61 unsuccessful replacement searches
-(57 timeouts); five further fallback updates end in the hit. Its verified
-2-GiB/1.5-GiB/no-swap limits, peak 393.63 MiB and OOM 0 are retained. The first
-trial's interrupted launcher leaves incomplete peak/OOM evidence.
+**Random-seed robustness and stable online 60 FPS remain open.** The two Wine 8
+warm/rescue clears and Wine 11 failure are different-seed observations. Full
+Present means for the new clears are 45.83 / 40.51 Hz; the Wine 11 full attempt's
+actual window mean / slowest five seconds / p99 is 45.42 Hz / 21.8 Hz / 52 ms.
+Its steady draw/Present-call means are 1.20/16.02 ms. All unchanged gates fail.
 
-Checked-prefix probes, queue/cleanup diagnostics and child completion timestamps
-now expose these failures and enforce the deadline when the parent is
-descheduled. A frozen negative control admits a late 40-frame certificate;
-the repaired regression rejects it. Removing unused literal-verification scores
-reduces child CPU 18.0% in one repeated-origin native workload with identical
-routes. All fixed-prefix comparisons and 15 closed native models remain private;
-nominal refresh and candidate diversity are optional, with retained failures.
+Two native-checked online runtime prefixes (Wine 8 seed 23430 / 1,200 updates;
+Wine 11/DXVK seed 14702 / 3,600) have zero misses/bombs and four startup fallback.
+Actual window means are 51.96 / 55.95 Hz, peaks 332.81 / 351.63 MiB, OOM 0.
+Two separate **pure original-loader replay** controls of the same seed-14702
+input prefix run without MPC/follower: window means 58.97 Hz with hardware
+bullets and 59.62 Hz with CPU batching, both p99 28 ms and failing gates.
+All supplied projection rows match; these are incomplete prefixes. Cache warmth
+and shared-host scheduling limit attribution, and batching stays replay-only.
 
-Optional `--render-timing` records actual online update/draw/Present API clocks.
-A replay-checked 1,200-update seed-61531 prefix has zero hits/bombs, 1,199
-Present samples and no sequence skips/flags. Full Present mean is 40.64 Hz;
-steady draw/Present-call means are 0.76/19.18 ms. It fails the pacing gate and
-remains incomplete, with no independent window clock. Current accounting is
-eleven full hits, three full clears, four prefixes and three earlier zero-frame starts.
-
-The [queue-rescue study](EXTRA_SEARCH.md#2026-10-28-verified-backup-and-shorter-futures)
-adds seed **61515**, `online-rescue-002`, under private
-`reports/local/extra-control-20261028/`: **44,959 actual updates, NMNB clear**,
-complete frozen replay and matching retail projections. The combined profile
-adds `--warm-start --rescue-horizon 64 --save-certificates --render-timing`.
-Its 9,045 searches publish 8,719 certificates, including 548 verified nominal
-backups and 31 shorter futures from 41 short searches. All four fallback inputs
-are at startup; stale/rejected plans and follower errors remain zero. Independent
-journal checks reconstruct every acknowledged queue and policy transition.
-Search p50/p99/max including cleanup is 93.05/124.85/164.13 ms; the verified
-2-GiB/1.5-GiB/no-swap group peaks at 447.27 MiB with OOM 0.
-
-The same study retains seed **27718**, a full hit at 24,033 with warm backups
-but no short horizon. Its last certificate ends at 24,032. These different-seed
-outcomes cannot isolate the rescue policy's effect. Native latency comparisons
-retain all fourteen phase episodes, including failures; every trace now independently
-replays with matching digests.
-Full Present cadence for the new clear is **45.83 Hz**, slowest five seconds
-22.8 Hz, p99 47.37 ms. Steady draw/Present-call means are 0.94/15.85 ms.
-The unchanged pacing gate fails, with no independent window clock; this is
-neither a 60-FPS result nor general random-seed robustness.
-
-A same-profile natural-seed repeat, **57265**, `online-rescue-003`, also clears
-NMNB at **47,986 actual updates**, with complete frozen replay and matching retail
-projections. It publishes 9,432 plans from 10,066 searches (2,818 timeouts), with
-1,091 warm and 91 short publications. The only fallback remains four startup
-inputs; every captured queue/policy transition passes independent journal checks.
-Search p50/p99/max is 99.42/130.25/211.72 ms; verified group peak is 388.54 MiB,
-OOM 0. Full Present mean / slowest five seconds / p99 is 40.51 Hz / 19.2 Hz /
-54.13 ms, with steady draw/Present-call means 0.97/20.09 ms. This is the second
-consecutive clear of the warm/rescue profile, still a small sampled result;
-it does not close the all-seed or 60-FPS targets.
-
-The optional live runtime selector and independent window observer pass two
-native-checked bounded prefixes: Wine 8 seed 23430 / 1,200 updates and Wine 11
-wow64/DXVK seed 14702 / 3,600 updates. Both have zero misses/bombs, four startup
-fallback and verified resource limits (peaks 332.81 / 351.63 MiB, OOM 0).
-Actual window means are 51.96 / 55.95 Hz. The latter's slowest five seconds / p99
-is 43.0 Hz / 32 ms, so both gates fail. These unpaired runtime smokes add two
-incomplete prefixes; current accounting retains all four prefixes.
+Earlier seed-24443/4902 hits, the seed-61531 rendering prefix, deadline negative
+controls and native performance studies remain in [Extra search](EXTRA_SEARCH.md)
+and [Performance](PERFORMANCE.md). They are not erased by later successes.
+Current actual Extra accounting is **three full clears, twelve full hits, four
+prefixes and three zero-frame starts**; the two pure replay diagnostics are separate.
 
 ## Published replays and recordings
 
