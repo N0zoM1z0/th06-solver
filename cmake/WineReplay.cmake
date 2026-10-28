@@ -42,6 +42,7 @@ add_custom_command(OUTPUT ${_wine_out}/shadow.dll
     -ladvapi32 -Wl,--kill-at -o ${_wine_out}/shadow.new.dll
   COMMAND ${CMAKE_COMMAND} -E rename ${_wine_out}/shadow.new.dll ${_wine_out}/shadow.dll
   DEPENDS tools/wine-shadow/observer.cpp tools/wine-replay/identity.hpp
+    tools/wine-replay/render_timing.hpp tools/wine-replay/mapped_journal.hpp include/th06/render_timing.hpp
     tools/wine-shadow/limiter_scope.hpp include/th06/retail_clock.hpp
     include/th06/shadow_bridge.hpp ${_wine_out}/retail_abi.hpp VERBATIM)
 add_custom_target(th06_wine_shadow ALL DEPENDS ${_wine_out}/shadow.dll)

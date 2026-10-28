@@ -1,4 +1,5 @@
 #include "../wine-replay/identity.hpp"
+#include "../wine-replay/render_timing.hpp"
 #include "limiter_scope.hpp"
 #include "retail_abi.hpp"
 #include "th06/shadow_bridge.hpp"
@@ -41,12 +42,20 @@ bool requested = false, initialized = false, attached = false;
 ChainElem observation;
 wine_shadow::LimiterScope limiter_scope;
 bool precise_limiter = false, sleep_limiter = false;
+bool profile_render = false;
+wine_replay::RenderTiming render_timing;
+wine_replay::MappedJournal<th06::render_timing::Update> update_times;
 using BeginPeriod = unsigned(WINAPI *)(unsigned);
 using Milliseconds = DWORD(WINAPI *)();
 BeginPeriod original_begin_period = nullptr;
 Milliseconds limiter_milliseconds = nullptr;
 
 [[noreturn]] void finish(const char *reason, unsigned code) {
+    const bool render_closed = render_timing.close(), updates_closed = update_times.close();
+    if (!render_closed || !updates_closed) {
+        reason = "render_timing_write_failed";
+        code = 9;
+    }
     if (shared) {
         const auto outcome = code == 0   ? b::Complete
                              : code == 2 ? b::Death
@@ -67,14 +76,14 @@ Milliseconds limiter_milliseconds = nullptr;
             "{\"reason\":\"%s\",\"frames\":%u,\"stage\":%d,\"cleared_stages\":%u,"
             "\"deaths\":%d,\"bombs\":%d,\"supervisor_state\":%d,\"retail_nmnb_complete\":%s,"
             "\"precise_limiter\":%s,\"sleep_limiter\":%s,\"limiter_entries\":%u,"
-            "\"limiter_restores\":%u,\"limiter_sleeps\":%u}\n",
+            "\"limiter_restores\":%u,\"limiter_sleeps\":%u,\"render_timing\":%s}\n",
             reason, frame, at<int>(game_base, abi::GameManager_currentStage), cleared,
             at<int>(game_base, abi::GameManager_deaths),
             at<int>(game_base, abi::GameManager_bombsUsed),
             at<int>(supervisor_base, abi::Supervisor_curState), code == 0 ? "true" : "false",
             precise_limiter ? "true" : "false", sleep_limiter ? "true" : "false",
-            limiter_scope.precision.entries, limiter_scope.precision.restores,
-            limiter_scope.sleeps);
+            limiter_scope.precision.entries, limiter_scope.precision.restores, limiter_scope.sleeps,
+            profile_render ? "true" : "false");
         std::fclose(out);
     }
     ExitProcess(code);
@@ -172,6 +181,12 @@ int __cdecl observe(void *) {
     if (!WriteFile(rows, receipt.data(), sizeof(receipt), &written, nullptr) ||
         written != sizeof(receipt))
         finish("journal_write_failed", 9);
+    if (profile_render) {
+        render_timing.context(frame, unsigned(stage), first_tick.QuadPart);
+        const th06::render_timing::Update update{frame, unsigned(stage), ns};
+        if (!update_times.append(update) || render_timing.failed())
+            finish("render_timing_write_failed", 9);
+    }
     b::save(shared + b::Sequence, frame);
     if (deaths || bombs || player_state == abi::player_dead)
         finish("hit_or_bomb", 2);
@@ -228,6 +243,9 @@ int __cdecl init_hook(void *manager) {
 }
 int __cdecl menu_hook(void *menu) {
     check_gameplay_precision();
+    if (profile_render &&
+        !render_timing.install(at<void *>(supervisor_base, abi::Supervisor_d3dDevice)))
+        finish("render_timing_install_failed", 9);
     const auto result = original_menu(menu);
     if (!requested && ++menu_frames >= 120 &&
         at<int>(supervisor_base, abi::Supervisor_curState) == 1) {
@@ -265,6 +283,9 @@ bool setup() {
     if (!QueryPerformanceFrequency(&frequency))
         return false;
     char option[8];
+    profile_render = GetEnvironmentVariableA("TH06_SHADOW_RENDER_TIMING", option, sizeof(option)) &&
+                     !std::strcmp(option, "1");
+    render_timing.before_present(+[] { limiter_scope.precision.restore(); });
     precise_limiter =
         GetEnvironmentVariableA("TH06_SHADOW_PRECISE_LIMITER", option, sizeof(option)) &&
         !std::strcmp(option, "1");
@@ -320,6 +341,14 @@ bool setup() {
         maximum = unsigned(n);
     }
     char path[MAX_PATH];
+    if (profile_render) {
+        std::snprintf(path, sizeof(path), "%s/render-times.bin", directory);
+        if (!render_timing.open(path, frequency.QuadPart, maximum))
+            return false;
+        std::snprintf(path, sizeof(path), "%s/update-times.bin", directory);
+        if (!update_times.open(path, th06::render_timing::update_header[0], maximum))
+            return false;
+    }
     std::snprintf(path, sizeof(path), "%s/bridge.bin", directory);
     HANDLE file =
         CreateFileA(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
