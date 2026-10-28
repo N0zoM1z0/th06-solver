@@ -88,20 +88,24 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
               bool recorded, unsigned proposals, bool laser_aware, bool anytime, bool power_aware,
-              bool damage_aware, bool acceleration_aware, bool diverse_first) {
+              bool damage_aware, bool acceleration_aware, bool diverse_first, bool warm_start) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
+    if (warm_start && !anytime)
+        throw std::invalid_argument("warm start requires anytime certificates");
     if (prctl(PR_SET_CHILD_SUBREAPER, 1))
         throw std::runtime_error("set child subreaper");
     if (laser_aware)
         game.enable_laser_guidance();
     const auto begin = Clock::now();
     struct SharedProgress {
-        std::uint32_t words[7]{};
+        std::uint32_t words[9]{};
         std::uint64_t checkpoint_ns = 0;
         std::uint64_t completion_ns = 0;
         Prediction checkpoint;
+        std::uint64_t warm_ns = 0;
+        Prediction warm_checkpoint;
     };
     struct Progress {
         SharedProgress *data = static_cast<SharedProgress *>(
@@ -145,7 +149,30 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                 result.digests[i] = game.observation_digest();
             }
             if (safe) {
-                Prediction tail;
+                Prediction tail, warm;
+                if (warm_start && !reuse && active.count &&
+                    origin + lead < active.origin + active.count) {
+                    b::save(progress.words + 2, 2);
+                    b::save(progress.words + 8, 1);
+                    warm = nominal(game, active, origin, lead, horizon, previous);
+                    ++result.branches;
+                    result.updates += warm.updates;
+                    if (warm.count) {
+                        auto &saved = progress.data->warm_checkpoint;
+                        saved = result;
+                        saved.count = lead + warm.count;
+                        saved.nominal = 1;
+                        std::copy_n(warm.inputs.begin(), warm.count, saved.inputs.begin() + lead);
+                        std::copy_n(warm.digests.begin(), warm.count, saved.digests.begin() + lead);
+                        progress.data->warm_ns =
+                            std::uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                              Clock::now() - begin)
+                                              .count());
+                        // Keep this separate from the first fresh certificate.
+                        // Neither slot is overwritten during deadline cleanup.
+                        b::save(progress.words + 7, 1);
+                    }
+                }
                 if (reuse && active.count && origin + lead < active.origin + active.count) {
                     b::save(progress.words + 2, 2);
                     tail = nominal(game, active, origin, lead, horizon, previous);
@@ -268,6 +295,8 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                                   decision.expected_digests.end(), tail.digests.begin());
                     }
                 }
+                if (!tail.count && warm.count)
+                    tail = warm;
                 if (tail.count) {
                     result.count = lead + tail.count;
                     result.nominal = tail.nominal;
@@ -336,9 +365,18 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
         progress.data->checkpoint_ns <= std::uint64_t(budget) * 1000000) {
         result.prediction = progress.data->checkpoint;
         result.deadline_checkpoint = true;
+    } else if (result.timeout && anytime && b::load(progress.words + 7) &&
+               progress.data->warm_ns <= std::uint64_t(budget) * 1000000) {
+        result.prediction = progress.data->warm_checkpoint;
+        result.deadline_checkpoint = result.warm_checkpoint = true;
     }
     result.wall_ms = milliseconds(begin);
     result.cleanup_ms = milliseconds(cleanup_begin);
+    result.warm_attempted = b::load(progress.words + 8);
+    result.warm_certified =
+        b::load(progress.words + 7) && progress.data->warm_ns <= std::uint64_t(budget) * 1000000;
+    result.warm_selected =
+        result.warm_attempted && result.prediction.count && result.prediction.nominal;
     result.motion_attempts = b::load(progress.words + 1);
     result.motion_cursor = b::load(progress.words);
     result.last_phase = b::load(progress.words + 2);

@@ -104,7 +104,7 @@ file hashes and publication identities.
 
 ## Validation and resource rules
 
-The 2026-10-28 validated build has 43 local CTest contracts with private DATs;
+The 2026-10-28 validated build has 46 local CTest contracts with private DATs;
 CI checks the asset-free subset. [Validation](VALIDATION.md) lists dependencies,
 entry profiles, focused tests, full replay checks and export commands.
 Use the configured test list rather than old milestone counts in archived notes.

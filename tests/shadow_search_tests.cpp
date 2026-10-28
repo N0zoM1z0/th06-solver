@@ -77,6 +77,68 @@ int main(int argc, char **argv) {
         Session game(config);
         const auto before = game.observation_digest();
         const std::string mode = argv[2];
+        if (mode == "warm" || mode == "warm-deadline" || mode == "warm-failure") {
+            b::Plan active;
+            active.generation = 2;
+            active.stage = config.stage;
+            active.first_change = 9;
+            active.count = 64;
+            active.inputs.fill(261);
+            bool rejected = false;
+            try {
+                b::search(game, active, 261, 8, 32, 1000, false, false, 0, false, 1, false, false,
+                          false, false, false, false, true);
+            } catch (const std::invalid_argument &) {
+                rejected = true;
+            }
+            require(rejected && game.observation_digest() == before,
+                    "warm start requires an anytime owner without mutating the world");
+            th06::ChainElem callback;
+            if (mode != "warm") {
+                callback.SetCallback(reinterpret_cast<th06::ChainCallback>(inject));
+                require(th06::g_FuncChain.AddToCalcChain(&callback, 15) == ZUN_SUCCESS,
+                        "inject warm failure/deadline");
+            }
+            if (mode == "warm-deadline") {
+                checkpoint_mode = checkpoint_delay = true;
+                blocked = static_cast<std::uint32_t *>(
+                    mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
+                require(blocked != MAP_FAILED, "shared warm deadline receipt");
+            }
+            const auto result =
+                b::search(game, active, 261, 8, 32, mode == "warm-deadline" ? 150 : 1000, false,
+                          false, 0, false, 1, false, true, false, false, false, false, true);
+            require(result.warm_attempted && game.observation_digest() == before && !calls,
+                    "warm attempt preserves the actual world and RNG");
+            if (mode == "warm-failure") {
+                require(!result.prediction.count && !result.warm_certified &&
+                            !result.warm_selected && !result.warm_checkpoint,
+                        "an incomplete nominal future cannot become a backup");
+            } else {
+                const bool timed = mode == "warm-deadline";
+                require(
+                    result.prediction.count == 40 && result.warm_certified &&
+                        result.timeout == timed && result.warm_selected == timed &&
+                        result.warm_checkpoint == timed && result.deadline_checkpoint == timed,
+                    "fresh success wins; only a blocked fresh search falls back to verified warm");
+                if (timed) {
+                    require(b::load(blocked) == 2, "fresh ranking reaches a nested blocked child");
+                    checkpoint_delay = false;
+                }
+                for (unsigned i = 0; i < result.prediction.count; ++i) {
+                    require(!game.step(result.prediction.inputs[i]).hit &&
+                                game.observation_digest() == result.prediction.digests[i],
+                            "independent literal warm/fresh certificate replay");
+                }
+            }
+            int status;
+            errno = 0;
+            require(waitpid(-1, &status, WNOHANG) == -1 && errno == ECHILD,
+                    "warm completion reaps every rollout descendant");
+            if (blocked)
+                munmap(blocked, 4096);
+            return 0;
+        }
         if (mode == "nominal") {
             const auto fresh = b::search(game, {}, 261, 16, 32, 1000, false);
             require(fresh.prediction.count == 48, "nominal fixture has a full fresh future");

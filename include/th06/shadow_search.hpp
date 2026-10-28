@@ -21,6 +21,8 @@ struct Search {
     bool timeout = false;
     bool late_completion = false;
     bool deadline_checkpoint = false;
+    bool warm_attempted = false, warm_certified = false, warm_selected = false;
+    bool warm_checkpoint = false;
     unsigned motion_attempts = 0, motion_cursor = 0;
     unsigned recorded_forecasts = 0, recorded_checks = 0, last_phase = 0;
 };
@@ -31,5 +33,5 @@ Search search(solver::Session &game, const Plan &active, std::uint16_t previous,
               unsigned motion_cursor = 0, bool recorded = false, unsigned proposals = 1,
               bool laser_aware = false, bool anytime = false, bool power_aware = false,
               bool damage_aware = false, bool acceleration_aware = false,
-              bool diverse_first = false);
+              bool diverse_first = false, bool warm_start = false);
 } // namespace th06::shadow

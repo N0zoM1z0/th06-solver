@@ -80,6 +80,8 @@ parser.add_argument('--pulse', action='store_true', help='try rotating native mo
 parser.add_argument('--pulse-on-failure', action='store_true', help='try motion once after an unsuccessful ordinary search')
 parser.add_argument('--laser-aware', action='store_true', help='guide native proposals with observed laser motion and orbital futures')
 parser.add_argument('--anytime', action='store_true', help='retain the first complete native certificate if later ranking times out')
+parser.add_argument('--warm-start', action='store_true', help='verify an extended nominal backup before fresh proposals; requires anytime')
+parser.add_argument('--save-certificates', action='store_true', help='save every published literal certificate and decision queue generation for exact window reconstruction')
 parser.add_argument('--acceleration-aware', action='store_true', help='guide proposals with observed native acceleration and its expiry')
 parser.add_argument('--damage-aware', action='store_true', help='score full native futures by actual boss damage and completed spell phases')
 parser.add_argument('--power-aware', action='store_true', help='guide native proposals toward power pickups until full power')
@@ -118,6 +120,8 @@ if args.recorded and max(args.horizon, args.survival_horizon) > 240:
     parser.error('recorded proposals require horizon <= 240')
 if args.pulse and args.pulse_on_failure:
     parser.error('choose one pulse policy')
+if args.warm_start and not args.anytime:
+    parser.error('warm start requires anytime certificates')
 if args.refresh_updates and (args.fresh or not args.interval <= args.refresh_updates <= args.horizon):
     parser.error('refresh interval requires non-fresh mode and interval..horizon')
 args.data = args.data.resolve()
@@ -197,6 +201,10 @@ if args.laser_aware:
     worker_config['controller'].append('--laser-aware')
 if args.anytime:
     worker_config['controller'].append('--anytime')
+if args.warm_start:
+    worker_config['controller'].append('--warm-start')
+if args.save_certificates:
+    worker_config['controller'].append('--save-certificates')
 if args.power_aware:
     worker_config['controller'].append('--power-aware')
 if args.acceleration_aware:
@@ -221,6 +229,7 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
            'stage': args.stage, 'shot': args.shot, 'difficulty': difficulty, 'story': args.story,
            'survival_horizon': args.survival_horizon,
+           'warm_start': args.warm_start, 'save_certificates': args.save_certificates,
            'render_timing': args.render_timing,
            'precise_limiter': args.precise_limiter or args.sleep_limiter,
            'sleep_limiter': args.sleep_limiter,

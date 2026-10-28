@@ -266,6 +266,34 @@ its saved certificate. Laser orbit priority remains unchanged. Under a deadline,
 the target is still best effort. Retained dense-window models include failures
 with this option; it is experimental and does not replace the successful profile.
 
+## Verified nominal backup
+
+Experimental `--warm-start` requires `--anytime`. Before a fresh search it
+re-executes the acknowledged queue and extends its tail through the entire
+requested horizon in a separate native branch. A complete input/digest
+certificate is saved in its own immutable slot. Fresh search still runs and
+wins when successful; its first full checkpoint also takes priority at timeout.
+Only when fresh work supplies no complete certificate can the verified nominal
+backup publish. Both slots obey completion timestamps, group cleanup and the
+same retail lead/adoption checks. An incomplete nominal future cannot publish.
+
+Using a warm backup still arms conditional motion recovery on the next query:
+maintaining a safe queue must not suppress attempts to find a different route.
+Decisions and the controller summary report warm attempts, completed backups,
+selections and publications. This differs from periodic nominal refresh, which
+can return an unchanged route without attempting fresh alternatives. Captured
+late seed-59127 models still hit with a warm backup; this is not a robustness
+guarantee or a replacement for the selected clear profile.
+
+Optional `--save-certificates` records each published plan's generation, origin,
+stage, first-change frame, lead, requested horizon, inputs and native digests in
+`certificates.jsonl` (schema version 1). Decision `active_generation` identifies
+the acknowledged queue used at that query's origin; `published_generation`
+identifies its proposed replacement. Publication is not adoption. These owned
+scalar records allow later checked reconstruction of the actual remaining queue
+without guessing a fixed 144-input suffix or copying native managers. Journals
+stay private under ignored experiment directories.
+
 ## Boundary contract
 
 This follows th08-solver's common-start, true-RNG shadow architecture, rather
