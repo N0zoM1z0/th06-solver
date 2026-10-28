@@ -294,6 +294,39 @@ scalar records allow later checked reconstruction of the actual remaining queue
 without guessing a fixed 144-input suffix or copying native managers. Journals
 stay private under ignored experiment directories.
 
+Extract a captured query's acknowledged queue with:
+
+```sh
+python3 scripts/shadow_queue.py --directory reports/local/CASE --origin N \
+  --data /path/to/private-dats --checker /path/to/frozen/th06_replay_check \
+  --output reports/local/queue-N.actions
+```
+
+The extractor rejects missing generations, malformed records and any disagreement
+with the actual input/digest prefix, then runs a fresh native checker on the
+prefix plus the old plan's remaining future. The sidecar records hashes and all
+verification attempts. A possible native terminal in that future is separate
+from the actual online result. An expired queue exports only the checked actual
+prefix with zero remaining frames. Existing outputs are never overwritten.
+Motion cursor values are logged separately from the gameplay RNG; a later policy
+episode must declare its cursor, recovery state and timing model as well.
+
+## Short native rescue horizon
+
+Experimental `--rescue-horizon 64` keeps the normal requested lookahead until a
+replacement fails and the acknowledged queue has at most `lead + normal/2`
+remaining inputs. The next query then tries the declared shorter horizon. It
+must complete that entire native future and retain its literal digests; failed
+long futures never publish their partial prefixes. Every successful replacement
+retries the normal horizon on the next query. Default zero disables the policy;
+configured bounds are 32 through the base horizon.
+
+Decisions report normal/actual horizons, the previous replacement result and
+whether the query shortened lookahead. Summary counts distinguish short and
+survival searches/publications. Deadline, immutable lead, adoption, miss/bomb
+and replay requirements remain intact. Captured native phase escapes are not
+full online clear or general random-seed acceptance.
+
 ## Boundary contract
 
 This follows th08-solver's common-start, true-RNG shadow architecture, rather

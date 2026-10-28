@@ -1,4 +1,5 @@
 #include "th06/shadow_native.hpp"
+#include "th06/shadow_search.hpp"
 #include <array>
 #include <iostream>
 #include <limits>
@@ -10,6 +11,15 @@ void require(bool value, const char *message) {
 }
 int main() {
     try {
+        require(b::recovery_horizon(128, 64, 16, 81, true) == 128 &&
+                    b::recovery_horizon(128, 64, 16, 80, true) == 64,
+                "short native rescue starts only at the declared low-queue boundary");
+        require(b::recovery_horizon(128, 64, 16, 72, false) == 128 &&
+                    b::recovery_horizon(128, 64, 16, 140, true) == 128,
+                "successful replacement retries normal lookahead and a healthy queue keeps it");
+        require(b::recovery_horizon(256, 64, 16, 144, true) == 64 &&
+                    b::recovery_horizon(256, 0, 16, 0, true) == 256,
+                "survival horizon has its own threshold; disabled rescue preserves defaults");
         require(b::start_valid(1, 3, 0, 1) && b::start_valid(6, 3, 3, 0), "Lunatic starts");
         require(b::start_valid(7, 4, 0, 0) && b::start_valid(7, 4, 3, 0), "Extra starts");
         require(!b::start_valid(7, 3, 0, 0) && !b::start_valid(6, 4, 0, 0),

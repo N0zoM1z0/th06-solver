@@ -3,6 +3,10 @@
 #include "th06/shadow_bridge.hpp"
 namespace th06::shadow {
 inline constexpr unsigned recorded_beam_width = 64;
+inline unsigned recovery_horizon(unsigned normal, unsigned rescue, unsigned lead, unsigned queued,
+                                 bool replacement_failed) {
+    return rescue && replacement_failed && queued <= lead + normal / 2 ? rescue : normal;
+}
 struct Prediction {
     unsigned count = 0, branches = 0, updates = 0, nominal = 0, motion = 0;
     unsigned recorded = 0;

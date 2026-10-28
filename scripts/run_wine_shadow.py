@@ -92,6 +92,7 @@ parser.add_argument('--record', action='store_true', help='capture owned Xvfb vi
 parser.add_argument('--render-timing', action='store_true', help='record actual online update/draw/Present API clocks with the shared replay timing journal')
 parser.add_argument('--horizon', type=int, default=128)
 parser.add_argument('--survival-horizon', type=int, default=0, help='use a longer certified horizon while all active spell bosses are non-interactable; zero disables')
+parser.add_argument('--rescue-horizon', type=int, default=0, help='after a failed replacement and low queue, try a shorter complete native future; zero disables')
 parser.add_argument('--lead', type=int, default=16)
 parser.add_argument('--budget-ms', type=int, default=110)
 parser.add_argument('--interval', type=int, default=16)
@@ -116,6 +117,8 @@ if not (32 <= args.horizon <= 592 and 8 <= args.lead <= 64 and args.horizon + ar
     parser.error('invalid shadow search bounds')
 if args.survival_horizon and not (args.horizon <= args.survival_horizon <= 600 - args.lead):
     parser.error('invalid survival horizon')
+if args.rescue_horizon and not 32 <= args.rescue_horizon <= args.horizon:
+    parser.error('rescue horizon requires 32..base horizon')
 if args.recorded and max(args.horizon, args.survival_horizon) > 240:
     parser.error('recorded proposals require horizon <= 240')
 if args.pulse and args.pulse_on_failure:
@@ -213,6 +216,8 @@ if args.damage_aware:
     worker_config['controller'].append('--damage-aware')
 if args.survival_horizon:
     worker_config['controller'].extend(['--survival-horizon', str(args.survival_horizon)])
+if args.rescue_horizon:
+    worker_config['controller'].extend(['--rescue-horizon', str(args.rescue_horizon)])
 if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:
@@ -229,6 +234,7 @@ receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
            'stage': args.stage, 'shot': args.shot, 'difficulty': difficulty, 'story': args.story,
            'survival_horizon': args.survival_horizon,
+           'rescue_horizon': args.rescue_horizon,
            'warm_start': args.warm_start, 'save_certificates': args.save_certificates,
            'render_timing': args.render_timing,
            'precise_limiter': args.precise_limiter or args.sleep_limiter,

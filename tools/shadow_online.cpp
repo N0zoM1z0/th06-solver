@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
         std::string data, directory;
         unsigned horizon = 128, lead = 16, budget = 110, interval = 16;
         unsigned survival_horizon = 0;
+        unsigned rescue_horizon = 0;
         unsigned refresh_updates = 0;
         bool pulse = false;
         bool pulse_on_failure = false;
@@ -139,7 +140,8 @@ int main(int argc, char **argv) {
                        "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware] "
                        "[--anytime] [--warm-start] [--power-aware] [--damage-aware] "
                        "[--acceleration-aware] "
-                       "[--survival-horizon N] [--refresh-updates N] [--diverse-first] "
+                       "[--survival-horizon N] [--rescue-horizon N] [--refresh-updates N] "
+                       "[--diverse-first] "
                        "[--save-certificates]\n";
                 return 0;
             }
@@ -159,6 +161,8 @@ int main(int argc, char **argv) {
                     horizon = n;
                 else if (key == "--survival-horizon")
                     survival_horizon = n;
+                else if (key == "--rescue-horizon")
+                    rescue_horizon = n;
                 else if (key == "--refresh-updates")
                     refresh_updates = n;
                 else if (key == "--lead")
@@ -180,6 +184,8 @@ int main(int argc, char **argv) {
         if (survival_horizon &&
             (survival_horizon < horizon || survival_horizon + lead > b::capacity))
             throw std::runtime_error("invalid survival horizon");
+        if (rescue_horizon && (rescue_horizon < 32 || rescue_horizon > horizon))
+            throw std::runtime_error("rescue horizon requires 32..base horizon");
         if (recorded && std::max(horizon, survival_horizon) > 240)
             throw std::runtime_error("recorded proposals require horizon <= 240");
         if (pulse && pulse_on_failure)
@@ -237,6 +243,8 @@ int main(int argc, char **argv) {
         unsigned ranking_yields = 0;
         unsigned warm_attempts = 0, warm_certificates = 0, warm_publications = 0;
         unsigned survival_searches = 0, survival_publications = 0;
+        unsigned short_searches = 0, short_publications = 0;
+        bool last_unpublished = false;
         bool recovery_armed = false;
         unsigned forecasts = 0, checks = 0, recorded_selected = 0;
         std::array<unsigned, 8> timeouts_by_phase{};
@@ -329,6 +337,7 @@ int main(int argc, char **argv) {
                 const auto origin = unsigned(state.frame);
                 const auto queue_before = b::remaining(active, origin);
                 const auto active_generation = active.generation;
+                const auto cursor_before = motion_cursor;
                 last_search = origin;
                 const bool reuse = refresh_updates
                                        ? attempts && origin - last_refresh < refresh_updates
@@ -337,9 +346,14 @@ int main(int argc, char **argv) {
                     last_refresh = origin;
                 const bool recovery = pulse_on_failure && recovery_armed;
                 recovery_searches += recovery;
-                const unsigned selected_horizon =
+                const unsigned normal_horizon =
                     survival_horizon && game.survival_spell() ? survival_horizon : horizon;
-                const bool extended = selected_horizon != horizon;
+                const bool previous_failed = last_unpublished;
+                const unsigned selected_horizon = b::recovery_horizon(
+                    normal_horizon, rescue_horizon, lead, queue_before, previous_failed);
+                const bool shortened = selected_horizon < normal_horizon;
+                const bool extended = selected_horizon > horizon;
+                short_searches += shortened;
                 survival_searches += extended;
                 const auto result = b::search(
                     game, active, previous, lead, selected_horizon, budget, reuse,
@@ -396,6 +410,7 @@ int main(int argc, char **argv) {
                     checkpoint_publications += result.deadline_checkpoint;
                     survival_publications += extended;
                     warm_publications += result.warm_selected;
+                    short_publications += shortened;
                     if (save_certificates) {
                         certificates << "{\"version\":1,\"generation\":" << pending.generation
                                      << ",\"origin\":" << pending.origin
@@ -415,10 +430,17 @@ int main(int argc, char **argv) {
                     ++stale;
                 else if (!result.timeout)
                     ++failed;
+                last_unpublished = !published;
                 decisions << "{\"origin\":" << origin << ",\"caught_up\":" << now.frame
+                          << ",\"normal_horizon\":" << normal_horizon
+                          << ",\"previous_replacement_failed\":"
+                          << (previous_failed ? "true" : "false")
+                          << ",\"shortened\":" << (shortened ? "true" : "false")
                           << ",\"horizon\":" << selected_horizon
                           << ",\"active_generation\":" << active_generation
                           << ",\"published_generation\":" << (published ? pending.generation : 0)
+                          << ",\"motion_cursor_before\":" << cursor_before
+                          << ",\"motion_cursor_after\":" << motion_cursor
                           << ",\"warm_attempted\":" << (result.warm_attempted ? "true" : "false")
                           << ",\"warm_certified\":" << (result.warm_certified ? "true" : "false")
                           << ",\"warm_selected\":" << (result.warm_selected ? "true" : "false")
@@ -506,6 +528,9 @@ int main(int argc, char **argv) {
                << ",\"checkpoint_publications\":" << checkpoint_publications
                << ",\"ranking_yields\":" << ranking_yields
                << ",\"survival_horizon\":" << survival_horizon
+               << ",\"rescue_horizon\":" << rescue_horizon
+               << ",\"short_searches\":" << short_searches
+               << ",\"short_publications\":" << short_publications
                << ",\"survival_searches\":" << survival_searches
                << ",\"survival_publications\":" << survival_publications
                << ",\"motion_attempts\":" << motion_attempts
