@@ -88,7 +88,7 @@ Prediction nominal(Session &game, const b::Plan &active, unsigned origin, unsign
 Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsigned lead,
               unsigned horizon, unsigned budget, bool reuse, bool pulse, unsigned cursor,
               bool recorded, unsigned proposals, bool laser_aware, bool anytime, bool power_aware,
-              bool damage_aware, bool acceleration_aware) {
+              bool damage_aware, bool acceleration_aware, bool diverse_first) {
     if (horizon < 8 || horizon + lead > capacity || !lead || !budget || budget > 2000 ||
         !proposals || proposals > 50)
         throw std::invalid_argument("invalid bounded search configuration");
@@ -219,6 +219,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     options.power_aware = power_aware;
                     options.damage_aware = damage_aware;
                     options.acceleration_aware = acceleration_aware;
+                    options.diverse_first = diverse_first;
                     if (anytime)
                         options.ranking_deadline =
                             begin + std::chrono::milliseconds(budget * 3 / 4);
@@ -236,6 +237,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                             saved.branches += unsigned(decision.branches);
                             saved.updates += unsigned(decision.simulated_frames);
                             saved.count = lead + decision.certified_frames;
+                            saved.unique_inputs = decision.unique_inputs;
                             saved.orbital = decision.orbital_selected;
                             std::copy(decision.expected_inputs.begin(),
                                       decision.expected_inputs.end(), saved.inputs.begin() + lead);
@@ -253,6 +255,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     const auto decision = choose(game, options, checkpoint);
                     result.branches += unsigned(decision.branches);
                     result.updates += unsigned(decision.simulated_frames);
+                    result.unique_inputs = decision.unique_inputs;
                     // A safe short prefix of a failed future never publishes.
                     if (decision.lookahead_frames == horizon || decision.future_complete) {
                         tail.count = decision.certified_frames;

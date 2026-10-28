@@ -14,17 +14,22 @@ int main(int argc, char **argv) {
         std::string data, path, output;
         unsigned origin = 0, lead = 16, horizon = 128, budget = 110, proposals = 6;
         bool anytime = false, laser = false, power = false, damage = false, acceleration = false;
+        bool diverse = false;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
             if (key == "--help") {
                 std::cout << "th06_shadow_probe --data DIR --tape TAPE --origin N [--lead N] "
                              "[--horizon N] [--budget-ms N] [--proposals N] [--anytime] "
                              "[--laser-aware] [--power-aware] [--damage-aware] "
-                             "[--acceleration-aware] [--output TAPE]\n";
+                             "[--acceleration-aware] [--diverse-first] [--output TAPE]\n";
                 return 0;
             }
             if (key == "--anytime") {
                 anytime = true;
+                continue;
+            }
+            if (key == "--diverse-first") {
+                diverse = true;
                 continue;
             }
             if (key == "--laser-aware") {
@@ -101,7 +106,7 @@ int main(int argc, char **argv) {
         const auto before = game.observation_digest();
         const auto result =
             b::search(game, committed, previous, lead, horizon, budget, false, false, 0, false,
-                      proposals, laser, anytime, power, damage, acceleration);
+                      proposals, laser, anytime, power, damage, acceleration, diverse);
         if (game.observation_digest() != before)
             throw std::runtime_error("search mutated the origin world");
         // Validate the captured lead even when the bounded search times out.
@@ -131,12 +136,13 @@ int main(int argc, char **argv) {
                   << ",\"budget_ms\":" << budget << ",\"proposals\":" << proposals
                   << ",\"anytime\":" << anytime << ",\"laser_aware\":" << laser
                   << ",\"power_aware\":" << power << ",\"damage_aware\":" << damage
-                  << ",\"acceleration_aware\":" << acceleration
+                  << ",\"acceleration_aware\":" << acceleration << ",\"diverse_first\":" << diverse
                   << ",\"prefix_and_lead_checked\":true,\"certified\":" << count
                   << ",\"literal_checked\":" << bool(count) << ",\"timeout\":" << result.timeout
                   << ",\"deadline_checkpoint\":" << result.deadline_checkpoint
                   << ",\"last_phase\":" << result.last_phase << ",\"wall_ms\":" << result.wall_ms
                   << ",\"branches\":" << result.prediction.branches
+                  << ",\"unique_inputs\":" << result.prediction.unique_inputs
                   << ",\"updates\":" << result.prediction.updates << "}\n";
         return count ? 0 : 2;
     } catch (const std::exception &error) {

@@ -238,6 +238,13 @@ Literal winner verification omits unused proposal/HP scores while preserving
 every native update, hit/terminal check and digest. This reduces redundant work;
 wall-time improvement and robustness still need separate measurements.
 
+Optional `--diverse-first` exposes the existing native planner's distinct-input
+ordering through bounded search, the probe and Wine runner. Decisions report
+`unique_inputs` for completed search work, including checkpoint work only up to
+its saved certificate. Laser orbit priority remains unchanged. Under a deadline,
+the target is still best effort. Retained dense-window models include failures
+with this option; it is experimental and does not replace the successful profile.
+
 ## Boundary contract
 
 This follows th08-solver's common-start, true-RNG shadow architecture, rather

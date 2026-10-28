@@ -8,6 +8,7 @@ struct Prediction {
     unsigned recorded = 0;
     unsigned orbital = 0;
     unsigned ranking_yielded = 0;
+    unsigned unique_inputs = 0;
     std::array<std::uint16_t, capacity> inputs{};
     std::array<std::uint64_t, capacity> digests{};
 };
@@ -27,5 +28,6 @@ Search search(solver::Session &game, const Plan &active, std::uint16_t previous,
               unsigned horizon, unsigned budget_ms, bool reuse, bool pulse = false,
               unsigned motion_cursor = 0, bool recorded = false, unsigned proposals = 1,
               bool laser_aware = false, bool anytime = false, bool power_aware = false,
-              bool damage_aware = false, bool acceleration_aware = false);
+              bool damage_aware = false, bool acceleration_aware = false,
+              bool diverse_first = false);
 } // namespace th06::shadow

@@ -94,6 +94,7 @@ parser.add_argument('--budget-ms', type=int, default=110)
 parser.add_argument('--interval', type=int, default=16)
 parser.add_argument('--proposals', type=int, default=1)
 parser.add_argument('--fresh', action='store_true', help='search fresh native alternatives at every interval')
+parser.add_argument('--diverse-first', action='store_true', help='rank distinct initial actions before duplicate tails for the same action')
 parser.add_argument('--refresh-updates', type=int, default=0, help='reuse a fully reverified nominal continuation between fresh searches every N actual updates; incompatible with fresh')
 parser.add_argument('--updates', type=int, default=180000)
 parser.add_argument('--seconds', type=int, default=3000)
@@ -206,6 +207,8 @@ if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:
     worker_config['controller'].append('--fresh')
+if args.diverse_first:
+    worker_config['controller'].append('--diverse-first')
 if args.refresh_updates:
     worker_config['controller'].extend(['--refresh-updates', str(args.refresh_updates)])
 (args.output / 'worker.json').write_text(json.dumps(worker_config, indent=2) + '\n')

@@ -90,14 +90,18 @@ int main(int argc, char **argv) {
             }
             return 0;
         }
-        if (mode == "literal" || mode == "pulse" || mode == "recorded") {
+        if (mode == "literal" || mode == "pulse" || mode == "recorded" || mode == "diverse") {
             b::Plan active;
             if (mode == "pulse") {
                 active.count = 48;
                 active.inputs.fill(261);
             }
             const auto result = b::search(game, active, 261, 16, 32, 1000, false, mode == "pulse",
-                                          65, mode == "recorded");
+                                          65, mode == "recorded", mode == "diverse" ? 6 : 1, false,
+                                          false, false, false, false, mode == "diverse");
+            if (mode == "diverse")
+                require(result.prediction.unique_inputs == 6,
+                        "bounded diversity covers six distinct initial inputs");
             require(!result.timeout && result.prediction.count == 48, "full lead and future");
             if (mode == "pulse")
                 require(result.prediction.motion && result.motion_attempts == 1 &&

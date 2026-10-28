@@ -76,11 +76,16 @@ int main(int argc, char **argv) {
         bool power_aware = false;
         bool damage_aware = false;
         bool acceleration_aware = false;
+        bool diverse_first = false;
         bool recorded = false;
         bool fresh = false;
         unsigned proposals = 1;
         for (int i = 1; i < argc; ++i) {
             const std::string key = argv[i];
+            if (key == "--diverse-first") {
+                diverse_first = true;
+                continue;
+            }
             if (key == "--fresh") {
                 fresh = true;
                 continue;
@@ -123,7 +128,7 @@ int main(int argc, char **argv) {
                        "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
                        "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware] "
                        "[--anytime] [--power-aware] [--damage-aware] [--acceleration-aware] "
-                       "[--survival-horizon N] [--refresh-updates N]\n";
+                       "[--survival-horizon N] [--refresh-updates N] [--diverse-first]\n";
                 return 0;
             }
             if (++i == argc)
@@ -315,10 +320,10 @@ int main(int argc, char **argv) {
                     survival_horizon && game.survival_spell() ? survival_horizon : horizon;
                 const bool extended = selected_horizon != horizon;
                 survival_searches += extended;
-                const auto result =
-                    b::search(game, active, previous, lead, selected_horizon, budget, reuse,
-                              pulse || recovery, motion_cursor, recorded, proposals, laser_aware,
-                              anytime, power_aware, damage_aware, acceleration_aware);
+                const auto result = b::search(
+                    game, active, previous, lead, selected_horizon, budget, reuse,
+                    pulse || recovery, motion_cursor, recorded, proposals, laser_aware, anytime,
+                    power_aware, damage_aware, acceleration_aware, diverse_first);
                 deadline_checkpoints += result.deadline_checkpoint;
                 if (result.prediction.count && !result.prediction.nominal)
                     last_refresh = origin;
@@ -391,6 +396,7 @@ int main(int argc, char **argv) {
                           << "\""
                           << ",\"timeout\":" << (result.timeout ? "true" : "false")
                           << ",\"certified\":" << result.prediction.count
+                          << ",\"unique_inputs\":" << result.prediction.unique_inputs
                           << ",\"pulse_recovery\":" << (recovery ? "true" : "false")
                           << ",\"orbital\":" << (result.prediction.orbital ? "true" : "false")
                           << ",\"deadline_checkpoint\":"
@@ -444,6 +450,7 @@ int main(int argc, char **argv) {
                << ",\"orbital_publications\":" << orbital_publications << ",\"anytime\":" << anytime
                << ",\"power_aware\":" << power_aware << ",\"damage_aware\":" << damage_aware
                << ",\"acceleration_aware\":" << acceleration_aware
+               << ",\"diverse_first\":" << diverse_first
                << ",\"deadline_checkpoints\":" << deadline_checkpoints
                << ",\"checkpoint_publications\":" << checkpoint_publications
                << ",\"ranking_yields\":" << ranking_yields
