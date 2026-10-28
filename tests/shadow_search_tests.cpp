@@ -6,6 +6,7 @@
 #include "th06/shadow_search.hpp"
 #include <cerrno>
 #include <chrono>
+#include <csignal>
 #include <iostream>
 #include <stdexcept>
 #include <sys/mman.h>
@@ -18,10 +19,20 @@ unsigned calls = 0;
 bool delay = false;
 bool saturate = false;
 bool checkpoint_mode = false, checkpoint_delay = false;
+bool late_finish = false;
+pid_t owner = 0;
 std::uint16_t forbidden = 0;
 std::uint32_t *blocked = nullptr;
 th06::ChainCallbackResult inject(void *) {
     ++calls;
+    if (late_finish) {
+        if (calls == 9 && !b::load(blocked)) {
+            b::save(blocked, 1);
+            kill(owner, SIGSTOP);
+            usleep(400000);
+        }
+        return th06::CHAIN_CALLBACK_RESULT_CONTINUE;
+    }
     if (checkpoint_mode) {
         if (checkpoint_delay && calls == 9) {
             const auto branch = b::load(blocked + 1) + 1;
@@ -122,6 +133,45 @@ int main(int argc, char **argv) {
             callback.SetCallback(reinterpret_cast<th06::ChainCallback>(inject));
             require(th06::g_FuncChain.AddToCalcChain(&callback, 15) == ZUN_SUCCESS,
                     "inject calc observer");
+            if (mode == "late-completion") {
+                late_finish = true;
+                owner = getpid();
+                blocked = static_cast<std::uint32_t *>(
+                    mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0));
+                require(blocked != MAP_FAILED, "shared late completion receipt");
+                for (bool anytime : {false, true}) {
+                    b::save(blocked, 0);
+                    const auto resumer = fork();
+                    require(resumer >= 0, "fork independent owner resumer");
+                    if (!resumer) {
+                        // The deadline enforcer is deliberately descheduled.
+                        // Search can finish late before its owner reads it.
+                        usleep(1200000);
+                        kill(owner, SIGCONT);
+                        _exit(0);
+                    }
+                    const auto result = b::search(game, {}, 261, 8, 32, 200, false, false, 0, false,
+                                                  1, false, anytime);
+                    int status;
+                    while (waitpid(resumer, &status, 0) < 0 && errno == EINTR) {
+                    }
+                    std::cout << "late result: count=" << result.prediction.count
+                              << " timeout=" << result.timeout
+                              << " completion_ms=" << result.completion_ms << " anytime=" << anytime
+                              << '\n';
+                    require(b::load(blocked) == 1 && result.timeout && result.late_completion &&
+                                result.completion_ms > 200 && !result.prediction.count &&
+                                !result.deadline_checkpoint,
+                            "a readable late certificate cannot bypass the deadline");
+                    require(game.observation_digest() == before && !calls,
+                            "late completion preserves actual state and RNG");
+                    errno = 0;
+                    require(waitpid(-1, &status, WNOHANG) == -1 && errno == ECHILD,
+                            "late completion leaves no descendant");
+                }
+                munmap(blocked, 4096);
+                return 0;
+            }
             if (mode == "checkpoint") {
                 checkpoint_mode = checkpoint_delay = true;
                 blocked = static_cast<std::uint32_t *>(

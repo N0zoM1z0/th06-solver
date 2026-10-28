@@ -98,8 +98,9 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
         game.enable_laser_guidance();
     const auto begin = Clock::now();
     struct SharedProgress {
-        std::uint32_t words[6]{};
+        std::uint32_t words[7]{};
         std::uint64_t checkpoint_ns = 0;
+        std::uint64_t completion_ns = 0;
         Prediction checkpoint;
     };
     struct Progress {
@@ -278,6 +279,9 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
                     std::copy_n(tail.digests.begin(), tail.count, result.digests.begin() + lead);
                 }
             }
+            progress.data->completion_ns = std::uint64_t(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - begin).count());
+            b::save(progress.words + 6, 1);
             transfer(pipefd[1], &result, sizeof(result), true);
             _exit(0);
         } catch (...) {
@@ -297,9 +301,24 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
     bool received = false;
     if (ready > 0 && (fd.revents & POLLIN))
         received = transfer(pipefd[0], &result.prediction, sizeof(Prediction), false);
+    if (received && !b::load(progress.words + 6)) {
+        // Treat a missing stamp as a child error, after normal group cleanup.
+        result.prediction = {};
+        received = false;
+    }
+    if (received) {
+        result.completion_ms = double(progress.data->completion_ns) / 1e6;
+        result.late_completion = progress.data->completion_ns > std::uint64_t(budget) * 1000000;
+        if (result.late_completion) {
+            // A descheduled parent can wake to a readable result after the
+            // deadline. Only the child's actual completion time can admit it.
+            result.prediction = {};
+            received = false;
+        }
+    }
     const auto cleanup_begin = Clock::now();
     if (!received) {
-        result.timeout = ready == 0;
+        result.timeout = ready == 0 || result.late_completion || milliseconds(begin) >= budget;
         kill(-pid, SIGKILL);
         kill(pid, SIGKILL);
     }

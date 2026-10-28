@@ -141,6 +141,8 @@ int main(int argc, char **argv) {
                   << ",\"literal_checked\":" << bool(count) << ",\"timeout\":" << result.timeout
                   << ",\"deadline_checkpoint\":" << result.deadline_checkpoint
                   << ",\"last_phase\":" << result.last_phase << ",\"wall_ms\":" << result.wall_ms
+                  << ",\"completion_ms\":" << result.completion_ms
+                  << ",\"late_completion\":" << result.late_completion
                   << ",\"branches\":" << result.prediction.branches
                   << ",\"unique_inputs\":" << result.prediction.unique_inputs
                   << ",\"updates\":" << result.prediction.updates << "}\n";

@@ -17,7 +17,9 @@ struct Search {
     Prediction prediction;
     double wall_ms = 0;
     double cleanup_ms = 0;
+    double completion_ms = 0;
     bool timeout = false;
+    bool late_completion = false;
     bool deadline_checkpoint = false;
     unsigned motion_attempts = 0, motion_cursor = 0;
     unsigned recorded_forecasts = 0, recorded_checks = 0, last_phase = 0;

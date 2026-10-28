@@ -381,6 +381,8 @@ int main(int argc, char **argv) {
                           << ",\"nominal\":" << (result.prediction.nominal ? "true" : "false")
                           << ",\"wall_ms\":" << result.wall_ms
                           << ",\"cleanup_ms\":" << result.cleanup_ms
+                          << ",\"completion_ms\":" << result.completion_ms
+                          << ",\"late_completion\":" << (result.late_completion ? "true" : "false")
                           << ",\"last_phase\":" << result.last_phase
                           << ",\"queue_before\":" << queue_before
                           << ",\"queue_after\":" << b::remaining(active, unsigned(now.frame))
