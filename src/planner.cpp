@@ -170,7 +170,8 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
             Result result;
             std::uint16_t action = input;
             auto current = game.state();
-            const auto initial_progress = damage_aware ? game.boss_progress() : BossProgress{};
+            const auto initial_progress =
+                damage_aware && !literal ? game.boss_progress() : BossProgress{};
             const bool score_damage =
                 initial_progress.active && initial_progress.damageable && initial_progress.life;
             BossGoal goal(initial_progress);
@@ -218,9 +219,13 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                 }
                 ++result.safe;
                 start = profile ? Clock::now() : Clock::time_point{};
-                result.cost += game.proposal_cost(laser_aware, power_aware);
-                if (score_damage)
-                    result.cost += goal.cost(game.boss_progress());
+                // Literal winner replay certifies the already selected inputs.
+                // Its score is unused; retain every source update and digest.
+                if (!literal) {
+                    result.cost += game.proposal_cost(laser_aware, power_aware);
+                    if (score_damage)
+                        result.cost += goal.cost(game.boss_progress());
+                }
                 if (profile)
                     result.timings.scoring += seconds_since(start);
                 if (state.complete) {
@@ -228,7 +233,7 @@ Result rollout(Session &game, std::uint16_t input, unsigned moving, unsigned hor
                     break;
                 }
             }
-            if (result.safe) {
+            if (result.safe && !literal) {
                 const auto start = profile ? Clock::now() : Clock::time_point{};
                 result.cost =
                     result.cost / result.safe + game.proposal_cost(laser_aware, power_aware);

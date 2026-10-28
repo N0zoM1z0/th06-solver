@@ -94,6 +94,7 @@ parser.add_argument('--budget-ms', type=int, default=110)
 parser.add_argument('--interval', type=int, default=16)
 parser.add_argument('--proposals', type=int, default=1)
 parser.add_argument('--fresh', action='store_true', help='search fresh native alternatives at every interval')
+parser.add_argument('--refresh-updates', type=int, default=0, help='reuse a fully reverified nominal continuation between fresh searches every N actual updates; incompatible with fresh')
 parser.add_argument('--updates', type=int, default=180000)
 parser.add_argument('--seconds', type=int, default=3000)
 args = parser.parse_args()
@@ -115,6 +116,8 @@ if args.recorded and max(args.horizon, args.survival_horizon) > 240:
     parser.error('recorded proposals require horizon <= 240')
 if args.pulse and args.pulse_on_failure:
     parser.error('choose one pulse policy')
+if args.refresh_updates and (args.fresh or not args.interval <= args.refresh_updates <= args.horizon):
+    parser.error('refresh interval requires non-fresh mode and interval..horizon')
 args.data = args.data.resolve()
 args.game = args.game.resolve()
 args.build = args.build.resolve()
@@ -203,6 +206,8 @@ if args.recorded:
     worker_config['controller'].append('--recorded')
 if args.fresh:
     worker_config['controller'].append('--fresh')
+if args.refresh_updates:
+    worker_config['controller'].extend(['--refresh-updates', str(args.refresh_updates)])
 (args.output / 'worker.json').write_text(json.dumps(worker_config, indent=2) + '\n')
 receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3,
            'memory_high_bytes': 1536 * 1024**2, 'swap_max_bytes': 0,
@@ -224,6 +229,7 @@ def interrupted(signum, _frame):
 
 signal.signal(signal.SIGTERM, interrupted)
 started = time.monotonic()
+last_snapshot = started
 with (args.output / 'process.log').open('wb') as log:
     child = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
     cgroup = None
@@ -257,12 +263,21 @@ with (args.output / 'process.log').open('wb') as log:
                         receipt[name] = max(receipt[name], int(events.get(name, 0)))
                 except FileNotFoundError:
                     pass
+            # Preserve measured limits/peaks if the interactive parent vanishes.
+            # Keep the final report distinct with an explicit completion flag.
+            if time.monotonic() - last_snapshot >= 1:
+                receipt['runner_finished'] = False
+                temporary = args.output / 'resource-receipt.tmp'
+                temporary.write_text(json.dumps(receipt, indent=2) + '\n')
+                temporary.replace(args.output / 'resource-receipt.json')
+                last_snapshot = time.monotonic()
             time.sleep(0.2)
     except BaseException:
         subprocess.run(['systemctl', '--user', 'stop', unit], check=False)
         child.wait()
         raise
 receipt['process_exit'] = child.returncode
+receipt['runner_finished'] = True
 receipt['wall_seconds'] = time.monotonic() - started
 state = subprocess.run(['systemctl', '--user', 'show', unit, '-p', 'Result', '-p', 'ExecMainStatus'],
                        capture_output=True, text=True, check=True)

@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
         std::string data, directory;
         unsigned horizon = 128, lead = 16, budget = 110, interval = 16;
         unsigned survival_horizon = 0;
+        unsigned refresh_updates = 0;
         bool pulse = false;
         bool pulse_on_failure = false;
         bool laser_aware = false;
@@ -122,7 +123,7 @@ int main(int argc, char **argv) {
                        "[--lead 8..64] [--budget-ms N] [--interval N] [--proposals 1..50] "
                        "[--fresh] [--pulse | --pulse-on-failure] [--recorded] [--laser-aware] "
                        "[--anytime] [--power-aware] [--damage-aware] [--acceleration-aware] "
-                       "[--survival-horizon N]\n";
+                       "[--survival-horizon N] [--refresh-updates N]\n";
                 return 0;
             }
             if (++i == argc)
@@ -141,6 +142,8 @@ int main(int argc, char **argv) {
                     horizon = n;
                 else if (key == "--survival-horizon")
                     survival_horizon = n;
+                else if (key == "--refresh-updates")
+                    refresh_updates = n;
                 else if (key == "--lead")
                     lead = n;
                 else if (key == "--budget-ms")
@@ -164,6 +167,9 @@ int main(int argc, char **argv) {
             throw std::runtime_error("recorded proposals require horizon <= 240");
         if (pulse && pulse_on_failure)
             throw std::runtime_error("choose one pulse policy");
+        if (refresh_updates && (fresh || refresh_updates < interval || refresh_updates > horizon))
+            throw std::runtime_error(
+                "refresh interval requires non-fresh mode and interval..horizon");
         Mapping mapping(directory + "/bridge.bin");
         auto *map = mapping.words;
         Resources resources(data);
@@ -271,7 +277,7 @@ int main(int argc, char **argv) {
             if (pending.stage != stage)
                 pending = {};
         };
-        unsigned last_search = 0;
+        unsigned last_search = 0, last_refresh = 0;
         try {
             while (true) {
                 catch_up();
@@ -298,7 +304,11 @@ int main(int argc, char **argv) {
                 const auto origin = unsigned(state.frame);
                 const auto queue_before = b::remaining(active, origin);
                 last_search = origin;
-                const bool reuse = !fresh && attempts % 4 != 0;
+                const bool reuse = refresh_updates
+                                       ? attempts && origin - last_refresh < refresh_updates
+                                       : !fresh && attempts % 4 != 0;
+                if (!reuse)
+                    last_refresh = origin;
                 const bool recovery = pulse_on_failure && recovery_armed;
                 recovery_searches += recovery;
                 const unsigned selected_horizon =
@@ -310,6 +320,8 @@ int main(int argc, char **argv) {
                               pulse || recovery, motion_cursor, recorded, proposals, laser_aware,
                               anytime, power_aware, damage_aware, acceleration_aware);
                 deadline_checkpoints += result.deadline_checkpoint;
+                if (result.prediction.count && !result.prediction.nominal)
+                    last_refresh = origin;
                 ranking_yields += result.prediction.ranking_yielded;
                 // Try motion once after an unsuccessful ordinary search, then
                 // restore ordinary proposals even when that rescue also fails.
@@ -360,6 +372,8 @@ int main(int argc, char **argv) {
                     ++failed;
                 decisions << "{\"origin\":" << origin << ",\"caught_up\":" << now.frame
                           << ",\"horizon\":" << selected_horizon
+                          << ",\"nominal_attempt\":" << (reuse ? "true" : "false")
+                          << ",\"nominal\":" << (result.prediction.nominal ? "true" : "false")
                           << ",\"wall_ms\":" << result.wall_ms
                           << ",\"cleanup_ms\":" << result.cleanup_ms
                           << ",\"last_phase\":" << result.last_phase
@@ -407,8 +421,9 @@ int main(int argc, char **argv) {
                << ",\"error\":\"" << error << "\",\"horizon\":" << horizon << ",\"lead\":" << lead
                << ",\"budget_ms\":" << budget << ",\"interval\":" << interval
                << ",\"fresh_only\":" << fresh << ",\"proposals\":" << proposals
-               << ",\"searches\":" << attempts << ",\"timeouts\":" << timeouts
-               << ",\"failed\":" << failed << ",\"published\":" << submitted
+               << ",\"refresh_updates\":" << refresh_updates << ",\"searches\":" << attempts
+               << ",\"timeouts\":" << timeouts << ",\"failed\":" << failed
+               << ",\"published\":" << submitted
                << ",\"accepted_generation\":" << b::load(map + b::Accepted)
                << ",\"rejected_generation\":" << b::load(map + b::Rejected)
                << ",\"stale\":" << stale << ",\"nominal_publications\":" << reused

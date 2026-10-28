@@ -66,6 +66,30 @@ int main(int argc, char **argv) {
         Session game(config);
         const auto before = game.observation_digest();
         const std::string mode = argv[2];
+        if (mode == "nominal") {
+            const auto fresh = b::search(game, {}, 261, 16, 32, 1000, false);
+            require(fresh.prediction.count == 48, "nominal fixture has a full fresh future");
+            b::Plan active;
+            active.count = fresh.prediction.count;
+            active.inputs = fresh.prediction.inputs;
+            active.stage = config.stage;
+            auto previous = std::uint16_t(261);
+            for (unsigned i = 0; i < 4; ++i) {
+                previous = active.inputs[i];
+                game.step(previous);
+            }
+            const auto origin = game.observation_digest();
+            const auto result = b::search(game, active, previous, 16, 32, 1000, true);
+            require(!result.timeout && result.prediction.count == 48 && result.prediction.nominal,
+                    "nominal re-executes the remaining queue and extends its tail");
+            require(game.observation_digest() == origin, "nominal search preserves actual state");
+            for (unsigned i = 0; i < result.prediction.count; ++i) {
+                require(!game.step(result.prediction.inputs[i]).hit &&
+                            game.observation_digest() == result.prediction.digests[i],
+                        "extended nominal receives independent literal verification");
+            }
+            return 0;
+        }
         if (mode == "literal" || mode == "pulse" || mode == "recorded") {
             b::Plan active;
             if (mode == "pulse") {
@@ -214,7 +238,7 @@ int main(int argc, char **argv) {
                 }
                 const bool recorded = mode == "recorded-deadline" || mode == "recorded-failure";
                 const auto result = b::search(
-                    game, active, 261, 8, 32, delay ? 30 : 1000, false, pulse, 65, recorded, 1,
+                    game, active, 261, 8, 32, delay ? 150 : 1000, false, pulse, 65, recorded, 1,
                     false, mode == "checkpoint-failure" || mode == "checkpoint-deadline");
                 require(result.prediction.count == 0, "failed future publishes no prefix");
                 require(!result.deadline_checkpoint,

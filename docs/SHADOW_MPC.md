@@ -220,6 +220,23 @@ timeout and completed no-certificate. Queue values describe the acknowledged
 active plan; a newly published plan remains pending until retail adopts it.
 Cleanup time is included in the existing whole-search wall time. The runner
 also checks actual `memory.high` against 1.5 GiB, alongside hard/swap limits.
+It atomically snapshots resource measurements every second with
+`runner_finished:false`; only the final receipt sets it true. An interrupted
+launcher cannot turn a partial resource receipt into complete acceptance.
+
+Optional `--refresh-updates 32` replaces attempt-count nominal scheduling with
+a period measured in actual updates. It is incompatible with `--fresh` and
+requires `interval <= refresh_updates <= horizon`. Between refreshes, search
+re-executes the remaining literal queue and extends its tail through the entire
+requested native horizon. If that future fails, fresh candidates run within
+the same original deadline. A successful fresh or recovery future resets the
+refresh clock. No unverified suffix can publish. This follows th08's periodic
+nominal extension; defaults and the previous successful Extra profile stay as
+documented. Decisions distinguish nominal attempts from nominal certificates.
+
+Literal winner verification omits unused proposal/HP scores while preserving
+every native update, hit/terminal check and digest. This reduces redundant work;
+wall-time improvement and robustness still need separate measurements.
 
 ## Boundary contract
 
