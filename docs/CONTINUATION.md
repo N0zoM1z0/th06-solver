@@ -32,8 +32,10 @@ Extra failures include spells 57, 58 and 62. The retained Stage 6 seed-47489
 right-edge failure is another useful older control. Start before the trap:
 more time after every candidate fails does not create a continuation.
 
-Promote one minimal diagnostic taking an actual tape, origin, immutable lead,
-profile and binary identity. Replay/check every prefix digest before branching.
+`th06_shadow_probe` now takes an actual tape, origin, immutable lead and search
+profile. It checks every prefix/lead digest and literally replays each returned
+certificate; its output remains a fixed-prefix native experiment. Freeze the
+binary and arguments with the experiment. See [Shadow MPC](SHADOW_MPC.md#checked-prefix-probes).
 Separate fixed-prefix comparisons from closed policy episodes and from actual
 retail trials. Native models using `max(1, ceil(search_ms * 60 / 1000))` consumed
 updates are timing-dependent: host load can change the route and action RNG.

@@ -37,6 +37,26 @@ if(damaged STREQUAL tape)
   message(FATAL_ERROR "corruption fixture did not change tape")
 endif()
 file(WRITE "${WORK}/damaged.actions" "${damaged}")
+execute_process(COMMAND "${PROBE}" --data "${DATA}" --tape "${WORK}/prefix.actions"
+  --origin 200 --lead 8 --horizon 32 --budget-ms 1000 --proposals 1
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE diagnostic)
+if(NOT result EQUAL 0 OR NOT output MATCHES "\"literal_checked\":true" OR
+   NOT output MATCHES "\"certified\":40")
+  message(FATAL_ERROR "checked shadow probe failed: ${output} ${diagnostic}")
+endif()
+foreach(origin IN ITEMS 1 0)
+  execute_process(COMMAND "${PROBE}" --data "${DATA}" --tape "${WORK}/damaged.actions"
+    --origin ${origin} --lead 8 --horizon 32 --budget-ms 1000 --proposals 1
+    RESULT_VARIABLE result OUTPUT_QUIET ERROR_VARIABLE diagnostic)
+  if(NOT result EQUAL 1 OR NOT diagnostic MATCHES "mismatch/hit at 1")
+    message(FATAL_ERROR "shadow probe accepted corrupt prefix/lead: ${diagnostic}")
+  endif()
+endforeach()
+execute_process(COMMAND "${PROBE}" --data "${DATA}" --tape "${WORK}/prefix.actions"
+  --origin 599 --lead 8 RESULT_VARIABLE result OUTPUT_QUIET ERROR_VARIABLE diagnostic)
+if(NOT result EQUAL 1 OR NOT diagnostic MATCHES "entire immutable lead")
+  message(FATAL_ERROR "shadow probe accepted missing lead: ${diagnostic}")
+endif()
 execute_process(COMMAND "${CHECK}" --data "${DATA}" --tape "${WORK}/damaged.actions"
   RESULT_VARIABLE result OUTPUT_QUIET ERROR_VARIABLE diagnostic)
 if(NOT result EQUAL 1 OR NOT diagnostic MATCHES "replay divergence at frame 1")

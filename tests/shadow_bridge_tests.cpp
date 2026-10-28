@@ -30,6 +30,10 @@ int main() {
         p.inputs.fill(261);
         p.inputs[16] = 389;
         require(b::valid(p), "valid literal plan");
+        require(b::remaining(p, 99) == 0 && b::remaining(p, 100) == 48 &&
+                    b::remaining(p, 147) == 1 && b::remaining(p, 148) == 0 &&
+                    b::remaining({}, 0) == 0,
+                "queue boundaries exclude exhausted fallback holds");
         b::publish(map.data(), p);
         b::Plan read;
         require(

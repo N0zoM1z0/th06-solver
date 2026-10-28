@@ -296,6 +296,7 @@ int main(int argc, char **argv) {
                 // Reconstruct the origin from actual receipts, then preserve
                 // the accepted queue/fallback through the immutable lead.
                 const auto origin = unsigned(state.frame);
+                const auto queue_before = b::remaining(active, origin);
                 last_search = origin;
                 const bool reuse = !fresh && attempts % 4 != 0;
                 const bool recovery = pulse_on_failure && recovery_armed;
@@ -360,6 +361,20 @@ int main(int argc, char **argv) {
                 decisions << "{\"origin\":" << origin << ",\"caught_up\":" << now.frame
                           << ",\"horizon\":" << selected_horizon
                           << ",\"wall_ms\":" << result.wall_ms
+                          << ",\"cleanup_ms\":" << result.cleanup_ms
+                          << ",\"last_phase\":" << result.last_phase
+                          << ",\"queue_before\":" << queue_before
+                          << ",\"queue_after\":" << b::remaining(active, unsigned(now.frame))
+                          << ",\"consumed_lead\":" << now.frame - origin
+                          << ",\"owner_sequence\":" << b::load(map + b::Sequence)
+                          << ",\"fallback_total\":" << b::load(map + b::Fallback)
+                          << ",\"result_reason\":\""
+                          << (published                  ? "published"
+                              : now.stage != state.stage ? "stage_reset"
+                              : result.prediction.count  ? "stale"
+                              : result.timeout           ? "timeout"
+                                                         : "no_certificate")
+                          << "\""
                           << ",\"timeout\":" << (result.timeout ? "true" : "false")
                           << ",\"certified\":" << result.prediction.count
                           << ",\"pulse_recovery\":" << (recovery ? "true" : "false")

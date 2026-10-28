@@ -49,6 +49,8 @@ set_source_files_properties(src/shadow_recorded.cpp PROPERTIES COMPILE_OPTIONS "
 target_link_libraries(th06_shadow PUBLIC th06_planner)
 add_executable(th06_shadow_online tools/shadow_online.cpp)
 target_link_libraries(th06_shadow_online PRIVATE th06_shadow th06_planner th06_tape)
+add_executable(th06_shadow_probe tools/shadow_probe.cpp)
+target_link_libraries(th06_shadow_probe PRIVATE th06_shadow th06_tape)
 add_executable(th06_replay_check tools/replay_check.cpp)
 target_link_libraries(th06_replay_check PRIVATE th06_native th06_tape)
 add_executable(th06_runtime_bench tools/runtime_bench.cpp)
@@ -155,7 +157,8 @@ if(BUILD_TESTING)
     add_test(NAME story_terminal_contracts COMMAND story_transition_tests ${TH06_DATA_DIR} premature)
     add_test(NAME real_data_contracts COMMAND ${CMAKE_COMMAND}
       -DHEADLESS=$<TARGET_FILE:th06_headless> -DPLAN=$<TARGET_FILE:th06_plan>
-      -DCHECK=$<TARGET_FILE:th06_replay_check> -DDATA=${TH06_DATA_DIR}
+      -DCHECK=$<TARGET_FILE:th06_replay_check> -DPROBE=$<TARGET_FILE:th06_shadow_probe>
+      -DDATA=${TH06_DATA_DIR}
       -DWORK=${CMAKE_CURRENT_BINARY_DIR}/real-data-tests -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/real_data.cmake)
     set_tests_properties(real_data_contracts PROPERTIES TIMEOUT 180)
   endif()

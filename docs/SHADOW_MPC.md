@@ -191,6 +191,36 @@ private `reports/local/shadow-extra-20261027/`,
 `reports/local/extra-search-20261027/` and
 `reports/local/extra-online-20261027/`, with per-root acceptance ledgers.
 
+## Checked-prefix probes
+
+Use the maintained diagnostic on a retained actual tape before another full
+Wine attempt. This is a fixed-origin native experiment, with no latency model
+or retail process:
+
+```sh
+build/th06_shadow_probe --data /path/to/private-dats --tape /path/to/actual.actions \
+  --origin 21700 --lead 16 --horizon 128 --budget-ms 110 --proposals 6 \
+  --anytime --laser-aware --power-aware --damage-aware --acceleration-aware \
+  --output reports/local/probe-new.actions
+```
+
+The tool validates the DAT identity, all actual inputs/digests through the
+origin and the entire captured lead, including on timeout. Every returned
+certificate must match independent literal native execution. Exit 0 means a
+checked certificate, 2 means no certificate, and 1 means invalid data/error.
+Optional output refuses existing paths and contains the checked original prefix
+plus the future; run a fresh `th06_replay_check` on it. A probe is not a closed
+policy episode or an online clear. Keep the binary hash, arguments and all
+outcomes under ignored evidence storage.
+
+New online decisions log queue remaining before/after search, consumed lead,
+owner sequence, cumulative actual fallback count, timeout phase and cleanup
+time. `result_reason` distinguishes publication, stage reset, stale result,
+timeout and completed no-certificate. Queue values describe the acknowledged
+active plan; a newly published plan remains pending until retail adopts it.
+Cleanup time is included in the existing whole-search wall time. The runner
+also checks actual `memory.high` against 1.5 GiB, alongside hard/swap limits.
+
 ## Boundary contract
 
 This follows th08-solver's common-start, true-RNG shadow architecture, rather

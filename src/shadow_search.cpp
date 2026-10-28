@@ -294,6 +294,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
     bool received = false;
     if (ready > 0 && (fd.revents & POLLIN))
         received = transfer(pipefd[0], &result.prediction, sizeof(Prediction), false);
+    const auto cleanup_begin = Clock::now();
     if (!received) {
         result.timeout = ready == 0;
         kill(-pid, SIGKILL);
@@ -315,6 +316,7 @@ Search search(Session &game, const b::Plan &active, std::uint16_t previous, unsi
         result.deadline_checkpoint = true;
     }
     result.wall_ms = milliseconds(begin);
+    result.cleanup_ms = milliseconds(cleanup_begin);
     result.motion_attempts = b::load(progress.words + 1);
     result.motion_cursor = b::load(progress.words);
     result.last_phase = b::load(progress.words + 2);

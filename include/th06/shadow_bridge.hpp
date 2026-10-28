@@ -95,6 +95,11 @@ inline bool read(const std::uint32_t *map, Plan &out) {
 inline std::uint16_t fallback(std::uint16_t previous) {
     return std::uint16_t((previous & 0xf4) | 0x101);
 }
+inline unsigned remaining(const Plan &p, unsigned sequence) {
+    return p.count && sequence >= p.origin && sequence - p.origin < p.count
+               ? p.count - (sequence - p.origin)
+               : 0;
+}
 inline std::uint16_t next_input(const Plan &p, unsigned next, std::uint16_t previous) {
     if (p.count && next > p.origin && next <= p.origin + p.count)
         return p.inputs[next - p.origin - 1];

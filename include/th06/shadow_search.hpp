@@ -15,6 +15,7 @@ static_assert(sizeof(Prediction) < 65536);
 struct Search {
     Prediction prediction;
     double wall_ms = 0;
+    double cleanup_ms = 0;
     bool timeout = false;
     bool deadline_checkpoint = false;
     unsigned motion_attempts = 0, motion_cursor = 0;

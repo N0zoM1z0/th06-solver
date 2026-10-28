@@ -204,7 +204,8 @@ if args.recorded:
 if args.fresh:
     worker_config['controller'].append('--fresh')
 (args.output / 'worker.json').write_text(json.dumps(worker_config, indent=2) + '\n')
-receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3, 'swap_max_bytes': 0,
+receipt = {'unit': unit, 'memory_max_bytes': 2 * 1024**3,
+           'memory_high_bytes': 1536 * 1024**2, 'swap_max_bytes': 0,
            'peak_cgroup_bytes': 0, 'oom': 0, 'oom_kill': 0,
            'cgroup_limits_verified': False,
            'retail_sha256': pinned, 'mode': 'live-shadow-mpc',
@@ -237,8 +238,10 @@ with (args.output / 'process.log').open('wb') as log:
                 if not receipt['cgroup_limits_verified']:
                     try:
                         actual_max = int((cgroup / 'memory.max').read_text())
+                        actual_high = int((cgroup / 'memory.high').read_text())
                         actual_swap = int((cgroup / 'memory.swap.max').read_text())
-                        if actual_max != receipt['memory_max_bytes'] or actual_swap != 0:
+                        if (actual_max != receipt['memory_max_bytes'] or
+                                actual_high != receipt['memory_high_bytes'] or actual_swap != 0):
                             raise RuntimeError('owned Wine cgroup memory limits were not applied')
                         receipt['cgroup_limits_verified'] = True
                     except FileNotFoundError:
